@@ -37,25 +37,28 @@ export function InputFormulario ({ control, name, rules, ...props }) {
 const estilosInputsFormulario = StyleSheet.create({
   textInput: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 16,
     color: '#222',
-    padding: 8,
-    paddingLeft: 13
+    padding: 12,
+    paddingLeft: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    minHeight: 40,
   },
 
   textInputFocused: {
-    borderColor: '#4361ee',
-    backgroundColor: '#fff',
-    shadowColor: '#4361ee',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2
+    backgroundColor: 'transparent',
   },
-
   textInputError: {
-    borderColor: '#f72585',
-    backgroundColor: '#fff5f5'
+    backgroundColor: 'transparent',
+    color: 'red'
+  },
+  errorText: {
+    color: '#f72585',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: '500'
   }
 
 })

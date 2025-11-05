@@ -42,7 +42,9 @@ export default function Formulario () {
           autoCapitalize='none'
         />
       </View>
-      {errors.correo && <Text style={estilosFormulario.errorText}>{errors.correo.message}</Text>}
+      {errors.correo && 
+        (<View style={estilosFormulario.errorContainer}><Text style={estilosFormulario.errorText}>{errors.correo.message}</Text></View>)
+      }
 
       <View style={estilosFormulario.inputRow}>
         <Icon name='lock-closed' size={26} color='#000' style={estilosFormulario.icon} />
@@ -57,7 +59,9 @@ export default function Formulario () {
           autoCapitalize='none'
         />
       </View>
-      {errors.contra && <Text style={estilosFormulario.errorText}>{errors.contra.message}</Text>}
+      {errors.contra && 
+        (<View style={estilosFormulario.errorContainer}><Text style={estilosFormulario.errorText}>{errors.contra.message}</Text></View>)
+      }
 
       <View style={estilosFormulario.rowBetween}>
         <View style={estilosFormulario.keepSession}>
@@ -105,7 +109,8 @@ const estilosFormulario = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#222',
-    marginBottom: 14
+    marginBottom: 20,
+    textAlign: 'center'
   },
   inputRow: {
     flexDirection: 'row',
@@ -114,8 +119,8 @@ const estilosFormulario = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
     backgroundColor: '#FAFAFB'
   },
   icon: {
@@ -165,5 +170,10 @@ const estilosFormulario = StyleSheet.create({
     color: '#f72585',
     marginLeft: 4,
     flex: 1
+  },
+  errorContainer:{
+    width:'auto',
+    minHeight: 20,
+    marginBottom: 6,
   }
 })
