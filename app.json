@@ -20,10 +20,19 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.yhesus.evaluacionelectiva3"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2c096fc4-982d-4647-80f5-394dde9240a2"
+      }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

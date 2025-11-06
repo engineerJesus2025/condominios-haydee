@@ -3,6 +3,8 @@ import { createStackNavigator } from '@react-navigation/stack'
 import { createDrawerNavigator } from '@react-navigation/drawer'
 
 // Screens
+import PagosScreen from '../screens/PagosScreen'
+import GastosScreen from '../screens/GastosScreen'
 import MensualidadesScreen from '../screens/MensualidadesScreen'
 import LoginScreen from '../screens/LoginScreen'
 
@@ -26,6 +28,15 @@ function MyDrawer () {
       <Drawer.Screen
         name='Mensualidad'
         component={MensualidadesScreen}
+      />
+      <Drawer.Screen
+        name='Pagos'
+        component={PagosScreen}
+      />
+
+      <Drawer.Screen
+        name='Gastos'
+        component={GastosScreen}
       />
     </Drawer.Navigator>
   )

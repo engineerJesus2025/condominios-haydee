@@ -6,11 +6,12 @@ import {
   StyleSheet,
   ScrollView
 } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
+
 import Icon from 'react-native-vector-icons/Ionicons'
 
+import { LISTA_MENU } from '../utils/constants'
+
 const MenuLateral = (props) => {
-  const navigation = useNavigation()
   const [expandedItems, setExpandedItems] = useState({})
 
   const toggleExpanded = (itemName) => {
@@ -19,118 +20,6 @@ const MenuLateral = (props) => {
       [itemName]: !prev[itemName]
     }))
   }
-
-  const listaMenu = [
-    {
-      name: 'Inicio',
-      icon: 'business',
-      screen: 'Inicio',
-      permission: true
-    },
-    {
-      name: 'Pagos',
-      icon: 'cash',
-      screen: 'Pagos',
-      permission: true
-    },
-    {
-      name: 'Gastos',
-      icon: 'cart',
-      screen: 'Gastos',
-      permission: true
-    },
-    {
-      name: 'Caja Chica',
-      icon: 'wallet',
-      screen: 'CajaChica',
-      permission: true
-    },
-    {
-      name: 'Mensualidad',
-      icon: 'calendar-number',
-      screen: 'Mensualidad',
-      permission: true
-    },
-    {
-      name: 'Cartelera Virtual',
-      icon: 'tv',
-      screen: 'CarteleraVirtual',
-      permission: true
-    },
-    {
-      name: 'Apartamentos',
-      icon: 'business',
-      screen: 'Apartamentos',
-      permission: true
-    },
-    {
-      name: 'Solicitud Gasto',
-      icon: 'document-text',
-      screen: 'SolicitudGasto',
-      permission: true
-    },
-    {
-      name: 'Presupuesto Mensual',
-      icon: 'calculator',
-      screen: 'Presupuesto',
-      permission: true
-    },
-    {
-      name: 'Año Fiscal',
-      icon: 'calendar',
-      screen: 'AnioFiscal',
-      permission: true
-    },
-    {
-      name: 'Reportes',
-      icon: 'list',
-      isExpandable: true,
-      permission: true,
-      children: [
-        { name: 'Reportes PDF', icon: 'document', screen: 'ReportesPDF', permission: true },
-        { name: 'Reportes Estadísticos', icon: 'stats-chart', screen: 'ReportesEstadisticos', permission: true }
-      ]
-    },
-    {
-      name: 'Configuración',
-      icon: 'settings',
-      isExpandable: true,
-      permission: true,
-      children: [
-        { name: 'Proveedores', icon: 'car', screen: 'Proveedores', permission: true },
-        { name: 'Bancos', icon: 'card', screen: 'Bancos', permission: true },
-        { name: 'Tipo de Gasto', icon: 'grid', screen: 'TipoGasto', permission: true }
-      ]
-    },
-    {
-      name: 'Usuarios',
-      icon: 'people',
-      screen: 'Usuarios',
-      permission: true
-    },
-    {
-      name: 'Seguridad',
-      icon: 'shield-checkmark',
-      isExpandable: true,
-      permission: true,
-      children: [
-        { name: 'Roles', icon: 'person-circle', screen: 'Roles', permission: true },
-        { name: 'Bitácora', icon: 'archive', screen: 'Bitacora', permission: true }
-      ]
-    },
-    {
-      name: 'Notificaciones',
-      icon: 'notifications',
-      screen: 'Notificaciones',
-      permission: true
-    },
-    {
-      name: 'Mantenimiento',
-      icon: 'build',
-      screen: 'Mantenimiento',
-      permission: true
-    }
-  ]
 
   const MenuItem = ({ item, level = 0, isChild = false }) => {
     const isActive = props.state.routes[props.state.index].name === item.screen
@@ -150,7 +39,7 @@ const MenuLateral = (props) => {
             if (item.isExpandable) {
               toggleExpanded(item.name)
             } else if (item.screen) {
-              navigation.navigate(item.screen)
+              props.navigation.navigate(item.screen)
               props.navigation.closeDrawer()
             }
           }}
@@ -204,7 +93,7 @@ const MenuLateral = (props) => {
       </View>
 
       <ScrollView style={estilosMenuLateral.menuList}>
-        {listaMenu.map((item, index) => (
+        {LISTA_MENU.map((item, index) => (
           <MenuItem key={index} item={item} />
         ))}
       </ScrollView>
