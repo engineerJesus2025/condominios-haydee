@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 
 const usePaginacion = (datos, onBuscarPersonalizado) => {
   const [paginaActual, setPaginaActual] = useState(0)
-  const [elementosPorPagina, setElementosPorPagina] = useState(10)
+  const [elementosPorPagina, setElementosPorPagina] = useState(9)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Filtrar datos

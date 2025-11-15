@@ -1,8 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
-import tareasReducer from './slices/tareasSlice'
+import publicaccionesReducer from '../store/slices/publicacionesSlice'
+import temaReducer from '../store/slices/temaSlice'
+import usuarioReducer from '../store/slices/usuarioSlice'
 
 export const store = configureStore({
   reducer: {
-    tareas: tareasReducer
+    publicaciones: publicaccionesReducer,
+    tema: temaReducer,
+    usuario: usuarioReducer,
   }
 })
+

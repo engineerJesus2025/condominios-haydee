@@ -1,10 +1,15 @@
-import { StyleSheet } from 'react-native'
 import { TextInput } from 'react-native-gesture-handler'
-
 import { Controller } from 'react-hook-form'
 import { useState } from 'react'
+import { useSelector } from 'react-redux'
+
+import { useTema } from './../hooks/useTema'
+import { getEstilosInputsFormulario } from './../styles/components/estilosInputsFormulario'
 
 export function InputFormulario ({ control, name, rules, ...props }) {
+  const { colores } = useTema()
+  const estilosInputsFormulario = getEstilosInputsFormulario(colores)
+
   const [focus, setFocus] = useState(false)
   return (
     <Controller
@@ -12,7 +17,6 @@ export function InputFormulario ({ control, name, rules, ...props }) {
       name={name}
       rules={rules}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-
         <TextInput
           {...props}
           onBlur={() => {
@@ -33,32 +37,3 @@ export function InputFormulario ({ control, name, rules, ...props }) {
     />
   )
 }
-
-const estilosInputsFormulario = StyleSheet.create({
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#222',
-    padding: 12,
-    paddingLeft: 0,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    minHeight: 40,
-  },
-
-  textInputFocused: {
-    backgroundColor: 'transparent',
-  },
-  textInputError: {
-    backgroundColor: 'transparent',
-    color: 'red'
-  },
-  errorText: {
-    color: '#f72585',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-    fontWeight: '500'
-  }
-
-})

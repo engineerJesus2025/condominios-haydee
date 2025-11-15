@@ -1,12 +1,14 @@
+import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
 import { createDrawerNavigator } from '@react-navigation/drawer'
-
 // Screens
+import LoginScreen from '../screens/LoginScreen'
+import InicioScreen from '../screens/InicioScreen'
 import PagosScreen from '../screens/PagosScreen'
 import GastosScreen from '../screens/GastosScreen'
 import MensualidadesScreen from '../screens/MensualidadesScreen'
-import LoginScreen from '../screens/LoginScreen'
+import CarteleraVirtualScreen from '../screens/CarteleraVirtualScreen'
 
 import MenuLateral from '../components/MenuLateral'
 
@@ -26,6 +28,15 @@ function MyDrawer () {
       }}
     >
       <Drawer.Screen
+        name='CarteleraVirtual'
+        component={CarteleraVirtualScreen}
+      />
+
+      <Drawer.Screen
+        name='Inicio'
+        component={InicioScreen}
+      />
+      <Drawer.Screen
         name='Mensualidad'
         component={MensualidadesScreen}
       />
@@ -38,6 +49,7 @@ function MyDrawer () {
         name='Gastos'
         component={GastosScreen}
       />
+      
     </Drawer.Navigator>
   )
 }
@@ -45,7 +57,7 @@ function MyDrawer () {
 // Stack Navigator
 function MyStack () {
   return (
-    <Stack.Navigator initialRouteName='Login'>
+    <Stack.Navigator initialRouteName='MainApp'>
       <Stack.Screen
         name='Login'
         component={LoginScreen}
@@ -63,6 +75,10 @@ function MyStack () {
 export default function Navigation () {
   return (
     <NavigationContainer>
+      <StatusBar 
+        barStyle="default" 
+        backgroundColor="#000"
+      />
       <MyStack />
     </NavigationContainer>
   )

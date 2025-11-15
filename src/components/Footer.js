@@ -1,25 +1,21 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { getEstilosFooter } from './../styles/components/estilosFooter'
+import { useTema } from './../hooks/useTema'
 
 export default function Footer () {
+  const insets = useSafeAreaInsets();
+
+  const { colores } = useTema()
+  const estilosFooter = getEstilosFooter(colores)
+  // console.log(insets)
   return (
-    <View style={styles.footer}>
-      <Text style={styles.footerText}>Junta de Condominios Edificio Haydee C.A.</Text>
-    </View>
+  	<>
+	    <View style={[estilosFooter.footer,{bottom:insets.bottom}]}>
+	      <Text style={estilosFooter.footerText}>Junta de Condominios Edificio Haydee C.A.</Text>
+	    </View>
+	    <View style={{height:insets.bottom, backgroundColor:'#000'}} />
+    </>
   )
 }
-const styles = StyleSheet.create({
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#3939a9',
-    paddingVertical: 12,
-    alignItems: 'center'
-  },
-  footerText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600'
-  }
-})
