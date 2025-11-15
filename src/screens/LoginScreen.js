@@ -15,7 +15,6 @@ export default function LoginScreen () {
         imageStyle={estilosLogin.bgImage}
       >
         <Formulario />
-        <Footer />
       </ImageBackground>
   )
 }

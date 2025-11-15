@@ -10,6 +10,7 @@ import ModalDetalles from '../components/ModalDetalles'
 import CabeceraTabla from '../components/CabeceraTabla'
 import FilaTabla from '../components/FilaTabla'
 import BuscadorTabla from '../components/BuscadorTabla'
+import ResultadosBusqueda from '../components/ResultadosBusqueda'
 
 const TablaDinamica = ({
   datos = [],
@@ -51,29 +52,21 @@ const TablaDinamica = ({
 
   return (
     <View style={[estilosTablaDinamica.contenedor, estilos.contenedor]}>
-      {/* Búsqueda */}
+      {/* Busqueda */}
       <BuscadorTabla
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        estilos={estilosTablaDinamica}
-        colores={colores}
         mostrarBusqueda={mostrarBusqueda}
       />
 
-      {/* Información de resultados */}
-      <View style={estilosTablaDinamica.infoContainer}>
-        <Text style={estilosTablaDinamica.infoText}>
-          {paginacion.totalElementos > 0
-            ? `Mostrando ${paginacion.desde + 1}-${paginacion.hasta} de ${paginacion.totalElementos} resultados`
-            : ''}
-        </Text>
-      </View>
+      {/* Informacion de resultados */}
+      <ResultadosBusqueda paginacion={paginacion} />
+      
 
       {/* Tabla */}
       <DataTable style={[estilosTablaDinamica.tabla, estilos.tabla]}>
         <CabeceraTabla
             columnasMostradas={columnasMostradas}
-            estilosTablaDinamica={estilosTablaDinamica}
             mostrarVerMas={mostrarVerMas}
             tieneAcciones={acciones.length > 0}
         />
@@ -92,7 +85,6 @@ const TablaDinamica = ({
                 fila={fila}
                 indexFila={indexFila}
                 columnasMostradas={columnasMostradas}
-                estilosTablaDinamica={estilosTablaDinamica}
                 mostrarVerMas={mostrarVerMas}
                 onVerMas={abrirDetalle}
                 acciones={acciones}

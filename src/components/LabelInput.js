@@ -28,7 +28,3 @@ const getEstilosLabelInput = (colores) => StyleSheet.create({
     color: colores.text,
   },
 })
- /*
-<LabelInput titulo="" icono={{nombre:'',color:'#3498db'}} />
-
- */

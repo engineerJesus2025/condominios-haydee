@@ -28,11 +28,6 @@ export default function useFormulario () {
       usuario_buscar => usuario_buscar.correo === data.correo && usuario_buscar.contra === data.contra
     )
     if (usuario) {
-      console.log("usuario",{
-        usuario: usuario.usuario,
-        rol: usuario.rol,
-        correo: usuario.correo
-      })
       // Login exitoso
       dispatch(login({
         usuario: usuario.usuario,
@@ -54,9 +49,11 @@ export default function useFormulario () {
       // Login inválido
       setError('correo', { 
         type: 'manual',
+        message:'Revise el correo introducido'
       })
       setError('contra', { 
         type: 'manual' ,
+        message:'Revise la contraseña introducida'
       })
     }
   }

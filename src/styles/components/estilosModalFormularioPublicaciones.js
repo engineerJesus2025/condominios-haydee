@@ -5,109 +5,19 @@ export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.cr
     flex: 1,
     backgroundColor: colores.background,
   },
-  header: {
-    backgroundColor: colores.backgroundBotones,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#E1E1F7',
-    textAlign: 'center',
-    flex: 1,
-    marginHorizontal: 10,
-  },
-  closeButton: {
-    padding: 4,
-  },
   formContent: {
     flex: 1,
     padding: 20,
   },
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 16,
-    marginLeft: 8,
-    fontWeight: '600',
-    color: colores.text,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  inputIcon: {
-    marginRight: 12,
-    position: 'absolute',
-    left: 15,
-    zIndex: 1,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    marginBottom: 8,
-    padding: 15,
-    paddingLeft: 50,
-    borderRadius: 12,
-    fontSize: 16,
-    backgroundColor: colores.inputBackground,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    flex: 1,
-    color: colores.text
-  },
+
   textArea: {
     textAlignVertical: 'top',
     height: 120,
   },
-  inputError: {
-    borderColor: '#e74c3c',
-    borderWidth: 1.5,
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  errorText: {
-    color: '#e74c3c',
-    fontSize: 13,
-    fontWeight: '500',
-    marginLeft: 6,
-  },
-  charCounterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginBottom: 3,
-  },
-  charCounter: {
-    fontSize: 12,
-    color: '#95a5a6',
-    marginLeft: 4,
-  },
   imageButtonsContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
-    gap: 10,
+    marginBottom: 1,
+    gap: 20
   },
   imageButton: {
     backgroundColor: colores.backgroundBotones,
@@ -124,53 +34,10 @@ export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.cr
     backgroundColor: '#e74c3c',
     flex: 0.5,
   },
-  imageButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   removeButtonText: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
-  },
-  imagePreviewContainer: {
-    alignItems: 'center',
-    marginVertical: 15,
-  },
-  previewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  previewText: {
-    fontSize: 14,
-    color: colores.textPlaceholder,
-    fontWeight: '500',
-    marginLeft: 6,
-  },
-  imageWrapper: {
-    position: 'relative',
-  },
-  imagePreview: {
-    width: 200,
-    height: 200,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  imageOverlay: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 16,
-    padding: 4,
   },
   spacer: {
     flex: 1,
@@ -179,13 +46,13 @@ export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.cr
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
+    paddingBottom:8,
     backgroundColor: colores.backgroundBotones,
     borderTopWidth: 1,
     borderTopColor: '#e9ecef',
     gap: 12,
   },
   button: {
-    flex: 1,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -196,7 +63,7 @@ export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.cr
     shadowRadius: 3,
     elevation: 3,
     flexDirection: 'row',
-    gap: 8,
+    marginBottom:0
   },
   cancelButton: {
     backgroundColor: '#95a5a6',
@@ -206,31 +73,5 @@ export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.cr
   },
   disabledButton: {
     opacity: 0.6,
-  },
-  cancelButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  noImageContainer: {
-  alignItems: 'center',
-  padding: 20,
-  backgroundColor: '#f8f9fa',
-  borderRadius: 12,
-  marginVertical: 10,
-  borderWidth: 2,
-  borderColor: '#e9ecef',
-  borderStyle: 'dashed',
-},
-noImageText: {
-  marginTop: 8,
-  fontSize: 14,
-  color: '#6c757d',
-  textAlign: 'center',
-},
+  }
 });

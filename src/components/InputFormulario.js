@@ -4,9 +4,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Controller } from 'react-hook-form'
 import { useTema } from './../hooks/useTema'
 
-export default function InputModal ({ control, name, rules, icono, estilos, error, placeholder=''}) {
+export default function InputFormulario ({ control, name, rules, icono, estilos, error, placeholder='', ...props}) {
   const { colores } = useTema()
-  const estilosInputModal = getEstilosInputModal(colores)
+  const estilosInputFormulario = getEstilosInputFormulario(colores)
 
   return (
     <Controller
@@ -14,9 +14,10 @@ export default function InputModal ({ control, name, rules, icono, estilos, erro
       rules={rules}
       render={({ field: { onChange, onBlur, value } }) => (
         <>
-          <View style={estilosInputModal.inputContainer}>
-            <Icon name={icono.nombre} size={20} color={error ? 'red' : icono.color} style={estilosInputModal.inputIcon} />
+          <View style={estilosInputFormulario.inputContainer}>
+            <Icon name={icono.nombre} size={20} color={error ? 'red' : icono.color} style={estilosInputFormulario.inputIcon} />
             <TextInput
+              {...props}
               placeholder={placeholder}
               placeholderTextColor="#999"
               onBlur={onBlur}
@@ -25,15 +26,15 @@ export default function InputModal ({ control, name, rules, icono, estilos, erro
               multiline
               maxLength={rules.maxLength.value}
               style={[
-                estilosInputModal.input,
-                error && estilosInputModal.inputError,
+                estilosInputFormulario.input,
+                error && estilosInputFormulario.inputError,
                 {...estilos}
               ]}
             />
           </View>
-            <View style={estilosInputModal.charCounterContainer}>
+            <View style={[estilosInputFormulario.charCounterContainer,!error && {marginBottom:15}]}>
               <Icon name="ellipsis-horizontal" size={14} color="#95a5a6" />
-              <Text style={estilosInputModal.charCounter}>
+              <Text style={estilosInputFormulario.charCounter}>
                 {value?.length || 0}/{rules.maxLength.value}
               </Text>
             </View>
@@ -44,7 +45,7 @@ export default function InputModal ({ control, name, rules, icono, estilos, erro
   )
 }
 
-const getEstilosInputModal = (colores) => StyleSheet.create({
+const getEstilosInputFormulario = (colores) => StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -88,10 +89,3 @@ const getEstilosInputModal = (colores) => StyleSheet.create({
     marginLeft: 4,
   },
 })
-/*
-
-<InputModal control={control} name="" rules={validaciones.} icono={{nombre:'',color:''} estilos={estilosModalFormularioPublicaciones}} />
-reader-outline
-#95a5a6
-"Describe tu publicación"
-*/

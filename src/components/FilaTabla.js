@@ -1,30 +1,34 @@
 import React from 'react'
 import { DataTable, Text } from 'react-native-paper'
-import { TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity, View, StyleSheet } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons'
+
+import { useTema } from '../hooks/useTema'
 
 const FilaTabla = ({
   fila,
   indexFila,
   columnasMostradas,
-  estilosTablaDinamica,
   mostrarVerMas,
   onVerMas,
   acciones = [] // Lo quite 3 veces y al final lo deje :)
 }) => {
+  const { colores } = useTema()
+  const estilosFilaTabla = getEstilosFilaTabla(colores)
+
   return (
-    <DataTable.Row key={fila.id || indexFila} style={estilosTablaDinamica.row}>
+    <DataTable.Row key={fila.id || indexFila} style={estilosFilaTabla.row}>
       {columnasMostradas.map((columna, indexColumna) => {
         const { campo, render } = columna.props
 
         return (
           <DataTable.Cell
             key={indexColumna}
-            style={estilosTablaDinamica.cell}
+            style={estilosFilaTabla.cell}
           >
             {render ? render(fila) : (
               <Text 
-                style={estilosTablaDinamica.cellText}
+                style={estilosFilaTabla.cellText}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -36,13 +40,13 @@ const FilaTabla = ({
       })}
 
       {/* Columna de acciones */}
-      <DataTable.Cell style={[estilosTablaDinamica.cell, estilosTablaDinamica.accionesCell]}>
-        <View style={estilosTablaDinamica.contenedorAcciones}>
+      <DataTable.Cell style={[estilosFilaTabla.cell, estilosFilaTabla.accionesCell]}>
+        <View style={estilosFilaTabla.contenedorAcciones}>
           {/* Botón "Ver más" (Ahora Siempre presente :) */}
           {mostrarVerMas && (
             <TouchableOpacity
               onPress={() => onVerMas(fila)}
-              style={[estilosTablaDinamica.botonAccion, estilosTablaDinamica.botonVerMas]}
+              style={[estilosFilaTabla.botonAccion, estilosFilaTabla.botonVerMas]}
             >
               <Icon name='eye' color='#fff' size={16} />
             </TouchableOpacity>
@@ -54,7 +58,7 @@ const FilaTabla = ({
               key={index}
               onPress={() => accion.onPress(fila)}
               style={[
-                estilosTablaDinamica.botonAccion,
+                estilosFilaTabla.botonAccion,
                 { backgroundColor: accion.color || '#666' }
               ]}
             >
@@ -68,3 +72,39 @@ const FilaTabla = ({
 }
 
 export default FilaTabla
+
+const getEstilosFilaTabla = (colores) => StyleSheet.create({
+  row: {
+    borderBottomWidth: 1,
+    borderColor: colores.border,
+    minHeight: 44,
+    paddingVertical: 2,
+  },
+  cell: {
+    justifyContent: 'flex-start',
+    flex: 1,
+  },
+  cellText: {
+    fontSize: 12, 
+    color: colores.text,
+  },
+  accionesCell: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  botonAccion: {
+    padding: 8,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  botonVerMas: {
+    backgroundColor: '#2196F3',
+  },
+  contenedorAcciones: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 8,
+  },
+})

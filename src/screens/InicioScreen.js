@@ -20,12 +20,8 @@ export default function InicioScreen () {
     <>
       <AppHeader />
       <View style={estilosInicio.mainContentContainer}>
-        
           <Text style={estilosInicio.title}>Inicio</Text>
-
           <ListaPublicaciones posts={posts} />
-
-        
       </View>
 
       <Footer />

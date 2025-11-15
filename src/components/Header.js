@@ -3,6 +3,7 @@ import Icon from 'react-native-vector-icons/Ionicons'
 
 import MenuUsuario from '../components/MenuUsuario'
 import BotonCambiarTema from '../components/BotonCambiarTema'
+import BotonMenuUsuario from '../components/BotonMenuUsuario'
 
 import { useNavigation } from '@react-navigation/native'
 import { useSelector } from 'react-redux'
@@ -28,7 +29,8 @@ export default function AppHeader () {
 
   return (
     <>
-      <View style={[estilosHeader.appHeader,{marginTop:insets.top}]}>
+      <View style={{height:insets.top, backgroundColor:'#000'}} />
+      <View style={[estilosHeader.appHeader]}>
         <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.toggleDrawer()}>
           <Icon name='menu' size={26} color='#fff' />
         </TouchableOpacity>
@@ -37,21 +39,7 @@ export default function AppHeader () {
         <View style={estilosHeader.headerRight}>
           <BotonCambiarTema />
 
-          <TouchableOpacity
-            style={estilosHeader.userMenuButton}
-            onPress={toggleUserMenu}
-            activeOpacity={0.8}
-          >
-            <View style={estilosHeader.userInfo}>
-              <Text style={estilosHeader.userName}>
-                Hola, {user?.usuario || 'Invitado'}
-              </Text>
-              <Text style={estilosHeader.userRole}>
-                ({user?.rol || 'Rol no disponible'})
-              </Text>
-            </View>
-            <Icon name='caret-down' size={12} color='#fff' style={{ marginLeft: 4 }} />
-          </TouchableOpacity>
+          <BotonMenuUsuario evento={toggleUserMenu} user={user} icono={{name:'caret-down',color:'#fff'}} />
         </View>
       </View>
 

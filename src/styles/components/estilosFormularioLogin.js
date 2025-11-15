@@ -6,7 +6,7 @@ export const getEstilosFormularioLogin = (colores) => StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 28,
+    paddingBottom: 10,
     width: '90%',
     maxWidth: 400,
     shadowColor: '#000',
@@ -65,10 +65,11 @@ export const getEstilosFormularioLogin = (colores) => StyleSheet.create({
   button: {
     backgroundColor: '#0A84FF',
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4
+    marginTop: 20,
+    width:'100%'
   },
   buttonText: {
     color: '#fff',

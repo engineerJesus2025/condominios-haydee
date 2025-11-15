@@ -6,7 +6,7 @@ import AppHeader from '../components/Header'
 import TablaDinamica from '../components/TablaDinamica'
 import ColumnaTabla from '../components/ColumnaTabla'
 import Footer from '../components/Footer'
-import BotonNuevoRegistro from '../components/BotonNuevoRegistro'
+import CustomBoton from '../components/CustomBoton'
 
 import { getEstilosMensualidades } from '../styles/screens/estilosMensualidades'
 import { useTema } from './../hooks/useTema'
@@ -22,7 +22,7 @@ export default function MensualidadesScreen () {
 
       <View style={estilosMensualidad.mainContentContainer}>
           <Text style={estilosMensualidad.title}>MENSUALIDAD</Text>
-          <BotonNuevoRegistro titulo="Nueva Mensualidad" />
+          <CustomBoton titulo="Nueva Mensualidad" />
 
           <TablaDinamica
             datos={DATA}

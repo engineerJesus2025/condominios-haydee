@@ -27,31 +27,34 @@ export default function MenuLateral(props){
   const paginaActual = LISTA_MENU.find((item)=>item.screen == activeRouteName)
 
   return (
-    <View style={[estilosMenuLateral.container,{marginTop:insets.top}]}>
-      <View style={estilosMenuLateral.header}>
-        <View style={estilosMenuLateral.logoContainer}>
-          <Icon name={paginaActual.icon} size={28} color='#fff' />
-          <Text style={estilosMenuLateral.logoText}>{paginaActual.name}</Text>
+    <>
+      <View style={{height:insets.top, backgroundColor:'#000'}} />
+      <View style={estilosMenuLateral.container}>
+        <View style={estilosMenuLateral.header}>
+          <View style={estilosMenuLateral.logoContainer}>
+            <Icon name={paginaActual.icon} size={28} color='#fff' />
+            <Text style={estilosMenuLateral.logoText}>{paginaActual.name}</Text>
+          </View>
+        </View>
+
+        <ScrollView style={estilosMenuLateral.menuList}>
+          {LISTA_MENU.map((item, index) => (
+            <MenuLateralItem
+              key={index}
+              item={item}
+              isActive={activeRouteName === item.screen}
+              isExpanded={isExpanded(item.name)}
+              onItemPress={handleItemPress}
+              onToggleExpand={toggleExpanded}
+              styles={estilosMenuLateral}
+            />
+          ))}
+        </ScrollView>
+
+        <View style={estilosMenuLateral.footer}>
+          <Text style={estilosMenuLateral.footerText}>Hola mano</Text>
         </View>
       </View>
-
-      <ScrollView style={estilosMenuLateral.menuList}>
-        {LISTA_MENU.map((item, index) => (
-          <MenuLateralItem
-            key={index}
-            item={item}
-            isActive={activeRouteName === item.screen}
-            isExpanded={isExpanded(item.name)}
-            onItemPress={handleItemPress}
-            onToggleExpand={toggleExpanded}
-            styles={estilosMenuLateral}
-          />
-        ))}
-      </ScrollView>
-
-      <View style={estilosMenuLateral.footer}>
-        <Text style={estilosMenuLateral.footerText}>Hola mano</Text>
-      </View>
-    </View>
+    </>
   )
 }

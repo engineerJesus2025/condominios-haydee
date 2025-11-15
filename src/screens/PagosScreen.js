@@ -6,7 +6,7 @@ import AppHeader from '../components/Header'
 import TablaDinamica from '../components/TablaDinamica'
 import ColumnaTabla from '../components/ColumnaTabla'
 import Footer from '../components/Footer'
-import BotonNuevoRegistro from '../components/BotonNuevoRegistro'
+import CustomBoton from '../components/CustomBoton'
 
 import { getEstilosPagos } from '../styles/screens/estilosPagos'
 import { useTema } from './../hooks/useTema'
@@ -23,7 +23,7 @@ export default function PagosScreengetEstilosPagos () {
       <View style={estilosPagos.mainContentContainer}>
         <Text style={estilosPagos.title}>Gestionar Pagos</Text>
 
-        <BotonNuevoRegistro titulo="Nuevo Pago" />
+        <CustomBoton titulo="Nuevo Pago" />
 
         <TablaDinamica
             datos={DATA_PAGOS}
@@ -31,7 +31,7 @@ export default function PagosScreengetEstilosPagos () {
             configuracionModal={{ //Este es para el modal de los detalles pago, gasto,etc
               titulo: "Detalles del Pago",
               campos: [
-                { key: 'estado', label: 'Título' },
+                { key: 'estado', label: 'Estado' },
                 { key: 'fecha', label: 'Fecha del pago' },
                 { key: 'monto', label: 'Monto' },
                 { key: 'mensualidad', label: 'Mensualidad' },
@@ -42,25 +42,6 @@ export default function PagosScreengetEstilosPagos () {
         >
             <ColumnaTabla titulo='Monto' campo='monto' ancho={1} />
             <ColumnaTabla titulo='Mensualidad' campo='mensualidad' ancho={2} />
-            <ColumnaTabla
-              titulo='Estado'
-              campo='estado'
-              ancho={1}
-              render={(valor) => {
-                const isProcesado = valor.estado === 'Procesado'
-                const isPendiente = valor.estado === 'Pendiente'
-                const backgroundColor = isProcesado ? '#2ecc71' : isPendiente ? '#f1c40f' : '#6c757d'
-                const textColor = isPendiente ? '#222' : '#fff'
-
-                return (
-                  <View style={[estilosPagos.statusBadge, { backgroundColor, paddingHorizontal: 7 }]}>
-                    <Text style={[estilosPagos.statusText, { color: textColor, fontSize: 13 }]}>
-                      {valor.estado}
-                    </Text>
-                  </View>
-                )
-              }}
-            />
         </TablaDinamica>
       </View>
 

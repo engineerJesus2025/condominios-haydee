@@ -40,29 +40,4 @@ export const getEstilosModalDetalles = (colores) => StyleSheet.create({
   detailsContent: {
     paddingBottom: 20, // Espacio al final del scroll
   },
-  detailsLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#7f8c8d',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  detailsValue: {
-    fontSize: 16,
-    color: colores.text,
-    lineHeight: 22,
-  },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
-  primaryBtn: {
-    alignSelf: 'center',
-    backgroundColor: colores.backgroundBotones,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.20,
-    shadowRadius: 1.41,
-    elevation: 2
-  },
 });

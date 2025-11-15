@@ -1,7 +1,10 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
+
 import { useTema } from './../hooks/useTema';
 import { getEstilosModalDetalles } from './../styles/components/estilosModalDetalles'
+import CustomBoton from '../components/CustomBoton'
+import DetalleRegistro from '../components/DetalleRegistro'
 
 const ModalDetalles = ({ 
   visible, 
@@ -36,23 +39,12 @@ const ModalDetalles = ({
             
             <View style={estilosModalDetalles.detailsContent}>
               {campos.map((campo, index) => (
-                <View key={index}>
-                  <Text style={estilosModalDetalles.detailsLabel}>{campo.label}:</Text>
-                  <Text style={estilosModalDetalles.detailsValue}>
-                    {datos[campo.key] || 'No disponible'}
-                  </Text>
-                </View>
+                <DetalleRegistro detalle={{label:campo.label,dato:datos[campo.key]}} index={index} />
               ))}
             </View>
           </ScrollView>
 
-          <TouchableOpacity 
-            style={estilosModalDetalles.primaryBtn} 
-            activeOpacity={0.8} 
-            onPress={onClose}
-          >
-            <Text style={estilosModalDetalles.primaryBtnText}>Cerrar</Text>
-          </TouchableOpacity>
+          <CustomBoton titulo="Cerrar" evento={onClose} estilos={{margin:'auto'}} />
         </View>
       </View>
     </Modal>

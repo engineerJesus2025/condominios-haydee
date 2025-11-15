@@ -27,10 +27,7 @@ function MyDrawer () {
         drawerType: 'front'
       }}
     >
-      <Drawer.Screen
-        name='CarteleraVirtual'
-        component={CarteleraVirtualScreen}
-      />
+      
 
       <Drawer.Screen
         name='Inicio'
@@ -49,7 +46,10 @@ function MyDrawer () {
         name='Gastos'
         component={GastosScreen}
       />
-      
+      <Drawer.Screen
+        name='CarteleraVirtual'
+        component={CarteleraVirtualScreen}
+      />
     </Drawer.Navigator>
   )
 }
@@ -76,7 +76,7 @@ export default function Navigation () {
   return (
     <NavigationContainer>
       <StatusBar 
-        barStyle="default" 
+        barStyle="light-content" 
         backgroundColor="#000"
       />
       <MyStack />

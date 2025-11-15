@@ -1,12 +1,18 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-export default function ErrorFormulario ({ error, estilos }) {
+
+import { useTema } from './../hooks/useTema'
+
+export default function ErrorFormulario ({ error }) {
+  const { colores } = useTema()
+  const estilosErrorFormulario = getEstilosErrorFormulario(colores)
+
   return (
     <>
     {error && (
-      <View style={{...estilos.errorContainer}}>
+      <View style={estilosErrorFormulario.errorContainer}>
         <Icon name="warning-outline" size={14} color="#e74c3c" />
-        <Text style={{...estilos.errorText}}>
+        <Text style={estilosErrorFormulario.errorText}>
           {error.message}
         </Text>
       </View>
@@ -14,3 +20,17 @@ export default function ErrorFormulario ({ error, estilos }) {
     </>
   )
 }
+
+const getEstilosErrorFormulario = (colores) => StyleSheet.create({
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  errorText: {
+    color: '#e74c3c',
+    fontSize: 13,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+})

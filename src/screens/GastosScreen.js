@@ -5,7 +5,7 @@ import AppHeader from '../components/Header'
 import TablaDinamica from '../components/TablaDinamica'
 import ColumnaTabla from '../components/ColumnaTabla'
 import Footer from '../components/Footer'
-import BotonNuevoRegistro from '../components/BotonNuevoRegistro'
+import CustomBoton from '../components/CustomBoton'
 
 import { getEstilosGastos } from '../styles/screens/estilosGastos'
 import { useTema } from './../hooks/useTema'
@@ -23,7 +23,7 @@ export default function GastosScreen () {
       <View style={estilosGastos.mainContentContainer}>
         <Text style={estilosGastos.title}>Gestionar Gastos</Text>
 
-        <BotonNuevoRegistro titulo="Nuevo Gasto" />
+        <CustomBoton titulo="Nuevo Gasto" />
 
         <TablaDinamica
             datos={DATA_GASTOS}

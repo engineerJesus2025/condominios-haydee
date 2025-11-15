@@ -33,6 +33,4 @@ const ListaPublicaciones = ({posts}) => {
   );
 };
 
-// const Publicacion = ({ post }) => {
-
 export default ListaPublicaciones;
