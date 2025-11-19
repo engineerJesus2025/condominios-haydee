@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Condominios Hayde",
-    "slug": "Condominios-hayde",
+    "slug": "evaluacion-electiva-3",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/condominiosHaydeeLogoSinFondo.png",
@@ -38,6 +38,7 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "owner": "yhesus"
   }
 }
