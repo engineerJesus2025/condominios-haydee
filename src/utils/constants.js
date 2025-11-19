@@ -1,7 +1,7 @@
 export const USUARIOS = [
-  { id: '1', usuario: '', correo: '', contra: '', },
+  { id: '1', usuario: '', correo: '', contra: '' },
   { id: '2', fecha: '', total: '', restante: '' },
-  { id: '3', fecha: '', total: '', restante: '' },
+  { id: '3', fecha: '', total: '', restante: '' }
 ]
 
 export const LISTA_MENU = [
@@ -38,7 +38,7 @@ export const LISTA_MENU = [
 ]
 
 export const DATA = [
-  { id: '1', fecha: 'Enero del 2025', total: '0.19 Bs. / 0.00 $', restante: '0.14 Bs. / 0.00 $'},
+  { id: '1', fecha: 'Enero del 2025', total: '0.19 Bs. / 0.00 $', restante: '0.14 Bs. / 0.00 $' },
   { id: '2', fecha: 'Febrero del 2025', total: '1.98 Bs. / 0.01 $', restante: '1.03 Bs. / 0.01 $' },
   { id: '3', fecha: 'Marzo del 2025', total: '163.23 Bs. / 0.84 $', restante: '109.09 Bs. / 0.56 $' },
   { id: '4', fecha: 'Abril del 2025', total: '113.10 Bs. / 0.58 $', restante: '92.10 Bs. / 0.47 $' },
@@ -75,4 +75,3 @@ export const DATA_GASTOS = [
   { id: '9', fecha: '02/12/2025', monto: '55.75 Bs.', tipo: 'Variable', tipo_gasto: 'Servicio de Agua', proveedor: 'Proveedor 9', descripcion: 'Cualquier cosa' },
   { id: '10', fecha: '05/12/2025', monto: '48.00 Bs.', tipo: 'Variable', tipo_gasto: 'Servicio de Agua', proveedor: 'Proveedor 10', descripcion: 'Cualquier cosa' }
 ]
-

@@ -1,21 +1,20 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useTema } from './../hooks/useTema'
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/Ionicons'
 
-export default function CustomBoton ({titulo = 'Nuevo', evento = ()=>{}, icono=false, disabled=false, estilos={}, fuente=false}) {
+export default function CustomBoton ({ titulo = 'Nuevo', evento = () => {}, icono = false, disabled = false, estilos = {}, fuente = false }) {
   const { colores } = useTema()
   const estilosCustomBoton = getEstilosCustomBoton(colores)
 
   return (
-  	<View style={estilosCustomBoton.topRow}>
-      <TouchableOpacity 
-        style={[estilosCustomBoton.primaryBtn, disabled && { opacity: 0.7 }, {...estilos}]}
-        
-        activeOpacity={0.8} 
+    <View style={estilosCustomBoton.topRow}>
+      <TouchableOpacity
+        style={[estilosCustomBoton.primaryBtn, disabled && { opacity: 0.7 }, { ...estilos }]}
+        activeOpacity={0.8}
         onPress={evento}
         disabled={disabled}
       >
-        <Text style={[estilosCustomBoton.primaryBtnText, fuente && {fontSize:fuente}]}>{titulo} {icono && (<Icon name={icono.nombre} size={fuente?fuente:16} color={icono.color} style={estilosCustomBoton.inputIcon} />)}</Text>
+        <Text style={[estilosCustomBoton.primaryBtnText, fuente && { fontSize: fuente }]}>{titulo} {icono && (<Icon name={icono.nombre} size={fuente || 16} color={icono.color} style={estilosCustomBoton.inputIcon} />)}</Text>
 
       </TouchableOpacity>
     </View>
@@ -42,6 +41,6 @@ const getEstilosCustomBoton = (colores) => StyleSheet.create({
     marginRight: 12,
     position: 'absolute',
     left: 15,
-    zIndex: 1,
-  },
+    zIndex: 1
+  }
 })

@@ -1,8 +1,7 @@
 import { View, Text, ScrollView } from 'react-native'
-import React from 'react'
 import Icon from 'react-native-vector-icons/Ionicons'
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { getEstilosMenuLatelal } from '../styles/components/estilosMenuLateral'
 import { useTema } from '../hooks/useTema'
@@ -10,8 +9,8 @@ import { useMenuLateral } from '../hooks/useMenuLateral'
 import MenuLateralItem from '../components/MenuLateralItem'
 import { LISTA_MENU } from '../utils/constants'
 
-export default function MenuLateral(props){
-  const insets = useSafeAreaInsets();
+export default function MenuLateral (props) {
+  const insets = useSafeAreaInsets()
   const { colores } = useTema()
   const estilosMenuLateral = getEstilosMenuLatelal(colores)
   const { isExpanded, toggleExpanded } = useMenuLateral()
@@ -22,13 +21,13 @@ export default function MenuLateral(props){
       props.navigation.closeDrawer()
     }
   }
-  
+
   const activeRouteName = props.state.routes[props.state.index].name
-  const paginaActual = LISTA_MENU.find((item)=>item.screen == activeRouteName)
+  const paginaActual = LISTA_MENU.find((item) => item.screen === activeRouteName)
 
   return (
     <>
-      <View style={{height:insets.top, backgroundColor:'#000'}} />
+      <View style={{ height: insets.top, backgroundColor: '#000' }} />
       <View style={estilosMenuLateral.container}>
         <View style={estilosMenuLateral.header}>
           <View style={estilosMenuLateral.logoContainer}>

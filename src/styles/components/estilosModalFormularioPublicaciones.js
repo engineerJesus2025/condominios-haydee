@@ -3,16 +3,16 @@ import { StyleSheet } from 'react-native'
 export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colores.background,
+    backgroundColor: colores.background
   },
   formContent: {
     flex: 1,
-    padding: 20,
+    padding: 20
   },
 
   textArea: {
     textAlignVertical: 'top',
-    height: 120,
+    height: 120
   },
   imageButtonsContainer: {
     flexDirection: 'row',
@@ -28,29 +28,29 @@ export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.cr
     justifyContent: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: 8,
+    gap: 8
   },
   removeButton: {
     backgroundColor: '#e74c3c',
-    flex: 0.5,
+    flex: 0.5
   },
   removeButtonText: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   spacer: {
-    flex: 1,
+    flex: 1
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 20,
-    paddingBottom:8,
+    paddingBottom: 8,
     backgroundColor: colores.backgroundBotones,
     borderTopWidth: 1,
     borderTopColor: '#e9ecef',
-    gap: 12,
+    gap: 12
   },
   button: {
     padding: 16,
@@ -63,15 +63,15 @@ export const getEstilosModalFormularioPublicaciones = (colores) => StyleSheet.cr
     shadowRadius: 3,
     elevation: 3,
     flexDirection: 'row',
-    marginBottom:0
+    marginBottom: 0
   },
   cancelButton: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: '#95a5a6'
   },
   submitButton: {
-    backgroundColor: '#27ae60',
+    backgroundColor: '#27ae60'
   },
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.6
   }
-});
+})

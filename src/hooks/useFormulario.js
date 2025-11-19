@@ -6,9 +6,9 @@ import { Alert } from 'react-native'
 import { login } from '../store/slices/usuarioSlice'
 
 const USUARIOS = [
-  { id: '1', usuario: 'jesus', correo: 'jesus@gmail.com', contra: '12345', rol: 'administrador'},
-  { id: '2', usuario: 'rafa', correo: 'rafa@gmail.com', contra: '12345', rol: 'coordinador'},
-  { id: '3', usuario: 'francisco', correo: 'fran@gmail.com', contra: '12345', rol: 'presidente'},
+  { id: '1', usuario: 'jesus', correo: 'jesus@gmail.com', contra: '12345', rol: 'administrador' },
+  { id: '2', usuario: 'rafa', correo: 'rafa@gmail.com', contra: '12345', rol: 'coordinador' },
+  { id: '3', usuario: 'francisco', correo: 'fran@gmail.com', contra: '12345', rol: 'presidente' }
 ]
 
 export default function useFormulario () {
@@ -25,7 +25,7 @@ export default function useFormulario () {
 
   const onSubmit = (data) => {
     const usuario = USUARIOS.find(
-      usuario_buscar => usuario_buscar.correo === data.correo && usuario_buscar.contra === data.contra
+      usuarioBuscar => usuarioBuscar.correo === data.correo && usuarioBuscar.contra === data.contra
     )
     if (usuario) {
       // Login exitoso
@@ -37,23 +37,23 @@ export default function useFormulario () {
       navigation.navigate('MainApp')
     } else {
       Alert.alert(
-      "Atención",
-      `Usuario o contraseña Incorrecto`,
-      [
-        {
-          text: "Aceptar",
-          style: "confirm"
-        }
-      ]
-    );
+        'Atención',
+        'Usuario o contraseña Incorrecto',
+        [
+          {
+            text: 'Aceptar',
+            style: 'confirm'
+          }
+        ]
+      )
       // Login inválido
-      setError('correo', { 
+      setError('correo', {
         type: 'manual',
-        message:'Revise el correo introducido'
+        message: 'Revise el correo introducido'
       })
-      setError('contra', { 
-        type: 'manual' ,
-        message:'Revise la contraseña introducida'
+      setError('contra', {
+        type: 'manual',
+        message: 'Revise la contraseña introducida'
       })
     }
   }

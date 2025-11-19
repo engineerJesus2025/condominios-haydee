@@ -1,7 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native'
 
 import { useNavigation } from '@react-navigation/native'
-import { useSelector } from 'react-redux'
 import { getEstilosMenuUsuario } from './../styles/components/estilosMenuUsuario'
 import { useTema } from './../hooks/useTema'
 

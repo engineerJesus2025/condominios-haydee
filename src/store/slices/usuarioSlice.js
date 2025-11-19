@@ -8,7 +8,7 @@ const usuarioSlice = createSlice({
   },
   reducers: {
     login: (state, action) => {
-      console.log("login",action)
+      console.log('login', action)
       state.user = action.payload
       state.isLogueado = true
     },

@@ -1,4 +1,3 @@
-import React from 'react'
 import { DataTable, Text } from 'react-native-paper'
 import { TouchableOpacity, View, StyleSheet } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons'
@@ -26,15 +25,17 @@ const FilaTabla = ({
             key={indexColumna}
             style={estilosFilaTabla.cell}
           >
-            {render ? render(fila) : (
-              <Text 
-                style={estilosFilaTabla.cellText}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {fila[campo]}
-              </Text>
-            )}
+            {render
+              ? render(fila)
+              : (
+                <Text
+                  style={estilosFilaTabla.cellText}
+                  numberOfLines={1}
+                  ellipsizeMode='tail'
+                >
+                  {fila[campo]}
+                </Text>
+                )}
           </DataTable.Cell>
         )
       })}
@@ -51,7 +52,7 @@ const FilaTabla = ({
               <Icon name='eye' color='#fff' size={16} />
             </TouchableOpacity>
           )}
-          
+
           {/* Acciones dinámicas */}
           {acciones.map((accion, index) => (
             <TouchableOpacity
@@ -78,33 +79,33 @@ const getEstilosFilaTabla = (colores) => StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: colores.border,
     minHeight: 44,
-    paddingVertical: 2,
+    paddingVertical: 2
   },
   cell: {
     justifyContent: 'flex-start',
-    flex: 1,
+    flex: 1
   },
   cellText: {
-    fontSize: 12, 
-    color: colores.text,
+    fontSize: 12,
+    color: colores.text
   },
   accionesCell: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   botonAccion: {
     padding: 8,
     borderRadius: 4,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   botonVerMas: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#2196F3'
   },
   contenedorAcciones: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    gap: 8,
-  },
+    gap: 8
+  }
 })

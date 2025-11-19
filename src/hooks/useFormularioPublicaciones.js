@@ -1,19 +1,19 @@
-import { useForm } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
-import { useState, useEffect } from 'react';
-import * as ImagePicker from 'expo-image-picker';
-import { Alert } from 'react-native';
-import { agregarPublicacion, editarPublicacion } from '../store/slices/publicacionesSlice';
+import { useForm } from 'react-hook-form'
+import { useDispatch } from 'react-redux'
+import { useState, useEffect } from 'react'
+import * as ImagePicker from 'expo-image-picker'
+import { Alert } from 'react-native'
+import { agregarPublicacion, editarPublicacion } from '../store/slices/publicacionesSlice'
 
 export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => { // ✅ Agregar publicacionEditar como parámetro
-  const dispatch = useDispatch();
-  const [status, requestPermission] = ImagePicker.useMediaLibraryPermissions();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const dispatch = useDispatch()
+  const [status, requestPermission] = ImagePicker.useMediaLibraryPermissions()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const { 
-    control, 
-    handleSubmit, 
-    formState: { errors, isValid }, 
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
     reset,
     setValue,
     watch,
@@ -25,45 +25,42 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
       descripcion: '',
       imagen: null
     }
-  });
+  })
 
-  const imageUri = watch('imagen');
-  const titulo = watch('titulo');
-  const descripcion = watch('descripcion');
+  const imageUri = watch('imagen')
+  const titulo = watch('titulo')
+  const descripcion = watch('descripcion')
 
-  // ✅ Efecto para cargar datos cuando se edita
   useEffect(() => {
     if (publicacionEditar) {
-      console.log('Cargando datos de edición:', publicacionEditar);
-      setValue('titulo', publicacionEditar.titulo || '');
-      setValue('descripcion', publicacionEditar.descripcion || '');
-      setValue('imagen', publicacionEditar.imagen || null);
+      setValue('titulo', publicacionEditar.titulo || '')
+      setValue('descripcion', publicacionEditar.descripcion || '')
+      setValue('imagen', publicacionEditar.imagen || null)
     } else {
-      // Limpiar formulario cuando no hay edición
       reset({
         titulo: '',
         descripcion: '',
         imagen: null
-      });
+      })
     }
-  }, [publicacionEditar, setValue, reset]);
+  }, [publicacionEditar, setValue, reset])
 
   // Verificar permisos al montar el hook
   useEffect(() => {
     (async () => {
       if (!status?.granted) {
-        await requestPermission();
+        await requestPermission()
       }
-    })();
-  }, []);
+    })()
+  }, [])
 
   const handleImagePick = async () => {
     try {
       if (!status?.granted) {
-        const permissionResult = await requestPermission();
+        const permissionResult = await requestPermission()
         if (!permissionResult.granted) {
-          Alert.alert('Permisos necesarios', 'Se necesitan permisos de galería para seleccionar una imagen.');
-          return;
+          Alert.alert('Permisos necesarios', 'Se necesitan permisos de galería para seleccionar una imagen.')
+          return
         }
       }
 
@@ -72,80 +69,78 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
-        base64: false,
-      });
+        base64: false
+      })
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setValue('imagen', result.assets[0].uri, { shouldValidate: true });
+        setValue('imagen', result.assets[0].uri, { shouldValidate: true })
       }
     } catch (error) {
-      console.error('Error al seleccionar imagen:', error);
-      Alert.alert('Error', 'No se pudo seleccionar la imagen');
+      console.error('Error al seleccionar imagen:', error)
+      Alert.alert('Error', 'No se pudo seleccionar la imagen')
     }
-  };
+  }
 
   const removeImage = () => {
-    setValue('imagen', null, { shouldValidate: true });
-  };
+    setValue('imagen', null, { shouldValidate: true })
+  }
 
   const onSubmit = async (data) => {
-    if (isSubmitting) return;
+    if (isSubmitting) return
 
     // Verificar que no sea base64
     if (data.imagen && data.imagen.startsWith('data:')) {
-      Alert.alert('Formato no soportado', 'La imagen está en un formato no optimizado. Por favor selecciona otra.');
-      return;
+      Alert.alert('Formato no soportado', 'La imagen está en un formato no optimizado. Por favor selecciona otra.')
+      return
     }
 
-    setIsSubmitting(true);
-    
+    setIsSubmitting(true)
+
     try {
       if (publicacionEditar) {
-        // ✅ Modo edición
         dispatch(editarPublicacion({
-          id: publicacionEditar.id, // ✅ Mantener el ID original
+          id: publicacionEditar.id,
           titulo: data.titulo,
           descripcion: data.descripcion,
           imagen: data.imagen,
-          date: publicacionEditar.date || new Date().toLocaleDateString(), // ✅ Mantener fecha original o usar nueva
-        }));
+          date: publicacionEditar.date || new Date().toLocaleDateString()
+        }))
       } else {
-        // Modo creación
         dispatch(agregarPublicacion({
           id: Date.now().toString(),
           titulo: data.titulo,
           descripcion: data.descripcion,
           imagen: data.imagen,
-          fecha: new Date().toLocaleDateString(),
-        }));
+          fecha: new Date().toLocaleDateString()
+        }))
       }
-      
-      resetForm();
-      onClose();
+
+      resetForm()
+      onClose()
     } catch (error) {
-      console.error('Error al publicar:', error);
-      Alert.alert('Error', 'No se pudo guardar la publicación');
+      console.error('Error al publicar:', error)
+      Alert.alert('Error', 'No se pudo guardar la publicación')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const resetForm = () => {
     reset({
       titulo: '',
       descripcion: '',
       imagen: null
-    });
-    setIsSubmitting(false);
-  };
+    })
+    setIsSubmitting(false)
+  }
 
   const handleCancel = () => {
-    resetForm();
-    onClose();
-  };
+    resetForm()
+    onClose()
+  }
 
   // Validación adicional para el botón de submit
-  const canSubmit = isValid && !isSubmitting && titulo.trim() && descripcion.trim();
+  const canSubmit = isValid && !isSubmitting && titulo.trim() && descripcion.trim()
 
   return {
     // Form state
@@ -154,22 +149,22 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     isValid,
     isSubmitting,
     canSubmit,
-    
+
     // Form values
     imageUri,
     titulo,
     descripcion,
-    
+
     // Form methods
     handleSubmit,
     setValue,
     trigger,
-    
+
     // Actions
     handleImagePick,
     removeImage,
     onSubmit,
     handleCancel,
     resetForm
-  };
-};
+  }
+}

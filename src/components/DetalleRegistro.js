@@ -1,9 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native'
 
-import { useTema } from './../hooks/useTema';
+import { useTema } from './../hooks/useTema'
 
-export default function DetalleRegistro({detalle={},index}){ 
+export default function DetalleRegistro ({ detalle = {}, index }) {
   const { colores } = useTema()
   const estilosDetalleRegistro = getEstilosDetalleRegistro(colores)
 
@@ -23,11 +22,11 @@ const getEstilosDetalleRegistro = (colores) => StyleSheet.create({
     fontWeight: 'bold',
     color: '#7f8c8d',
     marginTop: 12,
-    marginBottom: 4,
+    marginBottom: 4
   },
   detailsValue: {
     fontSize: 16,
     color: colores.text,
-    lineHeight: 22,
-  },
-});
+    lineHeight: 22
+  }
+})

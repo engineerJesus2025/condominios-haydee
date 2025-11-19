@@ -68,4 +68,3 @@ export default function useValidaciones () {
   }
   return validaciones
 }
-

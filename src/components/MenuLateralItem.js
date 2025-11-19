@@ -1,11 +1,10 @@
 import { View, Text, TouchableOpacity } from 'react-native'
-import React from 'react'
 import Icon from 'react-native-vector-icons/Ionicons'
 
 import { getEstilosMenuLatelalItem } from '../styles/components/estilosMenuLatelalItem'
 import { useTema } from '../hooks/useTema'
 
-export default function MenuLateralItem({ item, level = 0, isChild = false, isActive = false, isExpanded = false, onItemPress, onToggleExpand }){
+export default function MenuLateralItem ({ item, level = 0, isChild = false, isActive = false, isExpanded = false, onItemPress, onToggleExpand }) {
   if (!item.permission) return null
 
   const { colores } = useTema()
@@ -55,7 +54,7 @@ export default function MenuLateralItem({ item, level = 0, isChild = false, isAc
       {item.isExpandable && isExpanded && item.children && (
         <View style={estilosMenuLateral.submenu}>
           {item.children.map((child, index) => (
-            <MenuItem
+            <MenuLateralItem
               key={index}
               item={child}
               level={level + 1}

@@ -35,5 +35,5 @@ export const getEstilosMenuLatelalItem = (colores) => StyleSheet.create({
   },
   icon: {
     width: 24
-  },
+  }
 })

@@ -15,10 +15,10 @@ export const getEstilosHeader = (colores) => StyleSheet.create({
     backgroundColor: colores.navigation,
     borderBottomWidth: 1,
     borderColor: '#3E4756',
-    zIndex: 10,
+    zIndex: 10
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center'
-  },
+  }
 })

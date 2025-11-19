@@ -14,7 +14,7 @@ export const useTema = () => {
         textTitle: '#E1E1F7',
         backgroundTabla: '#1B1B29',
         backgroundBotones: '#313190',
-        textPlaceholder: 'rgba(230, 230, 246, 0.71)',
+        textPlaceholder: 'rgba(230, 230, 246, 0.71)'
       }
     : {
         background: '#F4F7F6',
@@ -26,8 +26,8 @@ export const useTema = () => {
         textTitle: '#495057',
         backgroundTabla: '#fff',
         backgroundBotones: '#007BFF',
-        textPlaceholder: '#999',
+        textPlaceholder: '#999'
       }
-//1d1133
+
   return { modoOscuro, colores }
 }

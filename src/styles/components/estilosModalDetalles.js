@@ -6,7 +6,7 @@ export const getEstilosModalDetalles = (colores) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 20
   },
   modalContent: {
     width: '90%',
@@ -16,7 +16,7 @@ export const getEstilosModalDetalles = (colores) => StyleSheet.create({
     elevation: 5,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 3.84
   },
   modalTitle: {
     fontSize: 20,
@@ -28,16 +28,16 @@ export const getEstilosModalDetalles = (colores) => StyleSheet.create({
 
   detailsContainer: {
     padding: 0,
-    borderRadius:10
+    borderRadius: 10
   },
   detailsImage: {
     width: '100%',
     height: 250,
     borderRadius: 12,
     marginBottom: 16,
-    resizeMode: 'cover',
+    resizeMode: 'cover'
   },
   detailsContent: {
-    paddingBottom: 20, // Espacio al final del scroll
-  },
-});
+    paddingBottom: 20 // Espacio al final del scroll
+  }
+})

@@ -1,4 +1,4 @@
-import { StatusBar } from 'react-native';
+import { StatusBar } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
 import { createDrawerNavigator } from '@react-navigation/drawer'
@@ -27,8 +27,6 @@ function MyDrawer () {
         drawerType: 'front'
       }}
     >
-      
-
       <Drawer.Screen
         name='Inicio'
         component={InicioScreen}
@@ -57,7 +55,7 @@ function MyDrawer () {
 // Stack Navigator
 function MyStack () {
   return (
-    <Stack.Navigator initialRouteName='MainApp'>
+    <Stack.Navigator initialRouteName='Login'>
       <Stack.Screen
         name='Login'
         component={LoginScreen}
@@ -75,9 +73,9 @@ function MyStack () {
 export default function Navigation () {
   return (
     <NavigationContainer>
-      <StatusBar 
-        barStyle="light-content" 
-        backgroundColor="#000"
+      <StatusBar
+        barStyle='light-content'
+        backgroundColor='#000'
       />
       <MyStack />
     </NavigationContainer>

@@ -28,17 +28,17 @@ export const useTablaDinamica = (datos, onBuscar, mostrarBusqueda = true) => {
     filaSeleccionada,
     modalVisible,
     searchQuery,
-    
+
     // Paginación
     paginacion,
     setPaginaActual,
     setElementosPorPagina,
-    
+
     // Acciones
     abrirDetalle,
     cerrarDetalle,
     setSearchQuery,
-    
+
     // Configuración
     mostrarBusqueda
   }

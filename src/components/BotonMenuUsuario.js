@@ -1,8 +1,6 @@
 import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-import { useTema } from './../hooks/useTema';
-
 export default function BotonMenuUsuario({evento , user, icono=false}) {
 
   return (

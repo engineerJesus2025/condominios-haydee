@@ -1,29 +1,28 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
+import { Modal, View, Text, ScrollView, Image } from 'react-native'
 
-import { useTema } from './../hooks/useTema';
+import { useTema } from './../hooks/useTema'
 import { getEstilosModalDetalles } from './../styles/components/estilosModalDetalles'
 import CustomBoton from '../components/CustomBoton'
 import DetalleRegistro from '../components/DetalleRegistro'
 
-const ModalDetalles = ({ 
-  visible, 
-  onClose, 
-  datos = {}, 
-  titulo = "Detalles",
+const ModalDetalles = ({
+  visible,
+  onClose,
+  datos = {},
+  titulo = 'Detalles',
   campos = [],
-  mostrarImagen = true 
+  mostrarImagen = true
 }) => {
-  const { colores } = useTema();
-  const estilosModalDetalles = getEstilosModalDetalles(colores);
-  
+  const { colores } = useTema()
+  const estilosModalDetalles = getEstilosModalDetalles(colores)
+
   if (!datos || Object.keys(datos).length === 0) { return }
-  
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      transparent={true}
+      animationType='slide'
+      transparent
       onRequestClose={onClose}
     >
       <View style={estilosModalDetalles.modalOverlay}>
@@ -31,24 +30,24 @@ const ModalDetalles = ({
           <Text style={[estilosModalDetalles.modalTitle]}>
             {titulo}
           </Text>
-          
+
           <ScrollView style={estilosModalDetalles.detailsContainer}>
             {mostrarImagen && datos.imagen && (
               <Image source={{ uri: datos.imagen }} style={estilosModalDetalles.detailsImage} />
             )}
-            
+
             <View style={estilosModalDetalles.detailsContent}>
               {campos.map((campo, index) => (
-                <DetalleRegistro detalle={{label:campo.label,dato:datos[campo.key]}} index={index} />
+                <DetalleRegistro detalle={{ label: campo.label, dato: datos[campo.key] }} key={index} index={index} />
               ))}
             </View>
           </ScrollView>
 
-          <CustomBoton titulo="Cerrar" evento={onClose} estilos={{margin:'auto'}} />
+          <CustomBoton titulo='Cerrar' evento={onClose} estilos={{ margin: 'auto' }} />
         </View>
       </View>
     </Modal>
-  );
-};
+  )
+}
 
-export default ModalDetalles;
+export default ModalDetalles

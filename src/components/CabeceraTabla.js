@@ -4,10 +4,10 @@ import { StyleSheet } from 'react-native'
 
 import { useTema } from '../hooks/useTema'
 
-const CabeceraTabla = ({ 
+const CabeceraTabla = ({
   columnasMostradas,
   mostrarVerMas,
-  tieneAcciones = false  // para saber si hay acciones
+  tieneAcciones = false // para saber si hay acciones
 }) => {
   const { colores } = useTema()
   const estilosCabeceraTabla = getEstilosCabeceraTabla(colores)
@@ -39,13 +39,13 @@ const CabeceraTabla = ({
 export default CabeceraTabla
 
 const getEstilosCabeceraTabla = (colores) => StyleSheet.create({
-  header:{
-    borderBottomWidth:2.5,
-    borderColor:colores.text
+  header: {
+    borderBottomWidth: 2.5,
+    borderColor: colores.text
   },
   cell: {
     justifyContent: 'flex-start',
-    flex: 1,
+    flex: 1
   },
   headerText: {
     fontSize: 13,
@@ -54,6 +54,6 @@ const getEstilosCabeceraTabla = (colores) => StyleSheet.create({
   },
   accionesHeader: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'center'
   }
 })

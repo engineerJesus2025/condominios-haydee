@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "evaluacion-electiva-3",
-    "slug": "evaluacion-electiva-3",
+    "name": "Condominios Hayde",
+    "slug": "Condominios-hayde",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/condominiosHaydeeLogoSinFondo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/condominiosHaydeeLogopng.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/condominiosHaydeeLogoSinFondo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,

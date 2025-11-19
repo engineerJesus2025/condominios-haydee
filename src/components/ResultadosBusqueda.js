@@ -1,4 +1,3 @@
-import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 
 import { useTema } from '../hooks/useTema'
@@ -29,5 +28,5 @@ export const getEstilosResultadosBusqueda = (colores) => StyleSheet.create({
     fontSize: 12,
     color: colores.text,
     textAlign: 'center'
-  },
+  }
 })

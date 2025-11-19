@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native'
 export const getEstilosMenuLatelal = (colores) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colores.navigation,
+    backgroundColor: colores.navigation
   },
   header: {
     backgroundColor: colores.navigation,

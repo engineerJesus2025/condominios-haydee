@@ -24,14 +24,14 @@ const TablaDinamica = ({
   mostrarVerMas = true,
   // para el modal adaptable
   configuracionModal = {
-    titulo: "Detalles",
+    titulo: 'Detalles',
     campos: [],
     mostrarImagen: false
   }
 }) => {
   const { colores } = useTema()
   const estilosTablaDinamica = getEstilosTablaDinamica(colores)
-  
+
   const {
     filaSeleccionada,
     modalVisible,
@@ -43,7 +43,7 @@ const TablaDinamica = ({
     cerrarDetalle,
     setSearchQuery
   } = useTablaDinamica(datos, onBuscar, mostrarBusqueda)
-  
+
   // Extraer y limitar columnas
   const columnas = React.Children.toArray(children).filter(child =>
     child && child.type && child.type.displayName === 'ColumnaTabla'
@@ -61,36 +61,37 @@ const TablaDinamica = ({
 
       {/* Informacion de resultados */}
       <ResultadosBusqueda paginacion={paginacion} />
-      
 
       {/* Tabla */}
       <DataTable style={[estilosTablaDinamica.tabla, estilos.tabla]}>
         <CabeceraTabla
-            columnasMostradas={columnasMostradas}
-            mostrarVerMas={mostrarVerMas}
-            tieneAcciones={acciones.length > 0}
+          columnasMostradas={columnasMostradas}
+          mostrarVerMas={mostrarVerMas}
+          tieneAcciones={acciones.length > 0}
         />
 
         <ScrollView style={estilosTablaDinamica.scrollVertical}>
-          {paginacion.datosPagina.length === 0 ? (
-            <DataTable.Row>
-              <DataTable.Cell>
-                <Text style={estilosTablaDinamica.noResults}>{textoVacio}</Text>
-              </DataTable.Cell>
-            </DataTable.Row>
-          ) : (
-            paginacion.datosPagina.map((fila, indexFila) => (
-              <FilaTabla
-                key={fila.id || indexFila}
-                fila={fila}
-                indexFila={indexFila}
-                columnasMostradas={columnasMostradas}
-                mostrarVerMas={mostrarVerMas}
-                onVerMas={abrirDetalle}
-                acciones={acciones}
-              />
-            ))
-          )}
+          {paginacion.datosPagina.length === 0
+            ? (
+              <DataTable.Row>
+                <DataTable.Cell>
+                  <Text style={estilosTablaDinamica.noResults}>{textoVacio}</Text>
+                </DataTable.Cell>
+              </DataTable.Row>
+              )
+            : (
+                paginacion.datosPagina.map((fila, indexFila) => (
+                  <FilaTabla
+                    key={fila.id || indexFila}
+                    fila={fila}
+                    indexFila={indexFila}
+                    columnasMostradas={columnasMostradas}
+                    mostrarVerMas={mostrarVerMas}
+                    onVerMas={abrirDetalle}
+                    acciones={acciones}
+                  />
+                ))
+              )}
         </ScrollView>
       </DataTable>
 
@@ -109,7 +110,7 @@ const TablaDinamica = ({
         <DataTable.Pagination
           theme={{
             colors: {
-              onSurface: colores.text,
+              onSurface: colores.text
             }
           }}
           page={paginacion.paginaActual}

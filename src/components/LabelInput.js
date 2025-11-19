@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, StyleSheet } from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
 
 import { useTema } from './../hooks/useTema'
 
@@ -19,12 +19,12 @@ const getEstilosLabelInput = (colores) => StyleSheet.create({
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 8
   },
   label: {
     fontSize: 16,
     marginLeft: 8,
     fontWeight: '600',
-    color: colores.text,
-  },
+    color: colores.text
+  }
 })

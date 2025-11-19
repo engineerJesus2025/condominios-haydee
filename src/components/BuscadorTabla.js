@@ -1,11 +1,12 @@
-import React from 'react'
 import { Searchbar } from 'react-native-paper'
 import { useTema } from '../hooks/useTema'
 
-const BuscadorTabla = ({ 
-  searchQuery, 
+import { StyleSheet } from 'react-native'
+
+const BuscadorTabla = ({
+  searchQuery,
   setSearchQuery,
-  mostrarBusqueda 
+  mostrarBusqueda
 }) => {
   if (!mostrarBusqueda) return null
 
@@ -27,13 +28,9 @@ const BuscadorTabla = ({
 
 export default BuscadorTabla
 
-import { StyleSheet, Dimensions } from 'react-native'
-
-const { width } = Dimensions.get('window')
-
 export const getEstilosBuscador = (colores) => StyleSheet.create({
   busqueda: {
     marginBottom: 8,
-    backgroundColor: colores.inputBackground,
+    backgroundColor: colores.inputBackground
   }
 })

@@ -1,6 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
-import Icon from 'react-native-vector-icons/Ionicons'
+import { View, Text } from 'react-native'
 
 import AppHeader from '../components/Header'
 import TablaDinamica from '../components/TablaDinamica'
@@ -11,7 +9,7 @@ import CustomBoton from '../components/CustomBoton'
 import { getEstilosPagos } from '../styles/screens/estilosPagos'
 import { useTema } from './../hooks/useTema'
 
-import { DATA_PAGOS } from '../utils/constants' //Para simular registros
+import { DATA_PAGOS } from '../utils/constants' // Para simular registros
 
 export default function PagosScreengetEstilosPagos () {
   const { colores } = useTema()
@@ -23,25 +21,25 @@ export default function PagosScreengetEstilosPagos () {
       <View style={estilosPagos.mainContentContainer}>
         <Text style={estilosPagos.title}>Gestionar Pagos</Text>
 
-        <CustomBoton titulo="Nuevo Pago" />
+        <CustomBoton titulo='Nuevo Pago' />
 
         <TablaDinamica
-            datos={DATA_PAGOS}
-            textoVacio='No hay pagos registrados'
-            configuracionModal={{ //Este es para el modal de los detalles pago, gasto,etc
-              titulo: "Detalles del Pago",
-              campos: [
-                { key: 'estado', label: 'Estado' },
-                { key: 'fecha', label: 'Fecha del pago' },
-                { key: 'monto', label: 'Monto' },
-                { key: 'mensualidad', label: 'Mensualidad' },
-                { key: 'apartamento', label: 'Apartamento' }
-              ],
-              mostrarImagen: false
-            }}
+          datos={DATA_PAGOS}
+          textoVacio='No hay pagos registrados'
+          configuracionModal={{ // Este es para el modal de los detalles pago, gasto,etc
+            titulo: 'Detalles del Pago',
+            campos: [
+              { key: 'estado', label: 'Estado' },
+              { key: 'fecha', label: 'Fecha del pago' },
+              { key: 'monto', label: 'Monto' },
+              { key: 'mensualidad', label: 'Mensualidad' },
+              { key: 'apartamento', label: 'Apartamento' }
+            ],
+            mostrarImagen: false
+          }}
         >
-            <ColumnaTabla titulo='Monto' campo='monto' ancho={1} />
-            <ColumnaTabla titulo='Mensualidad' campo='mensualidad' ancho={2} />
+          <ColumnaTabla titulo='Monto' campo='monto' ancho={1} />
+          <ColumnaTabla titulo='Mensualidad' campo='mensualidad' ancho={2} />
         </TablaDinamica>
       </View>
 

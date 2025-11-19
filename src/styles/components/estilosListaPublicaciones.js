@@ -6,10 +6,10 @@ export const getEstilosListaPublicaciones = (colores) => StyleSheet.create({
     fontWeight: 'bold',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    color: colores.textTitle,
+    color: colores.textTitle
   },
   listContentContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-});
+    paddingBottom: 16
+  }
+})

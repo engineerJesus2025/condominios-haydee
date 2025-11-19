@@ -1,33 +1,34 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, StyleSheet } from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
 
-import { useTema } from './../hooks/useTema';
+import { useTema } from './../hooks/useTema'
 import CustomBoton from '../components/CustomBoton'
 
-export default function HeaderFormulario({icono=false, titulo, evento}) {
-  const { colores } = useTema();
-  const estilosHeaderFormulario = getEstilosHeaderFormulario(colores);
+export default function HeaderFormulario ({ icono = false, titulo, evento, estilos = {} }) {
+  const { colores } = useTema()
+  const estilosHeaderFormulario = getEstilosHeaderFormulario(colores)
 
   return (
-    <View style={estilosHeaderFormulario.header}>
+    <View style={[estilosHeaderFormulario.header, estilos]}>
       <Icon name={icono.name} size={24} color={icono.color} />
       <Text style={estilosHeaderFormulario.title}>
         {titulo}
       </Text>
-      <CustomBoton 
-      titulo={""} 
-      evento={evento} 
-      icono={{nombre:'close-outline',color:'#E1E1F7'}}
-      estilos={estilosHeaderFormulario.closeButton} 
-      fuente={24} />
-      
+      <CustomBoton
+        titulo=''
+        evento={evento}
+        icono={{ nombre: 'close-outline', color: '#E1E1F7' }}
+        estilos={estilosHeaderFormulario.closeButton}
+        fuente={24}
+      />
+
     </View>
 
-  );
+  )
 };
 
 const getEstilosHeaderFormulario = (colores) => StyleSheet.create({
-    header: {
+  header: {
     backgroundColor: colores.backgroundBotones,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -40,7 +41,7 @@ const getEstilosHeaderFormulario = (colores) => StyleSheet.create({
     elevation: 3,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   },
   title: {
     fontSize: 20,
@@ -48,13 +49,13 @@ const getEstilosHeaderFormulario = (colores) => StyleSheet.create({
     color: '#E1E1F7',
     textAlign: 'center',
     flex: 1,
-    marginHorizontal: 10,
+    marginHorizontal: 10
   },
   closeButton: {
     paddingVertical: 4,
     paddingHorizontal: 4,
-    elevation:0,
+    elevation: 0,
     marginBottom: 0,
-    marginTop:8
-  },
-});
+    marginTop: 8
+  }
+})

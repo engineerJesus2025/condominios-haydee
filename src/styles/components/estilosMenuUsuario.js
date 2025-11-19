@@ -23,7 +23,7 @@ export const getEstilosMenuUsuario = (colores) => StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderColor: '#F1F3F5',
-    borderBottomWidth: 1,
+    borderBottomWidth: 1
   },
   userMenuText: {
     fontSize: 15,
