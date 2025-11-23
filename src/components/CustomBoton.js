@@ -2,9 +2,9 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useTema } from './../hooks/useTema'
 import Icon from 'react-native-vector-icons/Ionicons'
 
-export default function CustomBoton ({ titulo = 'Nuevo', evento = () => {}, icono = false, disabled = false, estilos = {}, fuente = false }) {
+export default function CustomBoton ({ titulo = 'Nuevo', evento = () => {}, icono = false, disabled = false, estilos = {}, fuente = false, noDark = false }) {
   const { colores } = useTema()
-  const estilosCustomBoton = getEstilosCustomBoton(colores)
+  const estilosCustomBoton = getEstilosCustomBoton(colores, noDark)
 
   return (
     <View style={estilosCustomBoton.topRow}>
@@ -21,11 +21,11 @@ export default function CustomBoton ({ titulo = 'Nuevo', evento = () => {}, icon
   )
 }
 
-const getEstilosCustomBoton = (colores) => StyleSheet.create({
+const getEstilosCustomBoton = (colores, noDark = false) => StyleSheet.create({
   topRow: { marginBottom: 12 },
   primaryBtn: {
     alignSelf: 'flex-start',
-    backgroundColor: colores.backgroundBotones,
+    backgroundColor: noDark?'#007BFF':colores.backgroundBotones,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 6,

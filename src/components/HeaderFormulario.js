@@ -4,9 +4,9 @@ import Icon from 'react-native-vector-icons/Ionicons'
 import { useTema } from './../hooks/useTema'
 import CustomBoton from '../components/CustomBoton'
 
-export default function HeaderFormulario ({ icono = false, titulo, evento, estilos = {} }) {
+export default function HeaderFormulario ({ icono = false, titulo, evento, estilos = {},  noDark = false }) {
   const { colores } = useTema()
-  const estilosHeaderFormulario = getEstilosHeaderFormulario(colores)
+  const estilosHeaderFormulario = getEstilosHeaderFormulario(colores, noDark)
 
   return (
     <View style={[estilosHeaderFormulario.header, estilos]}>
@@ -20,6 +20,7 @@ export default function HeaderFormulario ({ icono = false, titulo, evento, estil
         icono={{ nombre: 'close-outline', color: '#E1E1F7' }}
         estilos={estilosHeaderFormulario.closeButton}
         fuente={24}
+        noDark={true}
       />
 
     </View>
@@ -27,13 +28,13 @@ export default function HeaderFormulario ({ icono = false, titulo, evento, estil
   )
 };
 
-const getEstilosHeaderFormulario = (colores) => StyleSheet.create({
+const getEstilosHeaderFormulario = (colores, noDark = false) => StyleSheet.create({
   header: {
-    backgroundColor: colores.backgroundBotones,
+    backgroundColor: noDark?'#007BFF':colores.backgroundBotones,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: colores.text,
+    borderBottomColor: noDark?'#2c3e50':colores.text,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

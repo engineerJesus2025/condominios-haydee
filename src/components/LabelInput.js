@@ -3,9 +3,9 @@ import Icon from 'react-native-vector-icons/Ionicons'
 
 import { useTema } from './../hooks/useTema'
 
-export default function LabelInput ({ titulo, icono }) {
+export default function LabelInput ({ titulo, icono, noDark = false }) {
   const { colores } = useTema()
-  const estilosLabelInput = getEstilosLabelInput(colores)
+  const estilosLabelInput = getEstilosLabelInput(colores,noDark)
 
   return (
     <View style={estilosLabelInput.labelContainer}>
@@ -15,7 +15,7 @@ export default function LabelInput ({ titulo, icono }) {
   )
 }
 
-const getEstilosLabelInput = (colores) => StyleSheet.create({
+const getEstilosLabelInput = (colores,noDark = false) => StyleSheet.create({
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -25,6 +25,6 @@ const getEstilosLabelInput = (colores) => StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     fontWeight: '600',
-    color: colores.text
+    color: noDark?'#2c3e5':colores.text
   }
 })

@@ -33,7 +33,7 @@ export default function Formulario () {
     <View style={estilosFormulario.formContainer}>
       <Text style={estilosFormulario.title}>Iniciar sesión</Text>
 
-      <LabelInput titulo='Correo Electrónico' icono={{ nombre: 'mail-outline', color: '#3498db' }} />
+      <LabelInput titulo='Correo Electrónico' icono={{ nombre: 'mail-outline', color: '#3498db' }} noDark={true} />
       <InputFormulario
         control={control}
         name='correo'
@@ -43,10 +43,11 @@ export default function Formulario () {
         placeholder='Ejm: ejemplo@gmail.com'
         keyboardType='email-address'
         autoCapitalize='none'
+        noDark={true}
       />
       <ErrorFormulario error={errors.correo} />
 
-      <LabelInput titulo='Contraseña' icono={{ nombre: 'lock-closed-outline', color: '#3498db' }} />
+      <LabelInput titulo='Contraseña' icono={{ nombre: 'lock-closed-outline', color: '#3498db' }} noDark={true} />
       <InputFormulario
         control={control}
         name='contra'
@@ -56,6 +57,7 @@ export default function Formulario () {
         placeholder='Ejm: 12345'
         keyboardType='password'
         autoCapitalize='none'
+        noDark={true}
       />
 
       <ErrorFormulario error={errors.contra} />
@@ -74,6 +76,7 @@ export default function Formulario () {
         disabled={botonDesabilitado}
         estilos={estilosFormulario.button}
         fuente={18}
+        noDark={true}
       />
 
       {/* Modal para recuperar contraseña */}

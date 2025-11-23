@@ -4,9 +4,9 @@ import Icon from 'react-native-vector-icons/Ionicons'
 import { Controller } from 'react-hook-form'
 import { useTema } from './../hooks/useTema'
 
-export default function InputFormulario ({ control, name, rules, icono, estilos, error, placeholder = '', ...props }) {
+export default function InputFormulario ({ control, name, rules, icono, estilos, error, placeholder = '', noDark = false, ...props }) {
   const { colores } = useTema()
-  const estilosInputFormulario = getEstilosInputFormulario(colores)
+  const estilosInputFormulario = getEstilosInputFormulario(colores,noDark)
 
   return (
     <Controller
@@ -45,7 +45,7 @@ export default function InputFormulario ({ control, name, rules, icono, estilos,
   )
 }
 
-const getEstilosInputFormulario = (colores) => StyleSheet.create({
+const getEstilosInputFormulario = (colores, noDark = false) => StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -64,14 +64,14 @@ const getEstilosInputFormulario = (colores) => StyleSheet.create({
     paddingLeft: 50,
     borderRadius: 12,
     fontSize: 16,
-    backgroundColor: colores.inputBackground,
+    backgroundColor: noDark?'#ffffff':colores.inputBackground,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
     flex: 1,
-    color: colores.text
+    color: noDark?'#2c3e50':colores.text
   },
   inputError: {
     borderColor: '#e74c3c',

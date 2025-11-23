@@ -56,6 +56,7 @@ const ModalRecuperarContrasena = ({ visible, onClose }) => {
           titulo='Recuperar Contraseña'
           evento={handleCerrar}
           icono={{ name: 'key-outline', color: '#E1E1F7' }} estilos={{ borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
+          noDark={true}
         />
 
         <View style={estilos.modalView}>
@@ -64,7 +65,7 @@ const ModalRecuperarContrasena = ({ visible, onClose }) => {
             Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
           </Text>
 
-          <LabelInput titulo='Correo Electrónico' icono={{ nombre: 'pricetag-outline', color: '#3498db' }} />
+          <LabelInput titulo='Correo Electrónico' icono={{ nombre: 'pricetag-outline', color: '#3498db' }} noDark={true} />
           <InputFormulario
             control={control}
             name='correo'
@@ -75,6 +76,7 @@ const ModalRecuperarContrasena = ({ visible, onClose }) => {
             keyboardType='email-address'
             autoCapitalize='none'
             autoComplete='email'
+            noDark={true}
           />
           <ErrorFormulario error={errors.correo} />
 
@@ -138,7 +140,7 @@ const getEstilosModalRecuperar = (colores) => ({
   },
   modalSubtitle: {
     fontSize: 14,
-    color: colores.textoSecundario || '#666',
+    color: '#666',
     textAlign: 'left',
     marginBottom: 20,
     lineHeight: 20
@@ -154,7 +156,7 @@ const getEstilosModalRecuperar = (colores) => ({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: colores.primario || '#007AFF',
+    backgroundColor: '#007AFF',
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -162,7 +164,7 @@ const getEstilosModalRecuperar = (colores) => ({
     minHeight: 50
   },
   modalButtonCancel: {
-    backgroundColor: colores.peligro || '#FF3B30',
+    backgroundColor: '#FF3B30',
     flex: 0.8
   },
   disabledButton: {
