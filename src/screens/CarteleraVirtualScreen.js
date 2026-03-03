@@ -1,8 +1,8 @@
 import { View, Text } from 'react-native'
 
 import AppHeader from '../components/Header'
-import TablaDinamica from '../components/TablaDinamica'
-import ColumnaTabla from '../components/ColumnaTabla'
+// import TablaDinamica from '../components/TablaDinamica'
+// import ColumnaTabla from '../components/ColumnaTabla'
 import Footer from '../components/Footer'
 import ModalFormularioPublicaciones from '../components/ModalFormularioPublicaciones'
 import CustomBoton from '../components/CustomBoton'
@@ -39,23 +39,6 @@ export default function CarteleraVirtualScreen () {
           evento={abrirModalNuevaPublicacion}
         />
 
-        <TablaDinamica
-          datos={posts}
-          mostrarVerMas
-          acciones={accionesUsuarios}
-          configuracionModal={{
-            titulo: 'Detalles de Publicación',
-            campos: [
-              { key: 'titulo', label: 'Título' },
-              { key: 'fecha', label: 'Fecha de Publicación' },
-              { key: 'descripcion', label: 'Descripción' }
-            ],
-            mostrarImagen: true
-          }}
-        >
-          <ColumnaTabla titulo='Título' campo='titulo' />
-          <ColumnaTabla titulo='Fecha' campo='fecha' />
-        </TablaDinamica>
 
         {/* Modal para nueva publicación */}
         <ModalFormularioPublicaciones

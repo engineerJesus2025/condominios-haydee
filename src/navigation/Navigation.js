@@ -55,7 +55,7 @@ function MyDrawer () {
 // Stack Navigator
 function MyStack () {
   return (
-    <Stack.Navigator initialRouteName='Login'>
+    <Stack.Navigator initialRouteName='MainApp'>
       <Stack.Screen
         name='Login'
         component={LoginScreen}

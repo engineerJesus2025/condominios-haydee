@@ -1,5 +1,5 @@
 export const USUARIOS = [
-  { id: '1', usuario: '', correo: '', contra: '' },
+  { id: '1', usuario: 'Yhesus', correo: 'admin@gmail.com', contra: '12345' },
   { id: '2', fecha: '', total: '', restante: '' },
   { id: '3', fecha: '', total: '', restante: '' }
 ]

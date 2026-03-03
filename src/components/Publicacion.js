@@ -2,6 +2,7 @@ import { View, Text, Image } from 'react-native'
 
 import { getEstilosPublicacion } from './../styles/components/estilosPublicacion'
 import { useTema } from './../hooks/useTema'
+import { formatearFechaLegible, parseFechaDDMMYYYY } from '../utils/dateUtils';
 
 export default function Publicacion ({ post }) {
   const { colores } = useTema()
@@ -10,6 +11,8 @@ export default function Publicacion ({ post }) {
   if (!post) {
     return null
   }
+
+  const fechaLegible = formatearFechaLegible(parseFechaDDMMYYYY(post.fecha));
 
   return (
     <View style={estilosPublicacion.cardContainer}>
@@ -29,9 +32,10 @@ export default function Publicacion ({ post }) {
 
       <View style={estilosPublicacion.cardContent}>
         <Text style={estilosPublicacion.cardTitle}>{post.titulo || 'Sin título'}</Text>
-        <Text style={estilosPublicacion.cardDate}>{post.fecha || 'Fecha no disponible'}</Text>
+        <Text style={estilosPublicacion.cardDate}>{fechaLegible}</Text>
         <Text style={estilosPublicacion.cardDescription} numberOfLines={3}>
           {post.descripcion || 'Sin descripción'}
+          {post.tipo || 'Sin tipo'}
         </Text>
       </View>
     </View>

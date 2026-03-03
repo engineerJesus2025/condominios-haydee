@@ -62,6 +62,11 @@ const ModalFormularioPublicaciones = ({
             <InputFormulario control={control} name='descripcion' rules={validaciones.descripcion_publicacion} icono={{ nombre: 'reader-outline', color: '#95a5a6' }} error={errors.descripcion} placeholder='Ejm: Se fue el agua por...' estilos={estilosModalFormularioPublicaciones.textArea} />
             <ErrorFormulario error={errors.descripcion} />
 
+          {/* NUEVO: Tipo, para probar el inicioa */}
+            <LabelInput titulo='Tipo' icono={{ nombre: 'document-text-outline', color: '#3498db' }} />
+            <InputFormulario control={control} name='tipo' rules={validaciones.descripcion_publicacion} icono={{ nombre: 'reader-outline', color: '#95a5a6' }} error={errors.tipo} placeholder='Ejm: Se fue el agua por...' estilos={estilosModalFormularioPublicaciones.textArea} />
+            <ErrorFormulario error={errors.tipo} />
+
             {/* Imagen */}
             <LabelInput titulo='Imagen' icono={{ nombre: 'image-outline', color: '#3498db' }} />
 

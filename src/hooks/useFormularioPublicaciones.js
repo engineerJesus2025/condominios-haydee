@@ -36,6 +36,7 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
       setValue('titulo', publicacionEditar.titulo || '')
       setValue('descripcion', publicacionEditar.descripcion || '')
       setValue('imagen', publicacionEditar.imagen || null)
+      setValue('tipo', publicacionEditar.tipo || '')
     } else {
       reset({
         titulo: '',
@@ -103,7 +104,8 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
           titulo: data.titulo,
           descripcion: data.descripcion,
           imagen: data.imagen,
-          date: publicacionEditar.date || new Date().toLocaleDateString()
+          date: publicacionEditar.date || new Date().toLocaleDateString(),
+          tipo: data.tipo,
         }))
       } else {
         dispatch(agregarPublicacion({
@@ -111,7 +113,8 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
           titulo: data.titulo,
           descripcion: data.descripcion,
           imagen: data.imagen,
-          fecha: new Date().toLocaleDateString()
+          fecha: new Date().toLocaleDateString(),
+          tipo: data.tipo,
         }))
       }
 

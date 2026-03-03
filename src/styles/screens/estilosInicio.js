@@ -2,9 +2,10 @@ import { StyleSheet } from 'react-native'
 
 export const getEstilosInicio = (colores) => StyleSheet.create({
   mainContentContainer: {
-    flex: 1,
-    backgroundColor: colores.background,
-    padding: 14
+    flexGrow: 1,
+    paddingBottom: 20,
+    padding: 14,
+    paddingBottom: 40
   },
 
   title: {
