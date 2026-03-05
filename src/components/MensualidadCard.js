@@ -1,53 +1,57 @@
-// src/components/MensualidadCard.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons'; 
+import { useTema } from '../hooks/useTema'; 
 
 export default function MensualidadCard({ mensualidad, onPressDetalles }) {
-  // Evaluamos si hay deuda de manera sencilla para cambiar colores
-  // (Asumimos que si el restante es mayor a 0, hay deuda)
-  const tieneDeuda = parseFloat(mensualidad.restante) > 0;
+  const { colores } = useTema();
+
+  const tieneDeuda = mensualidad.restante && mensualidad.restante !== '0' && mensualidad.restante !== '0.00';
 
   return (
-    <View style={styles.card}>
-      {/* Cabecera de la tarjeta con el mes */}
-      <View style={styles.header}>
-        <Text style={styles.mesTexto}>{mensualidad.fecha}</Text>
-        <Text style={[styles.estado, tieneDeuda ? styles.estadoDeuda : styles.estadoPagado]}>
-          {tieneDeuda ? 'Pendiente' : 'Al Día'}
+    <View style={[styles.card, { backgroundColor: colores.card }]}>
+      
+      <View style={[styles.header, { borderBottomColor: colores.border }]}>
+        <Text style={[styles.mesTexto, { color: colores.textTitle }]}>
+          {mensualidad.fecha || mensualidad.mes}
+        </Text>
+        <Text style={[styles.valor, { color: colores.text }]}>
+          {mensualidad.monto || mensualidad.total}
         </Text>
       </View>
 
-      {/* Cuerpo de la tarjeta con los montos */}
+      {/* Cuerpo de la tarjeta con los montos adaptados al Modo Oscuro */}
       <View style={styles.body}>
         <View style={styles.filaMonto}>
-          <Text style={styles.etiqueta}>Total del mes:</Text>
-          <Text style={styles.valor}>{mensualidad.total}</Text>
+          <Text style={[styles.etiqueta, { color: colores.textPlaceholder }]}>Total del mes:</Text>
+          <Text style={[styles.valor, { color: colores.text }]}>{mensualidad.total}</Text>
         </View>
         <View style={styles.filaMonto}>
-          <Text style={styles.etiqueta}>Restante por pagar:</Text>
-          <Text style={[styles.valor, tieneDeuda && styles.textoAlerta]}>
+          <Text style={[styles.etiqueta, { color: colores.textPlaceholder }]}>Restante por pagar:</Text>
+          <Text style={[styles.valor, { color: colores.text }, tieneDeuda && styles.textoAlerta]}>
             {mensualidad.restante}
           </Text>
         </View>
       </View>
 
-      {/* Botón de acción rápida */}
-      <TouchableOpacity style={styles.boton} onPress={() => onPressDetalles(mensualidad)}>
-        <Text style={styles.botonTexto}>Ver Presupuesto / Pagar</Text>
+      <TouchableOpacity 
+        style={[styles.botonDetalle, { borderTopColor: colores.border }]} 
+        onPress={() => onPressDetalles(mensualidad)}
+      >
+        <Text style={styles.botonTextoAzul}>Ver Presupuesto</Text>
+        <Icon name="chevron-forward" size={18} color="#007BFF" />
       </TouchableOpacity>
     </View>
   );
 }
 
-// Estilos temporales integrados (te sugiero moverlos a tu carpeta styles luego)
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    elevation: 3, // Sombra para Android
-    shadowColor: '#000', // Sombra para iOS
+    elevation: 3, 
+    shadowColor: '#000', 
     shadowOpacity: 0.1,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
@@ -56,29 +60,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
     paddingBottom: 10,
     marginBottom: 10,
   },
   mesTexto: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-  },
-  estado: {
-    fontWeight: 'bold',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  estadoDeuda: {
-    backgroundColor: '#ffebee',
-    color: '#d32f2f',
-  },
-  estadoPagado: {
-    backgroundColor: '#e8f5e9',
-    color: '#2e7d32',
   },
   body: {
     marginBottom: 15,
@@ -90,25 +77,24 @@ const styles = StyleSheet.create({
   },
   etiqueta: {
     fontSize: 14,
-    color: '#666',
   },
   valor: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
   },
   textoAlerta: {
-    color: '#d32f2f',
+    color: '#e74c3c', 
   },
-  boton: {
-    backgroundColor: '#0056b3', // Color primario (ajustar a tu tema)
-    padding: 12,
-    borderRadius: 8,
+  botonDetalle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
   },
-  botonTexto: {
-    color: '#fff',
-    fontWeight: 'bold',
+  botonTextoAzul: {
+    color: '#007BFF',
+    fontWeight: '600',
     fontSize: 15,
   }
 });

@@ -1,13 +1,12 @@
-import { View, Text, FlatList } from 'react-native'
+import { View, Text, FlatList, StyleSheet } from 'react-native'
 
-import { getEstilosListaPublicaciones } from './../styles/components/estilosListaPublicaciones'
 import { useTema } from './../hooks/useTema'
-import Publicacion from '../components/Publicacion'
+import PublicacionCard from './PublicacionCard'
 
 const ListaPublicaciones = ({ posts }) => {
   const { colores } = useTema()
   const estilosListaPublicaciones = getEstilosListaPublicaciones(colores)
-  // Si no hay posts, muestra un mensaje
+  
   if (!posts || posts.length === 0) {
     return (
       <View>
@@ -22,7 +21,7 @@ const ListaPublicaciones = ({ posts }) => {
       <Text style={estilosListaPublicaciones.headerTitle}>Publicaciones Recientes</Text>
       <FlatList
         data={posts}
-        renderItem={({ item }) => <Publicacion post={item} />}
+        renderItem={({ item }) => <PublicacionCard post={item} />}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={estilosListaPublicaciones.listContentContainer}
         ListEmptyComponent={<Text>No hay publicaciones para mostrar</Text>}
@@ -32,3 +31,17 @@ const ListaPublicaciones = ({ posts }) => {
 }
 
 export default ListaPublicaciones
+
+const getEstilosListaPublicaciones = (colores) => StyleSheet.create({
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: colores.textTitle
+  },
+  listContentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16
+  }
+})

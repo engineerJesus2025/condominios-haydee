@@ -33,7 +33,7 @@ export const CONTRA_REGEX = {
 }
 
 export const TITULO_REGEX = {
-  patron: /^[A-Za-z0-9 ]{3,50}$/,
+  patron: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,\- ]{3,50}$/,
   mensaje: 'Solo letras, números, espacios y signos de puntuación comunes',
   limites: {
     minimo: 3,
@@ -48,7 +48,7 @@ export const TITULO_REGEX = {
 }
 
 export const DESCRIPCION_REGEX = {
-  patron: /^[A-Za-z0-9 ]{5,100}$/,
+  patron: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,\- ]{5,100}$/,
   mensaje: 'Solo letras, números, espacios y signos de puntuación comunes',
   limites: {
     minimo: 5,

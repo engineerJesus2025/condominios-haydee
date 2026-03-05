@@ -4,9 +4,11 @@ import Icon from 'react-native-vector-icons/Ionicons'
 import { Controller } from 'react-hook-form'
 import { useTema } from './../hooks/useTema'
 
-export default function InputFormulario ({ control, name, rules, icono, estilos, error, placeholder = '', noDark = false, ...props }) {
+export default function InputFormulario ({ control, name, rules, icono, estilos, error, placeholder = '', noDark = false, inputRef, ...props }) {
   const { colores } = useTema()
   const estilosInputFormulario = getEstilosInputFormulario(colores,noDark)
+
+  const maxLengthValue = rules?.maxLength?.value;
 
   return (
     <Controller
@@ -23,8 +25,9 @@ export default function InputFormulario ({ control, name, rules, icono, estilos,
               onBlur={onBlur}
               onChangeText={onChange}
               value={value}
-              multiline
-              maxLength={rules.maxLength.value}
+              multiline={props.multiline || false}
+              ref={inputRef}
+              maxLength={maxLengthValue}
               style={[
                 estilosInputFormulario.input,
                 error && estilosInputFormulario.inputError,
@@ -32,12 +35,16 @@ export default function InputFormulario ({ control, name, rules, icono, estilos,
               ]}
             />
           </View>
-          <View style={[estilosInputFormulario.charCounterContainer, !error && { marginBottom: 15 }]}>
-            <Icon name='ellipsis-horizontal' size={14} color='#95a5a6' />
-            <Text style={estilosInputFormulario.charCounter}>
-              {value?.length || 0}/{rules.maxLength.value}
-            </Text>
-          </View>
+          
+          {/* RENDERIZADO CONDICIONAL: Solo dibuja el contador si el input tiene límite de caracteres */}
+          {maxLengthValue && (
+            <View style={[estilosInputFormulario.charCounterContainer, !error && { marginBottom: 15 }]}>
+              <Icon name='ellipsis-horizontal' size={14} color='#95a5a6' />
+              <Text style={estilosInputFormulario.charCounter}>
+                {value?.length || 0}/{maxLengthValue}
+              </Text>
+            </View>
+          )}
         </>
       )}
       name={name}
@@ -64,14 +71,14 @@ const getEstilosInputFormulario = (colores, noDark = false) => StyleSheet.create
     paddingLeft: 50,
     borderRadius: 12,
     fontSize: 16,
-    backgroundColor: noDark?'#ffffff':colores.inputBackground,
+    backgroundColor: noDark ? '#ffffff' : colores.inputBackground,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
     flex: 1,
-    color: noDark?'#2c3e50':colores.text
+    color: noDark ? '#2c3e50' : colores.text
   },
   inputError: {
     borderColor: '#e74c3c',

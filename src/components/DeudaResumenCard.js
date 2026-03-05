@@ -1,17 +1,9 @@
-// components/DeudaResumenCard.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTema } from '../hooks/useTema';
 import CustomBoton from './CustomBoton';
 
-/**
- * Tarjeta que resume la deuda pendiente del propietario.
- * @param {number} totalDeuda - Monto total adeudado.
- * @param {function} onVerDetalle - Función al presionar "Ver detalles".
- * @param {string} titulo - Título de la tarjeta (opcional).
- * @param {string} moneda - Símbolo de moneda (opcional).
- */
 const DeudaResumenCard = ({ 
   totalDeuda = 0, 
   onVerDetalle, 
@@ -25,7 +17,6 @@ const DeudaResumenCard = ({
 
   return (
     <View style={estilos.card}>
-      {/* Cabecera con ícono de estado */}
       <View style={estilos.header}>
         <Icon 
           name={tieneDeuda ? "warning-outline" : "checkmark-circle-outline"} 
@@ -35,7 +26,6 @@ const DeudaResumenCard = ({
         <Text style={estilos.titulo}>{titulo}</Text>
       </View>
       
-      {/* Monto total */}
       <Text style={estilos.monto}>
         {moneda} {totalDeuda.toFixed(2)}
       </Text>

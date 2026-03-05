@@ -1,15 +1,10 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
-export default function useHeader () {
-  const [userMenuVisible, setUserMenuVisible] = useState(false)
+export default function useHeader() {
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const toggleUserMenu = () => {
-    setUserMenuVisible(!userMenuVisible)
-  }
+  const toggleMenu = () => setIsMenuVisible((prev) => !prev);
+  const closeMenu = () => setIsMenuVisible(false);
 
-  const closeMenus = () => {
-    setUserMenuVisible(false)
-  }
-
-  return [userMenuVisible, toggleUserMenu, closeMenus]
+  return { isMenuVisible, toggleMenu, closeMenu };
 }

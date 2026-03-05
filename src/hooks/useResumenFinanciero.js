@@ -12,7 +12,7 @@ export const useResumenFinanciero = () => {
     // Simular carga de datos
     const timer = setTimeout(() => {
       // Datos mock
-      setDeudaTotal(150.75);
+      setDeudaTotal(152.75);
       setGastado(4500);
       setPresupuestoTotal(10000);
       setLoading(false);

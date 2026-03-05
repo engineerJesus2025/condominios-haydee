@@ -20,7 +20,7 @@ export default function HeaderFormulario ({ icono = false, titulo, evento, estil
         icono={{ nombre: 'close-outline', color: '#E1E1F7' }}
         estilos={estilosHeaderFormulario.closeButton}
         fuente={24}
-        noDark={true}
+        noDark={false}
       />
 
     </View>

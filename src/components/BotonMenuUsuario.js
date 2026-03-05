@@ -1,43 +1,41 @@
-import { TouchableOpacity, StyleSheet, View, Text } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { useTema } from '../hooks/useTema';
 
-export default function BotonMenuUsuario({evento , user, icono=false}) {
+export default function BotonMenuUsuario({ evento, user }) {
+  const { colores } = useTema();
+
+  const inicial = user?.usuario ? user.usuario.charAt(0).toUpperCase() : 'U';
 
   return (
     <TouchableOpacity
-      style={estilosBotonMenuUsuario.userMenuButton}
+      style={[
+        estilos.avatarContainer, 
+        { backgroundColor: colores.primario || '#3498db' }
+      ]}
       onPress={evento}
       activeOpacity={0.8}
     >
-      <View style={estilosBotonMenuUsuario.userInfo}>
-        <Text style={estilosBotonMenuUsuario.userName}>
-          Hola, {user?.usuario || 'Invitado'}
-        </Text>
-        <Text style={estilosBotonMenuUsuario.userRole}>
-          ({user?.rol || 'Rol no disponible'})
-        </Text>
-      </View>
-      {icono && (<Icon name={icono.name} size={12} color={icono.color} style={{ marginLeft: 4 }} />)}
+      <Text style={estilos.avatarTexto}>{inicial}</Text>
     </TouchableOpacity>
-    )
+  );
 }
 
-const estilosBotonMenuUsuario = StyleSheet.create({
-  userMenuButton: {
-    flexDirection: 'row',
-    alignItems: 'center'
+const estilos = StyleSheet.create({
+  avatarContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: 19, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
-  userInfo: {
-    alignItems: 'flex-end',
-    marginRight: 5
-  },
-  userName: {
+  avatarTexto: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '600'
-  },
-  userRole: {
-    color: '#E0E0E0',
-    fontSize: 11
+    fontSize: 18,
+    fontWeight: 'bold',
   }
 });

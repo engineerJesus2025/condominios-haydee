@@ -5,9 +5,9 @@ import * as ImagePicker from 'expo-image-picker'
 import { Alert } from 'react-native'
 import { agregarPublicacion, editarPublicacion } from '../store/slices/publicacionesSlice'
 
-export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => { // ✅ Agregar publicacionEditar como parámetro
+export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => { 
   const dispatch = useDispatch()
-  const [status, requestPermission] = ImagePicker.useMediaLibraryPermissions()
+  const [permissionStatus, requestPermission] = ImagePicker.useMediaLibraryPermissions();
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
@@ -23,13 +23,15 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     defaultValues: {
       titulo: '',
       descripcion: '',
-      imagen: null
+      imagen: null,
+      tipo: 'aviso'
     }
   })
 
   const imageUri = watch('imagen')
   const titulo = watch('titulo')
   const descripcion = watch('descripcion')
+  const tipo = watch('tipo')
 
   useEffect(() => {
     if (publicacionEditar) {
@@ -41,23 +43,23 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
       reset({
         titulo: '',
         descripcion: '',
-        imagen: null
+        imagen: null,
+        tipo: ''
       })
     }
   }, [publicacionEditar, setValue, reset])
 
-  // Verificar permisos al montar el hook
   useEffect(() => {
     (async () => {
-      if (!status?.granted) {
-        await requestPermission()
+      if (!permissionStatus?.granted) {
+        await requestPermission();
       }
-    })()
-  }, [])
+    })();
+  }, [permissionStatus, requestPermission]);
 
   const handleImagePick = async () => {
     try {
-      if (!status?.granted) {
+      if (!permissionStatus?.granted) {
         const permissionResult = await requestPermission()
         if (!permissionResult.granted) {
           Alert.alert('Permisos necesarios', 'Se necesitan permisos de galería para seleccionar una imagen.')
@@ -66,7 +68,7 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -89,7 +91,6 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
   const onSubmit = async (data) => {
     if (isSubmitting) return
 
-    // Verificar que no sea base64
     if (data.imagen && data.imagen.startsWith('data:')) {
       Alert.alert('Formato no soportado', 'La imagen está en un formato no optimizado. Por favor selecciona otra.')
       return
@@ -98,13 +99,19 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     setIsSubmitting(true)
 
     try {
+      const hoy = new Date();
+      const dia = String(hoy.getDate()).padStart(2, '0');
+      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+      const anio = hoy.getFullYear();
+      const fechaExacta = `${dia}/${mes}/${anio}`;
+      
       if (publicacionEditar) {
         dispatch(editarPublicacion({
           id: publicacionEditar.id,
           titulo: data.titulo,
           descripcion: data.descripcion,
           imagen: data.imagen,
-          date: publicacionEditar.date || new Date().toLocaleDateString(),
+          date: publicacionEditar.date || fechaExacta, // Ajusta si usas 'fecha' o 'date'
           tipo: data.tipo,
         }))
       } else {
@@ -113,57 +120,58 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
           titulo: data.titulo,
           descripcion: data.descripcion,
           imagen: data.imagen,
-          fecha: new Date().toLocaleDateString(),
+          fecha: fechaExacta, // <-- GUARDAMOS CON EL FORMATO PERFECTO
           tipo: data.tipo,
         }))
       }
 
-      resetForm()
+      // CORRECCIÓN DEL SALTO VISUAL (TABS)
+      // 1. Ocultamos el modal suavemente
       onClose()
+      
+      // 2. Esperamos que termine la animación (400ms) para limpiar los datos
+      setTimeout(() => {
+        resetForm()
+      }, 400)
+
     } catch (error) {
       console.error('Error al publicar:', error)
       Alert.alert('Error', 'No se pudo guardar la publicación')
-    } finally {
       setIsSubmitting(false)
-    }
+    } 
   }
 
   const resetForm = () => {
     reset({
       titulo: '',
       descripcion: '',
-      imagen: null
+      imagen: null,
+      tipo: ''
     })
     setIsSubmitting(false)
   }
 
   const handleCancel = () => {
-    resetForm()
     onClose()
+    setTimeout(() => {
+      resetForm()
+    }, 400)
   }
 
-  // Validación adicional para el botón de submit
-  const canSubmit = isValid && !isSubmitting && titulo.trim() && descripcion.trim()
+  const canSubmit = isValid && !isSubmitting && titulo.trim() && descripcion.trim() && tipo;
 
   return {
-    // Form state
     control,
     errors,
     isValid,
     isSubmitting,
     canSubmit,
-
-    // Form values
     imageUri,
     titulo,
     descripcion,
-
-    // Form methods
     handleSubmit,
     setValue,
     trigger,
-
-    // Actions
     handleImagePick,
     removeImage,
     onSubmit,

@@ -1,16 +1,20 @@
-// hooks/useEventos.js
 import { useSelector } from 'react-redux';
+import { parseFechaDDMMYYYY } from '../utils/dateUtils';
 
 export const useEventos = () => {
-  const publicaciones = useSelector(state => state.publicaciones.publicacion);
+  const publicaciones = useSelector(state => state.publicaciones.listaPublicaciones) || [];
   
-  // Filtrar solo eventos (suponiendo que tienen tipo 'evento')
-  const eventos = publicaciones.filter(pub => pub.tipo === 'evento');
+  const eventos = publicaciones.filter(pub => pub.tipo?.toLowerCase() === 'evento');
   
-  // Opcional: ordenar por fecha (más próximos primero)
-  const eventosOrdenados = [...eventos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  const eventosOrdenados = [...eventos].sort((a, b) => {
+    if (!a.fecha || !b.fecha) return 0; 
+
+    const fechaA = parseFechaDDMMYYYY(a.fecha);
+    const fechaB = parseFechaDDMMYYYY(b.fecha);
+    
+    return fechaA - fechaB; 
+  });
   
-  // Tomar solo los próximos 3, por ejemplo
   const proximosEventos = eventosOrdenados.slice(0, 3);
   
   return { eventos: proximosEventos };

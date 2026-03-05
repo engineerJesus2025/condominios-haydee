@@ -1,23 +1,16 @@
-// components/ProgresoPresupuesto.js
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Rect, G, Text as SvgText } from 'react-native-svg';
 import { useTema } from '../hooks/useTema';
 
-/**
- * Barra de progreso para mostrar el avance del presupuesto.
- * @param {number} gastado - Monto gastado hasta ahora.
- * @param {number} total - Presupuesto total del mes.
- * @param {string} moneda - Símbolo de moneda (ej. "Bs").
- */
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const ProgresoPresupuesto = ({ gastado = 0, total = 0, moneda = "Bs" }) => {
   const { colores } = useTema();
   const estilos = getEstilos(colores);
 
-  // Calcular porcentaje (evitar división por cero)
   const porcentaje = total > 0 ? Math.min((gastado / total) * 100, 100) : 0;
 
-  // Determinar color según el porcentaje
   let colorBarra = colores.success || '#27ae60'; // verde
   if (porcentaje > 90) {
     colorBarra = colores.error || '#e74c3c'; // rojo
@@ -25,8 +18,8 @@ const ProgresoPresupuesto = ({ gastado = 0, total = 0, moneda = "Bs" }) => {
     colorBarra = colores.warning || '#f39c12'; // amarillo/naranja
   }
 
-  // Ancho de la barra de progreso (fijo 300px, pero podemos hacerlo responsive)
-  const anchoTotal = 250;
+  // Ancho de pantalla - (Márgenes exteriores horizontales 16*2) - (Padding interior 16*2)
+  const anchoTotal = SCREEN_WIDTH - 90; 
   const anchoProgreso = (porcentaje / 100) * anchoTotal;
 
   return (
@@ -38,7 +31,6 @@ const ProgresoPresupuesto = ({ gastado = 0, total = 0, moneda = "Bs" }) => {
 
       <View style={estilos.barraContainer}>
         <Svg height="35" width={anchoTotal}>
-          {/* Fondo de la barra */}
           <Rect
             x="0"
             y="8"
@@ -48,7 +40,6 @@ const ProgresoPresupuesto = ({ gastado = 0, total = 0, moneda = "Bs" }) => {
             rx="7"
             ry="7"
           />
-          {/* Barra de progreso */}
           <Rect
             x="0"
             y="8"
@@ -58,11 +49,10 @@ const ProgresoPresupuesto = ({ gastado = 0, total = 0, moneda = "Bs" }) => {
             rx="7"
             ry="7"
           />
-          {/* Texto del porcentaje (opcional) */}
-          {porcentaje > 5 && (
+          {porcentaje > 10 && (
             <SvgText
-              x={anchoProgreso - 30}
-              y="20"
+              x={anchoProgreso - 10} 
+              y="19"
               fill="#fff"
               fontSize="10"
               fontWeight="bold"
@@ -92,7 +82,7 @@ const getEstilos = (colores) => StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    flexWrap:'wrap',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
@@ -107,8 +97,7 @@ const getEstilos = (colores) => StyleSheet.create({
   },
   barraContainer: {
     alignItems: 'center',
-    justifyContent:'center',
-
+    justifyContent: 'center',
   },
 });
 

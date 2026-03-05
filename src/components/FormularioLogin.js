@@ -1,11 +1,9 @@
-import { View, Text } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, StyleSheet } from 'react-native'
+import { useState, useRef } from 'react'
 
 import useValidaciones from '../hooks/useValidaciones'
-import useFormulario from '../hooks/useFormulario'
-import { useTema } from './../hooks/useTema'
-
-import { getEstilosFormularioLogin } from './../styles/components/estilosFormularioLogin'
+import useLogin from '../hooks/useLogin'
+import { useTema } from '../hooks/useTema'
 
 import InputFormulario from './InputFormulario'
 import ErrorFormulario from '../components/ErrorFormulario'
@@ -14,16 +12,17 @@ import LabelInput from '../components/LabelInput'
 import BotonRecuperarContra from '../components/BotonRecuperarContra'
 import ModalRecuperarContrasena from './ModalRecuperarContrasena'
 
-export default function Formulario () {
+export default function FormularioLogin () {
   const { colores } = useTema()
   const estilosFormulario = getEstilosFormularioLogin(colores)
+  const contraRef = useRef(null);
 
   const {
     control,
     handleSubmit,
     isValid,
     errors
-  } = useFormulario()
+  } = useLogin()
   const validaciones = useValidaciones()
 
   const botonDesabilitado = !isValid
@@ -44,6 +43,9 @@ export default function Formulario () {
         keyboardType='email-address'
         autoCapitalize='none'
         noDark={true}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        onSubmitEditing={() => contraRef.current?.focus()}
       />
       <ErrorFormulario error={errors.correo} />
 
@@ -58,16 +60,19 @@ export default function Formulario () {
         keyboardType='password'
         autoCapitalize='none'
         noDark={true}
+        inputRef={contraRef}
+        returnKeyType="send"
+        onSubmitEditing={handleSubmit}
       />
-
       <ErrorFormulario error={errors.contra} />
 
-      {/* Enlace para recuperar contraseña */}
-      <BotonRecuperarContra
-        titulo='¿Olvidaste tu contraseña?'
-        evento={() => setModalRecuperarVisible(true)}
-        fuente={16}
-      />
+      <View style={{ marginBottom: 20, marginTop: 5 }}>
+        <BotonRecuperarContra
+          titulo='¿Olvidaste tu contraseña?'
+          evento={() => setModalRecuperarVisible(true)}
+          fuente={16}
+        />
+      </View>
 
       <CustomBoton
         titulo='Ingresar'
@@ -79,7 +84,6 @@ export default function Formulario () {
         noDark={true}
       />
 
-      {/* Modal para recuperar contraseña */}
       <ModalRecuperarContrasena
         visible={modalRecuperarVisible}
         onClose={() => setModalRecuperarVisible(false)}
@@ -87,3 +91,28 @@ export default function Formulario () {
     </View>
   )
 }
+
+const getEstilosFormularioLogin = (colores) => StyleSheet.create({
+  formContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#222',
+    marginBottom: 20,
+    textAlign: 'center'
+  },
+  button: {
+    alignSelf: 'center'
+  }
+})

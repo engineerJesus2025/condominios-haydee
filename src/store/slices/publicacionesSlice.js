@@ -1,62 +1,28 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-
-// Por si me da por procesar la imagen antes de guardarla
-export const processImage = createAsyncThunk(
-  'publicacion/processImage',
-  async (imageUri) => {
-    // agregar lógica para procesar la imagen si es necesario (si me da)
-    return imageUri
-  }
-)
+import { createSlice } from '@reduxjs/toolkit';
+import { DATA_PUBLICACIONES } from '../../utils/Data'; 
 
 const publicacionesSlice = createSlice({
   name: 'publicaciones',
   initialState: {
-    publicacion: [],
+    listaPublicaciones: DATA_PUBLICACIONES, // <-- 2. INYECTAMOS LOS DATOS AQUÍ
     loading: false,
     error: null
   },
   reducers: {
     agregarPublicacion: (state, action) => {
-      state.publicacion.unshift({
-        ...action.payload,
-        id: action.payload.id || Date.now().toString()
-      })
+      state.listaPublicaciones.unshift(action.payload);
     },
     editarPublicacion: (state, action) => {
-      const { id, ...datosActualizados } = action.payload
-      const index = state.publicacion.findIndex(pub => pub.id === id)
+      const index = state.listaPublicaciones.findIndex(p => p.id === action.payload.id);
       if (index !== -1) {
-        state.publicacion[index] = { ...state.publicacion[index], ...datosActualizados }
+        state.listaPublicaciones[index] = action.payload;
       }
     },
     eliminarPublicacion: (state, action) => {
-      const id = action.payload
-      state.publicacion = state.publicacion.filter(pub => pub.id !== id)
-    },
-    clearPublicaciones: (state) => {
-      state.publicacion = []
+      state.listaPublicaciones = state.listaPublicaciones.filter(p => p.id !== action.payload);
     }
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(processImage.pending, (state) => {
-        state.loading = true
-      })
-      .addCase(processImage.fulfilled, (state, action) => {
-        state.loading = false
-      })
-      .addCase(processImage.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.error.message
-      })
   }
-})
+});
 
-export const {
-  agregarPublicacion,
-  editarPublicacion,
-  eliminarPublicacion,
-  clearPublicaciones
-} = publicacionesSlice.actions
-export default publicacionesSlice.reducer
+export const { agregarPublicacion, editarPublicacion, eliminarPublicacion } = publicacionesSlice.actions;
+export default publicacionesSlice.reducer;

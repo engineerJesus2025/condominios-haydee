@@ -30,7 +30,6 @@ export default function BotonCambiarTema() {
 
   const accessibilityLabel = getAccessibilityLabel();
 
-  // Evita parpadeos durante el montaje
   if (!mounted) {
     return (
       <TouchableOpacity 

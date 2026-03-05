@@ -1,4 +1,3 @@
-// src/components/PagoCard.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -7,24 +6,31 @@ import { useTema } from '../hooks/useTema';
 export default function PagoCard({ pago, onPressDetalles }) {
   const { colores } = useTema();
   
-  // Determinamos el color y el icono según el estado del pago
-  const esProcesado = pago.estado.toLowerCase() === 'procesado';
-  const colorEstado = esProcesado ? '#27ae60' : '#f39c12'; // Verde o Naranja
-  const iconoEstado = esProcesado ? 'checkmark-circle' : 'time';
+  const estado = pago.estado?.toLowerCase();
+  
+  let colorEstado = '#f39c12'; // (Pendiente)
+  let iconoEstado = 'time';
+
+  if (estado === 'procesado') {
+    colorEstado = '#27ae60'; // Verde
+    iconoEstado = 'checkmark-circle';
+  } else if (estado === 'rechazado') {
+    colorEstado = '#e74c3c'; // Rojo
+    iconoEstado = 'close-circle'; 
+  }
 
   return (
     <View style={[styles.card, { backgroundColor: colores.inputBackground }]}>
       
-      {/* Cabecera: Monto y Estado */}
       <View style={styles.header}>
         <Text style={[styles.monto, { color: colores.text }]}>{pago.monto}</Text>
+        
         <View style={[styles.estadoContainer, { backgroundColor: colorEstado + '20' }]}>
           <Icon name={iconoEstado} size={16} color={colorEstado} style={{ marginRight: 4 }} />
           <Text style={[styles.estadoTexto, { color: colorEstado }]}>{pago.estado}</Text>
         </View>
       </View>
 
-      {/* Cuerpo: Detalles principales */}
       <View style={styles.body}>
         <View style={styles.detalleFila}>
           <Icon name="calendar-outline" size={16} color="#7f8c8d" />
@@ -40,7 +46,6 @@ export default function PagoCard({ pago, onPressDetalles }) {
         </View>
       </View>
 
-      {/* Pie: Botón de acción */}
       <TouchableOpacity 
         style={[styles.botonVerMas, { borderTopColor: colores.border }]} 
         onPress={() => onPressDetalles(pago)}

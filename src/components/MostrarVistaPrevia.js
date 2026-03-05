@@ -10,7 +10,7 @@ export default function MostrarVistaPrevia ({ titulo, imageUri, icono = false })
     <View style={estilosMostrarVistaPrevia.imagePreviewContainer}>
       <View style={estilosMostrarVistaPrevia.previewHeader}>
         {icono && (<Icon name={icono.name} size={16} color={icono.color} />)}
-        <Text style={estilosMostrarVistaPrevia.previewText}>{titulo}:</Text>
+        <Text style={estilosMostrarVistaPrevia.previewText}>{titulo}</Text>
       </View>
       <View style={estilosMostrarVistaPrevia.imageWrapper}>
         <Image
