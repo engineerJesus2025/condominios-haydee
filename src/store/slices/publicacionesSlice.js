@@ -4,7 +4,7 @@ import { DATA_PUBLICACIONES } from '../../utils/Data';
 const publicacionesSlice = createSlice({
   name: 'publicaciones',
   initialState: {
-    listaPublicaciones: DATA_PUBLICACIONES, // <-- 2. INYECTAMOS LOS DATOS AQUÍ
+    listaPublicaciones: DATA_PUBLICACIONES, 
     loading: false,
     error: null
   },

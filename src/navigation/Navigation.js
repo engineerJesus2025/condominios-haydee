@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTema } from '../hooks/useTema';
 
-// <-- NUEVO 1: Importamos el hook para leer los márgenes del teléfono
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 
 // Screens
@@ -25,10 +24,8 @@ function MainTabs () {
   const modoOscuro = useSelector(state => state.tema.modoOscuro); 
   const { colores } = useTema();
   
-  // <-- NUEVO 2: Obtenemos el margen inferior de forma estática
   const insets = useSafeAreaInsets();
   
-  // <-- NUEVO 3: Calculamos la altura matemática exacta y la congelamos
   const paddingAbajo = Math.max(insets.bottom, 10);
   const alturaBarra = 60 + paddingAbajo;
 
@@ -37,7 +34,6 @@ function MainTabs () {
       screenOptions={({ route }) => ({
         headerShown: false, 
         
-        // <-- NUEVO 4: El "Candado". Le prohíbe a React Navigation achicar la barra
         safeAreaInsets: { bottom: 0 }, 
         
         tabBarStyle: {
@@ -45,12 +41,10 @@ function MainTabs () {
           borderTopWidth: 1,
           borderTopColor: colores.border, 
           
-          // <-- NUEVO 5: Aplicamos las medidas congeladas
           height: alturaBarra, 
           paddingBottom: paddingAbajo, 
           paddingTop: 8,
           
-          // <-- NUEVO 6: La volvemos una caja flotante absoluta para que el teclado/galería no la empujen
           position: 'absolute', 
           left: 0, 
           right: 0, 
@@ -91,7 +85,6 @@ function MainTabs () {
   );
 }
 
-// Stack solo para pantallas de autenticación
 function AuthStack () {
   return (
     <Stack.Navigator>

@@ -26,7 +26,7 @@ const pagosSlice = createSlice({
       // Añadimos el nuevo pago al principio de la lista
       state.listaPagos.unshift(nuevoPago);
     },
-    // A futuro, los administradores usarán esta acción para aprobar
+    // los administradores usarán esta acción para aprobar (algun dia mano)
     cambiarEstadoPago: (state, action) => {
       const { id, nuevoEstado } = action.payload;
       const pago = state.listaPagos.find(p => p.id === id);
