@@ -36,7 +36,7 @@ export default function InputFormulario ({ control, name, rules, icono, estilos,
             />
           </View>
           
-          {/* RENDERIZADO CONDICIONAL: Solo dibuja el contador si el input tiene límite de caracteres */}
+          {/* Solo dibuja el contador si el input tiene límite de caracteres */}
           {maxLengthValue && (
             <View style={[estilosInputFormulario.charCounterContainer, !error && { marginBottom: 15 }]}>
               <Icon name='ellipsis-horizontal' size={14} color='#95a5a6' />

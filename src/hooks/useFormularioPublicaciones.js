@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { useState, useEffect } from 'react'
 import * as ImagePicker from 'expo-image-picker'
 import { Alert } from 'react-native'
-import { agregarPublicacion, editarPublicacion } from '../store/slices/publicacionesSlice'
+import { fetchPublicaciones, crearPublicacion } from '../store/slices/publicacionesSlice';
 
 export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => { 
   const dispatch = useDispatch()
@@ -89,57 +89,67 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
   }
 
   const onSubmit = async (data) => {
-    if (isSubmitting) return
+    if (isSubmitting) return;
 
     if (data.imagen && data.imagen.startsWith('data:')) {
-      Alert.alert('Formato no soportado', 'La imagen está en un formato no optimizado. Por favor selecciona otra.')
-      return
+      Alert.alert('Formato no soportado', 'La imagen está en un formato no optimizado. Por favor selecciona otra.');
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      const hoy = new Date();
-      const dia = String(hoy.getDate()).padStart(2, '0');
-      const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-      const anio = hoy.getFullYear();
-      const fechaExacta = `${dia}/${mes}/${anio}`;
-      
-      if (publicacionEditar) {
-        dispatch(editarPublicacion({
-          id: publicacionEditar.id,
-          titulo: data.titulo,
-          descripcion: data.descripcion,
-          imagen: data.imagen,
-          date: publicacionEditar.date || fechaExacta, // Ajusta si usas 'fecha' o 'date'
-          tipo: data.tipo,
-        }))
-      } else {
-        dispatch(agregarPublicacion({
-          id: Date.now().toString(),
-          titulo: data.titulo,
-          descripcion: data.descripcion,
-          imagen: data.imagen,
-          fecha: fechaExacta, // <-- GUARDAMOS CON EL FORMATO PERFECTO
-          tipo: data.tipo,
-        }))
+      // FormData estándar
+      const formData = new FormData();
+      formData.append('operacion', 'registrar_cartelera');
+      formData.append('titulo', data.titulo);
+      formData.append('descripcion', data.descripcion);
+      formData.append('usuario_id', 1); // Temporal hasta usar Tokens de sesión
+
+      let prioridad = 3; // Por defecto Noticia
+      if (data.tipo === 'aviso') prioridad = 1;
+      else if (data.tipo === 'evento') prioridad = 2;
+      formData.append('prioridad', prioridad);
+
+      // Empaquetar la imagen para React Native
+      if (data.imagen) {
+        let localUri = data.imagen;
+        let filename = localUri.split('/').pop();
+
+        let match = /\.(\w+)$/.exec(filename);
+        let type = match ? `image/${match[1]}` : `image`;
+
+        formData.append('imagen', {
+          uri: localUri,
+          name: filename,
+          type: type
+        });
       }
 
-      // CORRECCIÓN DEL SALTO VISUAL (TABS)
-      // 1. Ocultamos el modal suavemente
-      onClose()
-      
-      // 2. Esperamos que termine la animación (400ms) para limpiar los datos
+      const datosVisuales = {
+        titulo: data.titulo,
+        descripcion: data.descripcion,
+        tipo: data.tipo,
+        autor: 'Tú',
+        imagen: data.imagen
+      };
+
+      // Despachamos la acción al servidor y esperamos que termine (.unwrap() extrae el resultado o lanza el error)
+      await dispatch(crearPublicacion({ datosVisuales, formData })).unwrap();
+
+      // Cerramos modal y limpiamos
+      onClose();
       setTimeout(() => {
-        resetForm()
-      }, 400)
+        resetForm();
+      }, 400);
 
     } catch (error) {
-      console.error('Error al publicar:', error)
-      Alert.alert('Error', 'No se pudo guardar la publicación')
-      setIsSubmitting(false)
-    } 
-  }
+      console.error('Error al publicar:', error);
+      Alert.alert('Error', typeof error === 'string' ? error : 'No se pudo guardar la publicación en el servidor.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const resetForm = () => {
     reset({

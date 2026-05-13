@@ -16,9 +16,30 @@ import PagosScreen from '../screens/PagosScreen';
 import GastosScreen from '../screens/GastosScreen';
 import MensualidadesScreen from '../screens/MensualidadesScreen';
 import CarteleraVirtualScreen from '../screens/CarteleraVirtualScreen';
+import PerfilScreen from '../screens/PerfilScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const AppStack = createStackNavigator();
+
+function LoggedInStack() {
+  return (
+    <AppStack.Navigator screenOptions={{ headerShown: false }}>
+      {/* Las pestañas principales */}
+      <AppStack.Screen name="MainTabs" component={MainTabs} />
+      
+      {/* La pantalla de perfil fuera del Tab para que cubra toda la pantalla */}
+      <AppStack.Screen 
+        name="Perfil" 
+        component={PerfilScreen} 
+        options={{ 
+          headerShown: false,
+          // añadir animaciones de transición
+        }} 
+      />
+    </AppStack.Navigator>
+  );
+}
 
 function MainTabs () {
   const modoOscuro = useSelector(state => state.tema.modoOscuro); 
@@ -81,6 +102,7 @@ function MainTabs () {
       <Tab.Screen name='Pagos' component={PagosScreen} />
       <Tab.Screen name='Gastos' component={GastosScreen} />
       <Tab.Screen name='Cartelera' component={CarteleraVirtualScreen} options={{ tabBarLabel: 'Cartelera' }} />
+
     </Tab.Navigator>
   );
 }
@@ -99,7 +121,7 @@ export default function Navigation () {
   return (
     <NavigationContainer>
       <StatusBar barStyle='light-content' backgroundColor='#000' />
-      {isAuthenticated ? <MainTabs /> : <AuthStack />}
+      {isAuthenticated ? <LoggedInStack /> : <AuthStack />}
     </NavigationContainer>
   );
 }

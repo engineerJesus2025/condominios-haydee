@@ -7,26 +7,28 @@ export const useTema = () => {
     ? {
         background: '#2A2A4D',
         text: '#ffffff',
-        navigation: '#313190', // Morado claro para dark mode
+        navigation: '#313190', 
         card: '#1e1e1e',
         border: '#333333',
         inputBackground: '#2d2d2d',
         textTitle: '#E1E1F7',
         backgroundTabla: '#1B1B29',
         backgroundBotones: '#313190',
-        textPlaceholder: 'rgba(230, 230, 246, 0.71)'
+        textPlaceholder: 'rgba(230, 230, 246, 0.71)',
+        primario: '#4facfe'
       }
     : {
         background: '#F4F7F6',
         text: '#2c3e50',
-        navigation: '#3939a9', // Azul original
+        navigation: '#3939a9', 
         card: '#f8f8f8',
         border: '#e0e0e0',
         inputBackground: '#ffffff',
         textTitle: '#495057',
         backgroundTabla: '#fff',
         backgroundBotones: '#007BFF',
-        textPlaceholder: '#999'
+        textPlaceholder: '#999',
+        primario: '#007BFF'
       }
 
   return { modoOscuro, colores }

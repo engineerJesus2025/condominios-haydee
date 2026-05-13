@@ -1,25 +1,27 @@
-// hooks/useResumenFinanciero.js
-import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchResumenFinanciero } from '../store/slices/mensualidadesSlice';
 
 export const useResumenFinanciero = () => {
-  const [deudaTotal, setDeudaTotal] = useState(0);
-  const [gastado, setGastado] = useState(0);
-  const [presupuestoTotal, setPresupuestoTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    // Simular carga de datos
-    const timer = setTimeout(() => {
-      // Datos mock
-      setDeudaTotal(152.75);
-      setGastado(4500);
-      setPresupuestoTotal(10000);
-      setLoading(false);
-    }, 500);
+  const { resumen, loading, error } = useSelector(state => state.mensualidades);
+  const { deudaTotal, gastado, presupuestoTotal } = resumen;
 
-    return () => clearTimeout(timer);
-  }, []);
+  // patrón Cache-First
+  const obtenerDatos = (forzar = false) => {
+    // o si los datos están en 0 (es la primera vez que abre la app) --- Pull-to-Refresh
+    if (forzar || (deudaTotal === 0 && gastado === 0)) {
+      dispatch(fetchResumenFinanciero());
+    }
+  };
 
-  return { deudaTotal, gastado, presupuestoTotal, loading, error };
+  return { 
+    deudaTotal, 
+    gastado, 
+    presupuestoTotal, 
+    loading, 
+    error, 
+    obtenerDatos, 
+    refrescarResumen: () => obtenerDatos(true) // Alias semántico para forzar recarga
+  };
 };

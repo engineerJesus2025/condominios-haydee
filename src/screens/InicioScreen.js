@@ -1,16 +1,21 @@
-import React from 'react';
-import { View, Text, ActivityIndicator, FlatList, Dimensions, StyleSheet } from 'react-native'; // <-- IMPORTAMOS Dimensions
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { View, Text, ActivityIndicator, FlatList, Dimensions, StyleSheet } from 'react-native';
+
+import { useSelector, useDispatch } from 'react-redux';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import PublicacionCard from '../components/PublicacionCard';
 import DeudaResumenCard from '../components/DeudaResumenCard';
 import EventoCard from '../components/EventoCard';
 import ProgresoPresupuesto from '../components/ProgresoPresupuesto';
+import ListaRefrescable from '../components/ListaRefrescable';
 
 import { useTema } from '../hooks/useTema';
 import { useResumenFinanciero } from '../hooks/useResumenFinanciero';
 import { useEventos } from '../hooks/useEventos';
+
+
+import { fetchPublicaciones } from '../store/slices/publicacionesSlice';
 
 const { width } = Dimensions.get('window');
 const SNAP_INTERVAL = (width * 0.75) + 12; 
@@ -19,12 +24,19 @@ export default function InicioScreen({ navigation }) {
   const { colores } = useTema();
   const estilosInicio = getEstilosInicio(colores);
 
-  const { deudaTotal, gastado, presupuestoTotal, loading, error } = useResumenFinanciero();
+  const dispatch = useDispatch();
+
+  const { deudaTotal, gastado, presupuestoTotal, loading: loadingFinanzas, error, obtenerDatos } = useResumenFinanciero();
   const { eventos } = useEventos();
   
-  const listaPublicaciones = useSelector(state => state.publicaciones.listaPublicaciones) || []; 
+  const { listaPublicaciones, cargando: loadingPublicaciones } = useSelector(state => state.publicaciones);
 
-  const noticiasGenerales = listaPublicaciones.filter(post => post.tipo?.toLowerCase() !== 'evento');
+  const noticiasGenerales = (listaPublicaciones || []).filter(post => post.tipo?.toLowerCase() !== 'evento');
+
+  useEffect(() => {
+    if (obtenerDatos) obtenerDatos();
+    dispatch(fetchPublicaciones());
+  }, [dispatch]);
 
   const handleVerDetalleDeuda = () => {
     navigation.navigate('Pagos');
@@ -34,8 +46,10 @@ export default function InicioScreen({ navigation }) {
     navigation.navigate('Cartelera'); 
   };
 
+
   const renderHeader = () => {
-    if (loading) {
+    if (loadingFinanzas && !gastado) {
+      // Solo mostramos el spinner gigante si es la primera carga y no hay datos
       return <ActivityIndicator size="large" color={colores.primario} style={{ marginTop: 40 }} />;
     }
     if (error) {
@@ -69,8 +83,7 @@ export default function InicioScreen({ navigation }) {
               showsHorizontalScrollIndicator={false}
               snapToAlignment="start"
               decelerationRate="fast"
-              snapToInterval={SNAP_INTERVAL} // Detiene la tarjeta en el lugar perfecto
-              
+              snapToInterval={SNAP_INTERVAL} 
               style={{ marginHorizontal: -16 }} 
               contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingVertical: 8 }} 
             />
@@ -78,18 +91,16 @@ export default function InicioScreen({ navigation }) {
           </View>
         )}
 
-        {!loading && !error && (
-          <View style={{ marginTop: 20 }}>
-            <Text style={[estilosInicio.title, { fontSize: 18, marginBottom: 10, paddingHorizontal: 0 }]}>
-              Gestión del mes
-            </Text>
-            <ProgresoPresupuesto
-              gastado={gastado}
-              total={presupuestoTotal}
-              moneda="Bs"
-            />
-          </View>
-        )}
+        <View style={{ marginTop: 20 }}>
+          <Text style={[estilosInicio.title, { fontSize: 18, marginBottom: 10, paddingHorizontal: 0 }]}>
+            Gestión del mes
+          </Text>
+          <ProgresoPresupuesto
+            gastado={gastado}
+            total={presupuestoTotal}
+            moneda="Bs"
+          />
+        </View>
 
         <Text style={[estilosInicio.title, { fontSize: 18, marginTop: 24, marginBottom: 10, paddingHorizontal: 0 }]}>
           Últimas noticias
@@ -98,26 +109,28 @@ export default function InicioScreen({ navigation }) {
     );
   };
 
+  // Combinamos los estados de carga para el Pull-to-Refresh
+  const isRefreshing = loadingFinanzas || loadingPublicaciones;
+
   return (
     <View style={{ flex: 1, backgroundColor: colores.background }}>
       <HeaderPrincipal />
       
-      <FlatList
+      <ListaRefrescable
         data={noticiasGenerales}
         keyExtractor={(item) => item.id.toString()}
+        cargando={isRefreshing}
+        onRefresh={() => {
+          dispatch(fetchPublicaciones()); 
+          if (obtenerDatos) obtenerDatos(true); 
+        }}
+        ListHeaderComponent={renderHeader}
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: 16 }}>
             <PublicacionCard post={item} />
           </View>
         )}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <Text style={{ textAlign: 'center', color: colores.textPlaceholder, marginTop: 20 }}>
-            No hay noticias recientes en el condominio.
-          </Text>
-        }
+        mensajeVacio="No hay noticias recientes en el condominio."
       />
     </View>
   );
@@ -130,7 +143,6 @@ const getEstilosInicio = (colores) => StyleSheet.create({
     padding: 14,
     paddingBottom: 40
   },
-
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -138,4 +150,4 @@ const getEstilosInicio = (colores) => StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 4
   }
-})
+});

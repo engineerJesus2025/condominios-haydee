@@ -18,7 +18,7 @@ const ProgresoPresupuesto = ({ gastado = 0, total = 0, moneda = "Bs" }) => {
     colorBarra = colores.warning || '#f39c12'; // amarillo/naranja
   }
 
-  // Ancho de pantalla - (Márgenes exteriores horizontales 16*2) - (Padding interior 16*2)
+  // Ancho de pantalla 
   const anchoTotal = SCREEN_WIDTH - 90; 
   const anchoProgreso = (porcentaje / 100) * anchoTotal;
 

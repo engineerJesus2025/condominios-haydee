@@ -1,9 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { useDispatch, useSelector } from 'react-redux';
-import { cambiarEstadoPago } from '../store/slices/pagosSlice'; 
-import { Alert } from 'react-native'; 
+import React, { useEffect } from 'react';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import PagoCard from '../components/PagoCard';
@@ -11,69 +7,43 @@ import ModalDetalles from '../components/ModalDetalles';
 import DeudaResumenCard from '../components/DeudaResumenCard'; 
 import ModalFormularioPago from '../components/ModalFormularioPago'; 
 import ModalEstadoCuenta from '../components/ModalEstadoCuenta';
+import ListaRefrescable from '../components/ListaRefrescable';
+import BotonRegistrar from '../components/BotonRegistrar';
 
 import { useTema } from './../hooks/useTema';
+import { usePagos } from '../hooks/usePagos';
 
 export default function PagosScreen() {
-  const dispatch = useDispatch();
-  const { user } = useSelector(state => state.usuario);
-  const esAdmin = user?.rol === 'administrador' || user?.rol === 'presidente';
-
   const { colores } = useTema();
   const estilosPagos = getEstilosPagos(colores);
 
-  const listaPagos = useSelector(state => state.pagos.listaPagos);
+  // Destructuramos todo lo necesario desde el Hook
+  const {
+    listaPagos,
+    loading,
+    error,
+    esAdmin,
+    modalVisible,
+    modalPagoVisible,
+    modalEstadoCuentaVisible,
+    pagoSeleccionado,
+    setModalPagoVisible,
+    setModalEstadoCuentaVisible,
+    obtenerPagos,
+    abrirDetalles,
+    cerrarDetalles,
+    handleAprobar,
+    handleRechazar
+  } = usePagos();
   
-  const [modalVisible, setModalVisible] = useState(false); 
-  const [modalPagoVisible, setModalPagoVisible] = useState(false); 
-  const [modalEstadoCuentaVisible, setModalEstadoCuentaVisible] = useState(false);
-  const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
-
-  const abrirDetalles = (pago) => {
-    setPagoSeleccionado({
-      ...pago,
-      imagen: pago.comprobante || pago.imagen 
-    });
-    setModalVisible(true);
-  };
-
-  const handleAprobar = (pago) => {
-    Alert.alert(
-      "Aprobar Pago",
-      `¿Confirmas que el pago por ${pago.monto} es válido y está en la cuenta del condominio?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sí, Aprobar", 
-          onPress: () => {
-            dispatch(cambiarEstadoPago({ id: pago.id, nuevoEstado: 'Procesado' }));
-            setModalVisible(false); 
-          }
-        }
-      ]
-    );
-  };
-
-  const handleRechazar = (pago) => {
-    Alert.alert(
-      "Rechazar Pago",
-      "¿Estás seguro de rechazar este pago? El recibo será marcado como inválido.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sí, Rechazar", 
-          style: "destructive",
-          onPress: () => {
-            dispatch(cambiarEstadoPago({ id: pago.id, nuevoEstado: 'Rechazado' }));
-            setModalVisible(false);
-          }
-        }
-      ]
-    );
-  };
+  // Cargamos los datos al montar la pantalla
+  useEffect(() => {
+    obtenerPagos();
+  }, []);
 
   const renderHeader = () => (
     <View style={{ paddingBottom: 10 }}>
+      {/* Temporalmente pasamos datos estáticos a la Deuda, esto lo conectaremos luego a otro endpoint */}
       <DeudaResumenCard 
         totalDeuda={150.75} 
         titulo="Total Adeudado" 
@@ -91,32 +61,43 @@ export default function PagosScreen() {
       <HeaderPrincipal />
 
       <View style={[estilosPagos.mainContentContainer, { flex: 1, paddingHorizontal: 0, paddingTop: 10 }]}>
-        <FlatList
-          data={listaPagos}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => (
-            <PagoCard pago={item} onPressDetalles={abrirDetalles} />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 16 }}
-          ListEmptyComponent={<Text style={{ color: colores.text }}>No hay pagos registrados</Text>}
-        />
+        
+        {/* Renderizado Condicional */}
+        {loading ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <ActivityIndicator size="large" color={colores.primario || '#007BFF'} />
+             <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando pagos...</Text>
+           </View>
+        ) : error ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <Text style={{ color: '#e74c3c' }}>Ocurrió un error: {error}</Text>
+             <TouchableOpacity onPress={obtenerPagos} style={{ marginTop: 10 }}>
+                <Text style={{ color: '#007BFF' }}>Reintentar</Text>
+             </TouchableOpacity>
+           </View>
+        ) : (
+          <ListaRefrescable
+            data={listaPagos}
+            keyExtractor={(item) => item.id.toString()}
+            cargando={loading}
+            onRefresh={() => obtenerPagos(true)}
+            ListHeaderComponent={renderHeader}
+            renderItem={({ item }) => (
+              <PagoCard pago={item} onPressDetalles={abrirDetalles} />
+            )}
+            mensajeVacio="No hay pagos registrados"
+          />
+        )}
       </View>
 
-      {/* EL BOTÓN FLOTANTE (FAB) PARA REGISTRAR PAGO */}
-      <TouchableOpacity 
-        style={[estilosPagos.fab, { backgroundColor: colores.backgroundBotones || '#007BFF' }]} 
-        onPress={() => setModalPagoVisible(true)}
-        activeOpacity={0.8}
-      >
-        <Icon name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+      <BotonRegistrar 
+        puedeRegistrar={true}
+        modalAbrir={() => setModalPagoVisible(true)}
+      />
 
-      {/* Modal Detalles Existente */}
       <ModalDetalles
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={cerrarDetalles}
         titulo="Detalles del Pago"
         datos={pagoSeleccionado}
         campos={[
@@ -134,7 +115,6 @@ export default function PagosScreen() {
         onRechazar={handleRechazar}
       />
 
-      {/* Modal para Registrar Pago */}
       <ModalFormularioPago 
         visible={modalPagoVisible} 
         onClose={() => setModalPagoVisible(false)} 

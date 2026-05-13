@@ -1,4 +1,3 @@
-// src/store/store.js
 import { configureStore } from '@reduxjs/toolkit';
 import publicacionesReducer from '../store/slices/publicacionesSlice';
 import temaReducer from '../store/slices/temaSlice';

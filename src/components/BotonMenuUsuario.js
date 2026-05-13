@@ -1,5 +1,6 @@
 import { TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { useTema } from '../hooks/useTema';
+import AvatarUsuario from './AvatarUsuario';
 
 export default function BotonMenuUsuario({ evento, user }) {
   const { colores } = useTema();
@@ -15,7 +16,7 @@ export default function BotonMenuUsuario({ evento, user }) {
       onPress={evento}
       activeOpacity={0.8}
     >
-      <Text style={estilos.avatarTexto}>{inicial}</Text>
+      <AvatarUsuario usuario={user} size={38} />
     </TouchableOpacity>
   );
 }

@@ -1,50 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { useSelector } from 'react-redux';
-import { usePermisos } from '../hooks/usePermisos';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import GastoCard from '../components/GastoCard';
 import ModalDetalles from '../components/ModalDetalles';
 import ModalFormularioGasto from '../components/ModalFormularioGasto';
+import ListaRefrescable from '../components/ListaRefrescable';
+import BotonRegistrar from '../components/BotonRegistrar';
 
 import { useTema } from './../hooks/useTema';
+import { useGastos } from '../hooks/useGastos';
+import { usePermisos } from '../hooks/usePermisos';
 
 export default function GastosScreen () {
   const { colores } = useTema();
   const estilosGastos = getEstilosGastos(colores);
   
-  const listaGastos = useSelector(state => state.gastos.listaGastos);
-  const totalGastadoMes = useSelector(state => state.gastos.totalGastadoMes);
-  
-  const { user } = useSelector(state => state.usuario);
-  const esAdministrador = user?.rol === 'administrador' || user?.rol === 'presidente';
-  const { puedeRegistrarGasto } = usePermisos();
+  const { puedeRegistrarGasto, usuario: user } = usePermisos();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalGastoVisible, setModalGastoVisible] = useState(false);
-  const [gastoSeleccionado, setGastoSeleccionado] = useState(null);
+  // Usamos el Hook para obtener todo lo necesario
+  const {
+    listaGastos,
+    totalGastadoMes,
+    loading,
+    error,
+    modalDetalleVisible,
+    modalGastoVisible,
+    gastoSeleccionado,
+    obtenerGastos,
+    abrirDetalles,
+    cerrarDetalles,
+    abrirNuevoGasto,
+    cerrarNuevoGasto
+  } = useGastos();
 
-  const abrirDetalles = (gasto) => {
-    setGastoSeleccionado({
-      ...gasto,
-      imagen: gasto.comprobante // <-- Le pasamos la factura al modal
-    });
-    setModalVisible(true);
-  };
+  // Disparamos la consulta al entrar a la pantalla
+  useEffect(() => {
+    obtenerGastos();
+  }, []);
 
-  // Resumen superior para los propietarios
   const renderHeader = () => (
-    <View style={[
-      estilosGastos.resumenContainer, 
-      { backgroundColor: colores.card }
-    ]}>
-      <Text style={[
-        estilosGastos.resumenLabel, 
-        { color: colores.textPlaceholder }
-      ]}>
-        Total Ejecutado este Mes
+    <View style={[estilosGastos.resumenContainer, { backgroundColor: colores.card }]}>
+      <Text style={[estilosGastos.resumenLabel, { color: colores.textPlaceholder }]}>
+        Total Ejecutado
       </Text>
       <Text style={[estilosGastos.resumenTotal, { color: colores.error || '#e74c3c' }]}>
         {totalGastadoMes} Bs.
@@ -58,35 +56,42 @@ export default function GastosScreen () {
       <HeaderPrincipal />
 
       <View style={[estilosGastos.mainContentContainer, { flex: 1, paddingHorizontal: 0 }]}>
-        <FlatList
-          data={listaGastos}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => (
-            <GastoCard gasto={item} onPressDetalles={abrirDetalles} />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ 
-            paddingBottom: 100, 
-            paddingHorizontal: 16,
-            paddingTop: 10 
-          }}
-        />
+        
+        {loading ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <ActivityIndicator size="large" color={colores.primario || '#007BFF'} />
+             <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando gastos...</Text>
+           </View>
+        ) : error ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <Text style={{ color: '#e74c3c' }}>Ocurrió un error: {error}</Text>
+             <TouchableOpacity onPress={obtenerGastos} style={{ marginTop: 10 }}>
+                <Text style={{ color: '#007BFF' }}>Reintentar</Text>
+             </TouchableOpacity>
+           </View>
+        ) : (
+          <ListaRefrescable
+            data={listaGastos}
+            keyExtractor={(item) => item.id.toString()}
+            cargando={loading}
+            onRefresh={() => obtenerGastos(true)}
+            ListHeaderComponent={renderHeader}
+            renderItem={({ item }) => (
+              <GastoCard gasto={item} onPressDetalles={abrirDetalles} />
+            )}
+            mensajeVacio="No hay gastos registrados este mes."
+          />
+        )}
       </View>
 
-      {puedeRegistrarGasto && (
-        <TouchableOpacity 
-          style={[estilosGastos.fab, { backgroundColor: colores.backgroundBotones || '#007BFF' }]} 
-          onPress={() => setModalGastoVisible(true)}
-          activeOpacity={0.8}
-        >
-          <Icon name="add-outline" size={28} color="#fff" />
-        </TouchableOpacity>
-      )}
+      <BotonRegistrar 
+        puedeRegistrar={puedeRegistrarGasto}
+        modalAbrir={abrirNuevoGasto}
+      />
 
       <ModalDetalles
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        visible={modalDetalleVisible}
+        onClose={cerrarDetalles}
         titulo="Detalle de Gasto"
         datos={gastoSeleccionado}
         campos={[
@@ -98,10 +103,10 @@ export default function GastosScreen () {
         ]}
         mostrarImagen={true}
       />
-      {/* Modal para Registrar Nuevo Gasto */}
+      
       <ModalFormularioGasto 
         visible={modalGastoVisible} 
-        onClose={() => setModalGastoVisible(false)} 
+        onClose={cerrarNuevoGasto} 
       />
     </View>
   );

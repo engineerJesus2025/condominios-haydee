@@ -14,7 +14,9 @@ export default function CustomBoton ({ titulo = 'Nuevo', evento = () => {}, icon
         onPress={evento}
         disabled={disabled}
       >
-        <Text style={[estilosCustomBoton.primaryBtnText, fuente && { fontSize: fuente }]}>{titulo} {icono && (<Icon name={icono.nombre} size={fuente || 16} color={icono.color} style={estilosCustomBoton.inputIcon} />)}</Text>
+        <Text style={[estilosCustomBoton.primaryBtnText, fuente && { fontSize: fuente }]}>
+          {titulo} {icono && (<Icon name={icono.nombre} size={fuente || 16} color={icono.color} />)}
+        </Text>
 
       </TouchableOpacity>
     </View>
@@ -37,10 +39,4 @@ const getEstilosCustomBoton = (colores, noDark = false) => StyleSheet.create({
     elevation: 2
   },
   primaryBtnText: { color: '#fff', fontWeight: '700' },
-  inputIcon: {
-    marginRight: 12,
-    position: 'absolute',
-    left: 15,
-    zIndex: 1
-  }
 })

@@ -12,7 +12,8 @@ import LabelInput from '../components/LabelInput'
 import BotonRecuperarContra from '../components/BotonRecuperarContra'
 import ModalRecuperarContrasena from './ModalRecuperarContrasena'
 
-export default function FormularioLogin () {
+// Recibimos la nueva prop
+export default function FormularioLogin ({ botonBloqueadoPorSeguridad }) {
   const { colores } = useTema()
   const estilosFormulario = getEstilosFormularioLogin(colores)
   const contraRef = useRef(null);
@@ -25,7 +26,9 @@ export default function FormularioLogin () {
   } = useLogin()
   const validaciones = useValidaciones()
 
-  const botonDesabilitado = !isValid
+  // El botón se bloquea si el formulario tiene errores O si el handshake no ha terminado
+  const botonDesabilitado = !isValid || botonBloqueadoPorSeguridad;
+  
   const [modalRecuperarVisible, setModalRecuperarVisible] = useState(false)
 
   return (
@@ -39,7 +42,7 @@ export default function FormularioLogin () {
         rules={validaciones.correo}
         icono={{ nombre: 'mail', color: '#000' }}
         error={errors.correo}
-        placeholder='Ejm: ejemplo@gmail.com'
+        placeholder='Ejm: franj@gmail.com'
         keyboardType='email-address'
         autoCapitalize='none'
         noDark={true}
@@ -75,7 +78,8 @@ export default function FormularioLogin () {
       </View>
 
       <CustomBoton
-        titulo='Ingresar'
+        // Cambiamos el título dinámicamente para dar buen feedback al usuario
+        titulo={botonBloqueadoPorSeguridad ? 'Conectando...' : 'Ingresar'}
         evento={handleSubmit}
         icono={{ nombre: 'send', color: '#fff' }}
         disabled={botonDesabilitado}

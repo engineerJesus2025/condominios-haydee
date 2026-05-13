@@ -1,12 +1,36 @@
+import { useState, useEffect } from 'react'; 
 import { ImageBackground, Dimensions, StyleSheet } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view' 
 
 import FormularioLogin from '../components/FormularioLogin'
+import clienteApi from '../utils/clienteApi';
+import { criptografiaMovil } from '../utils/criptografiaMovil';
 
 const { height: screenHeight } = Dimensions.get('window')
 
 export default function LoginScreen () {
   const estilosLogin = getEstilosLogin()
+  
+  // Estado para saber si el Handshake terminó
+  const [llaveLista, setLlaveLista] = useState(false);
+
+  // EL PRE-CÓMPUTO SILENCIOSO AL ABRIR LA APP
+  useEffect(() => {
+    const obtenerLlavePublica = async () => {
+      try {
+        const respuesta = await clienteApi.get('', { params: { endpoint: 'handshake' } });
+        if (respuesta.data.estatus) {
+          criptografiaMovil.setLlavePublica(respuesta.data.public_key);
+          setLlaveLista(true); 
+          console.log("Canal criptográfico preparado.");
+        }
+      } catch (error) {
+        console.error("Error al establecer Handshake:", error);
+      }
+    };
+
+    obtenerLlavePublica();
+  }, []);
 
   return (
     <ImageBackground
@@ -29,7 +53,8 @@ export default function LoginScreen () {
         showsVerticalScrollIndicator={false}
         bounces={false} 
       >
-        <FormularioLogin />
+        {/* Pasamos la variable para bloquear el botón si la llave no ha llegado */}
+        <FormularioLogin botonBloqueadoPorSeguridad={!llaveLista} />
       </KeyboardAwareScrollView>
     </ImageBackground>
   )

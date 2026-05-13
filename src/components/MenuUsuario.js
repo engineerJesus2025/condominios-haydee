@@ -62,7 +62,6 @@ export default function MenuUsuario () {
 const styles = StyleSheet.create({
   dropdownContainer: {
     position: 'absolute',
-    // Eliminamos el 'top' fijo de aquí porque ahora se calcula en línea arriba
     right: 15,
     width: 220,
     borderRadius: 14,

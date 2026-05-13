@@ -1,31 +1,40 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native'
+import { useNavigation } from '@react-navigation/native';
 
-import MenuUsuario from '../components/MenuUsuario'
-import BotonCambiarTema from '../components/BotonCambiarTema'
+import Icon from 'react-native-vector-icons/Ionicons'; 
+
 import BotonMenuUsuario from '../components/BotonMenuUsuario'
-
 import { useSelector } from 'react-redux'
-import useHeader from '../hooks/useHeader'
 import { useTema } from './../hooks/useTema'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export default function HeaderPrincipal () {
+export default function HeaderPrincipal ({ mostrarBotonAtras = false }) {
+  const navigation = useNavigation();
+
   const { user } = useSelector(state => state.usuario)
   const insets = useSafeAreaInsets()
   const { colores } = useTema()
   const estilosHeader = getEstilosHeader(colores)
-  const { isMenuVisible, toggleMenu, closeMenu } = useHeader()
-
+  
   return (
     <>
       <View style={{ height: insets.top, backgroundColor: '#000' }} />
       <View style={[estilosHeader.appHeader]}>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 }}>
+          {mostrarBotonAtras && (
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()} 
+              style={{ marginRight: 10, padding: 6 }}
+              activeOpacity={0.7}
+            >
+              <Icon name="arrow-back-outline" size={26} color="#fff" />
+            </TouchableOpacity>
+          )}
+
           <Text 
             style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }}
             numberOfLines={1} 
-            ellipsizeMode="tail"
           >
             Residencias
           </Text>
@@ -38,28 +47,20 @@ export default function HeaderPrincipal () {
         </View>
 
         <View style={[estilosHeader.headerRight, { gap: 15 }]}>
-          <BotonCambiarTema />
-          <BotonMenuUsuario evento={toggleMenu} user={user} />
+          {/* Si estamos en el perfil, oculto el avatar para no ser redundantes */}
+          {!mostrarBotonAtras && (
+            <BotonMenuUsuario 
+              evento={() => navigation.navigate('Perfil')} 
+              user={user} 
+            />
+          )}
         </View>
       </View>
-
-      {isMenuVisible && (
-        <Pressable
-          style={estilosHeader.overlay}
-          onPress={closeMenu}
-        />
-      )}
-      {isMenuVisible && <MenuUsuario />}
     </>
   )
 }
 
 const getEstilosHeader = (colores) => StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-    zIndex: 500
-  },
   appHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

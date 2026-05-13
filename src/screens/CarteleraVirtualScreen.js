@@ -1,15 +1,18 @@
-import { useMemo, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { useMemo, useState, useEffect } from 'react';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { useSelector } from 'react-redux';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import ModalFormularioPublicaciones from '../components/ModalFormularioPublicaciones';
 import PublicacionCard from '../components/PublicacionCard'; 
+import ListaRefrescable from '../components/ListaRefrescable';
+import BotonRegistrar from '../components/BotonRegistrar';
 
 import { useTema } from '../hooks/useTema';
 import { useCarteleraVirtual } from '../hooks/useCarteleraVirtual';
+import { usePermisos } from '../hooks/usePermisos';
+
+import { criptografiaMovil } from '../utils/criptografiaMovil'; 
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -21,15 +24,20 @@ LocaleConfig.locales['es'] = {
 LocaleConfig.defaultLocale = 'es';
 
 export default function CarteleraVirtualScreen () {
+// console.log('¿Hay clave AES?', criptografiaMovil.claveAESSesion);
   const { colores } = useTema();
   const estilosCarteleraVirtual = getEstilosCarteleraVirtual(colores);
 
-  const { user } = useSelector(state => state.usuario);
-  // Verificamos si es administrador o presidente
-  const esAdmin = user?.rol === 'administrador' || user?.rol === 'presidente';
+  const { puedePublicarCartelera, usuario: user } = usePermisos();
 
   const {
-    listaPublicaciones,
+    listaPublicacionesMostrar,
+    markedDates,
+    fechaSeleccionada,
+    setFechaSeleccionada,
+    cargando,
+    error,
+    obtenerPublicaciones,
     modalVisible,
     modalEdicionVisible,
     publicacionSeleccionada,
@@ -37,66 +45,12 @@ export default function CarteleraVirtualScreen () {
     cerrarModalNuevaPublicacion,
     cerrarModalEdicion,
     handleGuardarEdicion
-  } = useCarteleraVirtual();
+  } = useCarteleraVirtual(colores);
 
-  const [fechaSeleccionada, setFechaSeleccionada] = useState('');
+  useEffect(() => {
+    obtenerPublicaciones();
+  }, []);
 
-  const markedDates = useMemo(() => {
-    let dates = {};
-    if (!listaPublicaciones) return dates;
-
-    listaPublicaciones.forEach(post => {
-      if (post.fecha) {
-        const partes = post.fecha.split('/'); 
-        if(partes.length === 3) {
-          const dia = partes[0].padStart(2, '0');
-          const mes = partes[1].padStart(2, '0');
-          const anio = partes[2];
-          const fechaFormateada = `${anio}-${mes}-${dia}`; 
-          
-          const tipo = post.tipo?.toLowerCase() || 'noticia';
-          let dotColor = '#3498db'; // Azul para Noticia 
-          if (tipo === 'evento') dotColor = '#e74c3c'; // Rojo para Eventos
-          else if (tipo === 'aviso') dotColor = '#f39c12'; // Naranja para Avisos
-          
-          if (!dates[fechaFormateada]) {
-            dates[fechaFormateada] = { dots: [] };
-          }
-
-          const yaTieneEseTipo = dates[fechaFormateada].dots.some(dot => dot.key === tipo);
-          
-          if (!yaTieneEseTipo) {
-            dates[fechaFormateada].dots.push({ key: tipo, color: dotColor });
-          }
-        }
-      }
-    });
-    
-    if (fechaSeleccionada) {
-      if (!dates[fechaSeleccionada]) {
-        dates[fechaSeleccionada] = { dots: [] };
-      }
-      dates[fechaSeleccionada].selected = true;
-      dates[fechaSeleccionada].selectedColor = colores.primario || '#007BFF';
-    }
-    
-    return dates;
-  }, [listaPublicaciones, fechaSeleccionada, colores]);
-
-  const listaPublicacionesMostrar = useMemo(() => {
-    if (!fechaSeleccionada) return listaPublicaciones; 
-    
-    return listaPublicaciones.filter(post => {
-      if (!post.fecha) return false;
-      const partes = post.fecha.split('/');
-      if (partes.length !== 3) return false;
-      const dia = partes[0].padStart(2, '0');
-      const mes = partes[1].padStart(2, '0');
-      const anio = partes[2];
-      const fechaFormateada = `${anio}-${mes}-${dia}`;
-      return fechaFormateada === fechaSeleccionada;
-    });
-  }, [listaPublicaciones, fechaSeleccionada]);
 
   const renderHeader = () => (
     <View style={{ marginBottom: 20 }}>
@@ -104,13 +58,9 @@ export default function CarteleraVirtualScreen () {
       
       <View style={estilosCarteleraVirtual.calendarContainer}>
         <Calendar
-          markingType={'multi-dot'} // <-- MAGIA: Cambia a modo de múltiples puntos
+          markingType={'multi-dot'}
           onDayPress={(day) => {
-            if (fechaSeleccionada === day.dateString) {
-              setFechaSeleccionada('');
-            } else {
-              setFechaSeleccionada(day.dateString);
-            }
+            setFechaSeleccionada(fechaSeleccionada === day.dateString ? '' : day.dateString);
           }}
           markedDates={markedDates}
           theme={{
@@ -124,7 +74,7 @@ export default function CarteleraVirtualScreen () {
         />
       </View>
 
-      {/* LEYENDA DE COLORES (Ayuda visual para los usuarios) */}
+      {/* LEYENDA DE COLORES */}
       <View style={estilosCarteleraVirtual.leyendaContainer}>
         <View style={estilosCarteleraVirtual.leyendaItem}>
           <View style={[estilosCarteleraVirtual.leyendaPunto, { backgroundColor: '#f39c12' }]} />
@@ -158,30 +108,35 @@ export default function CarteleraVirtualScreen () {
       <HeaderPrincipal />
 
       <View style={[estilosCarteleraVirtual.mainContentContainer, { flex: 1, paddingHorizontal: 16, paddingTop: 10 }]}>
-        <FlatList
-          data={listaPublicacionesMostrar}
-          keyExtractor={(item) => item.id.toString()}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => <PublicacionCard post={item} />}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          ListEmptyComponent={
-            <Text style={{ color: colores.textPlaceholder, textAlign: 'center', marginTop: 20 }}>
-              No hay publicaciones para esta fecha.
-            </Text>
-          }
-        />
+        {cargando ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <ActivityIndicator size="large" color={colores.primario || '#007BFF'} />
+             <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando cartelera...</Text>
+           </View>
+        ) : error ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <Text style={{ color: '#e74c3c' }}>Ocurrió un error: {error}</Text>
+             <TouchableOpacity onPress={obtenerPublicaciones} style={{ marginTop: 10 }}>
+                <Text style={{ color: '#007BFF' }}>Reintentar</Text>
+             </TouchableOpacity>
+           </View>
+        ) : (
+          <ListaRefrescable
+            data={listaPublicacionesMostrar}
+            keyExtractor={(item) => item.id.toString()}
+            cargando={cargando}
+            onRefresh={() => obtenerPublicaciones(true)}
+            ListHeaderComponent={renderHeader}
+            renderItem={({ item }) => <PublicacionCard post={item} />}
+            mensajeVacio="No hay publicaciones para esta fecha."
+          />
+        )}
       </View>
 
-      {esAdmin && (
-        <TouchableOpacity 
-          style={[estilosCarteleraVirtual.fab, { backgroundColor: colores.backgroundBotones || '#007BFF' }]} 
-          onPress={abrirModalNuevaPublicacion}
-          activeOpacity={0.8}
-        >
-          <Icon name="megaphone-outline" size={26} color="#fff" />
-        </TouchableOpacity>
-      )}
+      <BotonRegistrar 
+        puedeRegistrar={puedePublicarCartelera}
+        modalAbrir={abrirModalNuevaPublicacion}
+      />
 
       <ModalFormularioPublicaciones
         visible={modalVisible}

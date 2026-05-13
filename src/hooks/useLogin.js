@@ -1,35 +1,33 @@
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
-import { DATA_USUARIOS } from '../utils/Data'; 
-import { loginSuccess } from '../store/slices/usuarioSlice';
+import { loginUsuario } from '../store/slices/usuarioSlice';
 
 export default function useLogin() {
   const dispatch = useDispatch();
+  const { loading, error: serverError } = useSelector(state => state.usuario);
   
   const { control, handleSubmit, formState: { isValid, errors }, setError } = useForm({
     mode: 'onTouched',
     defaultValues: { correo: '', contra: '' }
   });
 
-  const onSubmit = (data) => {
-    const usuario = DATA_USUARIOS.find(
-      (u) => u.correo === data.correo.toLowerCase() && u.contra === data.contra
-    );
-
-    if (usuario) {
-      dispatch(loginSuccess({
-        id: usuario.id,
-        usuario: usuario.usuario,
-        rol: usuario.rol,
-        correo: usuario.correo
-      }));
-    } else {
-      Alert.alert('Atención', 'Usuario o contraseña Incorrecto', [{ text: 'Aceptar', style: 'confirm' }]);
-      setError('correo', { type: 'manual', message: 'Revise el correo introducido' });
-      setError('contra', { type: 'manual', message: 'Revise la contraseña introducida' });
+  const onSubmit = async (data) => {
+    try {
+      const resultado = await dispatch(loginUsuario(data)).unwrap();
+      // Si llega aquí, el login fue exitoso y el slice ya actualizó el estado
+    } catch (error) {
+      Alert.alert('Error de acceso', error);
+      setError('correo', { type: 'manual', message: 'Verifique sus credenciales' });
+      setError('contra', { type: 'manual', message: 'Verifique sus credenciales' });
     }
   };
 
-  return { control, handleSubmit: handleSubmit(onSubmit), isValid, errors };
+  return { 
+    control, 
+    handleSubmit: handleSubmit(onSubmit), 
+    isValid, 
+    errors,
+    loading // Para mostrar un spinner en el botón de ingresar
+  };
 }

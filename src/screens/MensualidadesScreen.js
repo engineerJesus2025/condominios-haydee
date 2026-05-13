@@ -1,41 +1,45 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { useSelector } from 'react-redux'; 
+import React, { useState, useEffect } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchMensualidades, fetchDetalleMensualidad } from '../store/slices/mensualidadesSlice';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import MensualidadCard from '../components/MensualidadCard';
 import ProgresoPresupuesto from '../components/ProgresoPresupuesto';
 import ModalDesgloseMensualidad from '../components/ModalDesgloseMensualidad';
+import ListaRefrescable from '../components/ListaRefrescable';
 
 import { useTema } from './../hooks/useTema';
-
-import { useResumenFinanciero } from '../hooks/useResumenFinanciero'; 
+import { useMensualidades } from '../hooks/useMensualidades'; 
 
 export default function MensualidadesScreen () {
   const { colores } = useTema();
   const estilosMensualidad = getEstilosMensualidades(colores);
-
   
-  const { gastado, presupuestoTotal, loading } = useResumenFinanciero();
-  const listaMensualidades = useSelector(state => state.mensualidades.listaMensualidades);
+  const {
+    listaMensualidades,
+    loading,
+    obtenerMensualidades,
+    manejarVerDetalles,
+    modalVisible,
+    setModalVisible,
+    mensualidadSeleccionada,
+    gastado,
+    presupuestoTotal
+  } = useMensualidades();
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [mensualidadSeleccionada, setMensualidadSeleccionada] = useState(null);
-
-  const manejarVerDetalles = (mensualidad) => {
-    setMensualidadSeleccionada(mensualidad);
-    setModalVisible(true);
-  };
+  useEffect(() => {
+    obtenerMensualidades();
+  }, []);
 
   const renderHeader = () => (
     <View style={{ marginBottom: 15 }}>
-      <Text style={estilosMensualidad.title}>Balance General</Text>
-      <Text style={{ color: colores.textPlaceholder, paddingHorizontal: 4, marginBottom: 10, marginTop: -10 }}>
-        Ejecución del presupuesto del mes en curso.
-      </Text>
+      <Text style={estilosMensualidad.title}>Balance General de Deuda</Text>
       
-      {loading ? (
-        <ActivityIndicator size="small" color={colores.primario} />
+      {loading && !gastado ? (
+         <View style={{ padding: 20, alignItems: 'center' }}>
+           <ActivityIndicator size="small" color={colores.primario} />
+         </View>
       ) : (
         <ProgresoPresupuesto gastado={gastado} total={presupuestoTotal} moneda="Bs" />
       )}
@@ -50,19 +54,30 @@ export default function MensualidadesScreen () {
 
       <View style={[estilosMensualidad.mainContentContainer, { flex: 1, paddingHorizontal: 0 }]}>
         
-        <FlatList
-          data={listaMensualidades} 
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => (
-            <MensualidadCard 
-              mensualidad={item} 
-              onPressDetalles={manejarVerDetalles} 
-            />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 15, paddingTop: 10 }}
-        />
+        {loading && listaMensualidades.length === 0 ? (
+           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+             <ActivityIndicator size="large" color={colores.primario || '#007BFF'} />
+             <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando mensualidades...</Text>
+           </View>
+        ) : (
+          <ListaRefrescable
+            data={listaMensualidades}
+            keyExtractor={(item) => item.id.toString()}
+            cargando={loading}
+            onRefresh={() => {
+              obtenerDatos(true); // Refresca las barras y KPIs
+              dispatch(fetchMensualidades()); // Refresca la lista histórica
+            }}
+            ListHeaderComponent={renderHeader}
+            renderItem={({ item }) => (
+              <MensualidadCard 
+                mensualidad={item} 
+                onPressDetalles={manejarVerDetalles} 
+              />
+            )}
+            mensajeVacio="No hay mensualidades registradas."
+          />
+        )}
 
       </View>
 
@@ -81,7 +96,6 @@ const getEstilosMensualidades = (colores) => StyleSheet.create({
     backgroundColor: colores.background,
     padding: 14
   },
-
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -89,4 +103,4 @@ const getEstilosMensualidades = (colores) => StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 4
   }
-})
+});

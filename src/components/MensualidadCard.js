@@ -20,7 +20,6 @@ export default function MensualidadCard({ mensualidad, onPressDetalles }) {
         </Text>
       </View>
 
-      {/* Cuerpo de la tarjeta con los montos adaptados al Modo Oscuro */}
       <View style={styles.body}>
         <View style={styles.filaMonto}>
           <Text style={[styles.etiqueta, { color: colores.textPlaceholder }]}>Total del mes:</Text>

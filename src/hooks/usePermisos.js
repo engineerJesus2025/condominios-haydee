@@ -1,29 +1,24 @@
-import { useSelector } from 'react-redux'
+import { useSelector } from 'react-redux';
 
 export const usePermisos = () => {
-  const { user, isLogueado } = useSelector(state => state.usuario)
+  const { user, isAuthenticated } = useSelector(state => state.usuario);
   
-  // Si no hay usuario en el estado, lo consideramos un desconocido
-  const rolActual = user?.rol || 'desconocido' 
+  const rolActual = user?.rol?.toLowerCase() || 'desconocido';
+  const esAdmin = ['administrador', 'presidente'].includes(rolActual.split(" ")[0]);
 
   return {
-    isLogueado,
+    isLogueado: isAuthenticated,
     rolActual,
-    usuario: user,
+    usuario: user, // Exportamos al usuario para no tener que usar useSelector en las vistas
     
-    // ¿Quién puede agregar un nuevo Gasto?
-    puedeRegistrarGasto: ['administrador', 'presidente'].includes(rolActual),
+    // Bandera General
+    esAdmin,
     
-    // ¿Quién puede reportar un Pago?
+    // Permisos Específicos (Módulos)
+    puedeRegistrarGasto: esAdmin, 
     puedeRegistrarPago: ['propietario', 'administrador', 'presidente'].includes(rolActual),
-    
-    // ¿Quién puede aprobar/rechazar pagos en estado "Pendiente"?
     puedeAprobarPagos: ['administrador', 'presidente', 'contador'].includes(rolActual),
-
-    // ¿Quién puede crear publicaciones en la Cartelera?
-    puedePublicarCartelera: ['administrador', 'presidente'].includes(rolActual),
-
-    // ¿Es un invitado de solo lectura?
+    puedePublicarCartelera: esAdmin,
     esInvitadoLectura: ['invitado', 'desconocido'].includes(rolActual)
-  }
-}
+  };
+};
