@@ -26,12 +26,29 @@ export const fetchGastos = createAsyncThunk(
   }
 );
 
+export const fetchCatalogosGastos = createAsyncThunk(
+  'gastos/fetchCatalogos',
+  async (_, { rejectWithValue }) => {
+    try {
+      const respuesta = await clienteApi.get('', {
+        params: { endpoint: 'gastos', operacion: 'obtener_catalogos' }
+      });
+      if (respuesta.data.estatus) {
+        return respuesta.data.datos;
+      }
+      return rejectWithValue(respuesta.data.mensaje);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const crearGasto = createAsyncThunk(
   'gastos/crearGasto',
   async ({ datosVisuales, formData }, { rejectWithValue }) => {
     try {
-      const respuesta = await clienteApi.post('?endpoint=gastos', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const respuesta = await clienteApi.post('', formData, {
+        params: { endpoint: 'gastos' }
       });
 
       const json = respuesta.data;
@@ -56,6 +73,7 @@ const gastosSlice = createSlice({
   name: 'gastos',
   initialState: {
     listaGastos: [],
+    catalogos: { proveedores: [], bancos: [], solicitudes: [], tipos_gasto: [] },
     loading: false,
     error: null,
     totalGastadoMes: "0.00" 
@@ -115,6 +133,9 @@ const gastosSlice = createSlice({
         // Sumamos el monto crudo al Total del Mes
         const nuevoTotal = parseFloat(state.totalGastadoMes) + parseFloat(action.payload.montoCrudo || 0);
         state.totalGastadoMes = nuevoTotal.toFixed(2);
+      })
+      .addCase(fetchCatalogosGastos.fulfilled, (state, action) => {
+        state.catalogos = action.payload;
       });
   }
 });

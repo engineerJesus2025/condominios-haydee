@@ -2,6 +2,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
 import { loginUsuario } from '../store/slices/usuarioSlice';
+import { procesarErrorApi } from '../utils/gestorErroresUI';
+import { HTTP_CODIGO } from '../utils/HttpCodigos';
 
 export default function useLogin() {
   const dispatch = useDispatch();
@@ -16,10 +18,17 @@ export default function useLogin() {
     try {
       const resultado = await dispatch(loginUsuario(data)).unwrap();
       // Si llega aquí, el login fue exitoso y el slice ya actualizó el estado
-    } catch (error) {
-      Alert.alert('Error de acceso', error);
-      setError('correo', { type: 'manual', message: 'Verifique sus credenciales' });
-      setError('contra', { type: 'manual', message: 'Verifique sus credenciales' });
+    } catch (errorObj) {
+      procesarErrorApi(errorObj, (status, mensaje) => {
+        if (status === HTTP_CODIGO.BAD_REQUEST) {
+          // Pintamos los inputs de rojo y le decimos al gestor global: "Yo me encargo"
+          setError('correo', { type: 'manual', message: 'Credenciales incorrectas' });
+          setError('contra', { type: 'manual', message: 'Credenciales incorrectas' });
+          Alert.alert('Atención', mensaje);
+          return true; 
+        }
+        return false; // Si es otro error (ej. Rate Limit 429), dejamos que el gestor global muestre el Alert
+      });
     }
   };
 

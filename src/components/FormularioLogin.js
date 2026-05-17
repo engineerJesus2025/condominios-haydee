@@ -22,12 +22,20 @@ export default function FormularioLogin ({ botonBloqueadoPorSeguridad }) {
     control,
     handleSubmit,
     isValid,
-    errors
+    errors,
+    loading
   } = useLogin()
   const validaciones = useValidaciones()
 
   // El botón se bloquea si el formulario tiene errores O si el handshake no ha terminado
-  const botonDesabilitado = !isValid || botonBloqueadoPorSeguridad;
+  const botonDesabilitado = !isValid || botonBloqueadoPorSeguridad || loading;
+
+  let textoBoton = 'Ingresar';
+  if (botonBloqueadoPorSeguridad) {
+    textoBoton = 'Conectando canal...';
+  } else if (loading) {
+    textoBoton = 'Cargando...'; // O simplemente 'Cargando...'
+  }
   
   const [modalRecuperarVisible, setModalRecuperarVisible] = useState(false)
 
@@ -78,11 +86,11 @@ export default function FormularioLogin ({ botonBloqueadoPorSeguridad }) {
       </View>
 
       <CustomBoton
-        // Cambiamos el título dinámicamente para dar buen feedback al usuario
-        titulo={botonBloqueadoPorSeguridad ? 'Conectando...' : 'Ingresar'}
+        titulo={textoBoton}
         evento={handleSubmit}
         icono={{ nombre: 'send', color: '#fff' }}
         disabled={botonDesabilitado}
+        loading={loading || botonBloqueadoPorSeguridad}
         estilos={estilosFormulario.button}
         fuente={18}
         noDark={true}

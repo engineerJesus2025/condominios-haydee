@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import GastoCard from '../components/GastoCard';
@@ -7,6 +7,7 @@ import ModalDetalles from '../components/ModalDetalles';
 import ModalFormularioGasto from '../components/ModalFormularioGasto';
 import ListaRefrescable from '../components/ListaRefrescable';
 import BotonRegistrar from '../components/BotonRegistrar';
+import CargandoOverlay from '../components/CargandoOverlay';
 
 import { useTema } from './../hooks/useTema';
 import { useGastos } from '../hooks/useGastos';
@@ -18,12 +19,12 @@ export default function GastosScreen () {
   
   const { puedeRegistrarGasto, usuario: user } = usePermisos();
 
-  // Usamos el Hook para obtener todo lo necesario
   const {
     listaGastos,
     totalGastadoMes,
     loading,
     error,
+    cargandoDetalle,
     modalDetalleVisible,
     modalGastoVisible,
     gastoSeleccionado,
@@ -34,7 +35,6 @@ export default function GastosScreen () {
     cerrarNuevoGasto
   } = useGastos();
 
-  // Disparamos la consulta al entrar a la pantalla
   useEffect(() => {
     obtenerGastos();
   }, []);
@@ -83,22 +83,25 @@ export default function GastosScreen () {
           />
         )}
       </View>
-
+      
       <BotonRegistrar 
         puedeRegistrar={puedeRegistrarGasto}
         modalAbrir={abrirNuevoGasto}
       />
-
+      
       <ModalDetalles
         visible={modalDetalleVisible}
         onClose={cerrarDetalles}
         titulo="Detalle de Gasto"
         datos={gastoSeleccionado}
-        campos={[
+        campos={[ 
           { key: 'tipo_gasto', label: 'Categoría' },
           { key: 'proveedor', label: 'Proveedor' },
           { key: 'monto', label: 'Monto' },
           { key: 'fecha', label: 'Fecha' },
+          { key: 'metodo_pago', label: 'Método de Pago' },
+          { key: 'banco', label: 'Banco' },
+          { key: 'referencia', label: 'Referencia' },
           { key: 'descripcion', label: 'Descripción' }
         ]}
         mostrarImagen={true}
@@ -107,6 +110,11 @@ export default function GastosScreen () {
       <ModalFormularioGasto 
         visible={modalGastoVisible} 
         onClose={cerrarNuevoGasto} 
+      />
+
+      <CargandoOverlay 
+        visible={cargandoDetalle} 
+        mensaje="Obteniendo recibo..." 
       />
     </View>
   );
@@ -139,19 +147,4 @@ const getEstilosGastos = (colores) => StyleSheet.create({
   },
   resumenLabel: { fontSize: 16, color: colores.textPlaceholder, marginBottom: 5 },
   resumenTotal: { fontSize: 32, fontWeight: 'bold', color: colores.text },
-  fab: {
-    position: 'absolute',
-    bottom: 120,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  }
 })

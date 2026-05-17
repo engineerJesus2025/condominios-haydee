@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { registrarPagoServidor } from '../store/slices/pagosSlice';
 import clienteApi from '../utils/clienteApi';
+import { usePermisos } from './usePermisos';
 
 export const useFormularioPago = (onClose) => {
   const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Estados para los catálogos de la Base de Datos
+  // Estados para los catálogos
   const [bancosDisponibles, setBancosDisponibles] = useState([]);
   const [apartamentosDisponibles, setApartamentosDisponibles] = useState([]);
   const [mesesPendientes, setMesesPendientes] = useState([]);
 
-  const { user } = useSelector(state => state.usuario);
-  const esAdmin = user?.rol === 'administrador' || user?.rol === 'presidente';
+  const { esAdmin, usuario } = usePermisos();
 
   const { control, handleSubmit, formState: { errors, isValid }, reset, setValue, watch } = useForm({
     mode: 'onChange',
@@ -32,40 +32,44 @@ export const useFormularioPago = (onClose) => {
   });
 
   const comprobanteUri = watch('comprobante');
-  const apartamentoSeleccionado = watch('apartamento_id'); // Escuchamos qué apartamento elige
+  const apartamentoSeleccionado = watch('apartamento_id'); 
+  const tipoPagoSeleccionado = watch('tipo_pago');
 
-  // CARGA INICIAL: Bancos y Apartamentos
+  // Lógica para saber si requerimos validaciones bancarias
+  const requiereBanco = (tipoPagoSeleccionado === 'Transferencia' || tipoPagoSeleccionado === 'Pago Movil');
+
+  // CARGA INICIAL
   useEffect(() => {
     const cargarCatalogosIniciales = async () => {
       try {
-        // Petición a Bancos
-        const resBancos = await clienteApi.get('?endpoint=bancos&operacion=consulta');
-        if (resBancos.data.estatus) setBancosDisponibles(resBancos.data.datos);
-
-        // Petición a Apartamentos (Le decimos quiénes somos)
-        const resAptos = await clienteApi.get('?endpoint=apartamentos&operacion=consulta', {
+        const respuesta = await clienteApi.get('', {
           params: {
+            endpoint: 'pagos',
+            operacion: 'obtener_catalogos_base',
             es_propietario: esAdmin ? 0 : 1,
-            correo: user?.correo || ''
+            correo: usuario?.correo || ''
           }
         });
-        if (resAptos.data.estatus) {
-          setApartamentosDisponibles(resAptos.data.datos);
+
+        if (respuesta.data.estatus) {
+          const { bancos, apartamentos } = respuesta.data.datos;
+          setBancosDisponibles(bancos);
+          setApartamentosDisponibles(apartamentos);
           
           // Auto-seleccionar si el propietario solo tiene 1 apartamento
-          if (resAptos.data.datos.length === 1) {
-            setValue('apartamento_id', resAptos.data.datos[0].id_apartamento, { shouldValidate: true });
+          if (apartamentos.length === 1) {
+            setValue('apartamento_id', apartamentos[0].id_apartamento, { shouldValidate: true });
           }
         }
       } catch (error) {
-        console.error("Error cargando catálogos", error);
+        console.error("Error cargando catálogos unificados", error);
       }
     };
 
     cargarCatalogosIniciales();
   }, []);
 
-  // Si cambia el apartamento, buscamos sus deudas
+  // Mensualidades (Se ejecuta al elegir apartamento)
   useEffect(() => {
     if (!apartamentoSeleccionado) {
       setMesesPendientes([]);
@@ -74,12 +78,15 @@ export const useFormularioPago = (onClose) => {
 
     const cargarDeudas = async () => {
       try {
-        const resDeudas = await clienteApi.get('?endpoint=pagos&operacion=consultar_mensualidades', {
-          params: { apartamento_id: apartamentoSeleccionado }
+        const resDeudas = await clienteApi.get('', {
+          params: { 
+            endpoint: 'pagos',
+            operacion: 'consultar_mensualidades',
+            apartamento_id: apartamentoSeleccionado 
+          }
         });
         
         if (resDeudas.data.estatus) {
-          // Mapeamos para que la vista lo entienda fácil
           const deudasFormateadas = resDeudas.data.datos.map(d => ({
             id: d.id_mensualidad,
             mes: `${d.mes} ${d.anio}`,
@@ -93,7 +100,6 @@ export const useFormularioPago = (onClose) => {
     };
 
     cargarDeudas();
-    // Reiniciamos el mes seleccionado si cambian de apartamento
     setValue('mensualidad_id', null); 
   }, [apartamentoSeleccionado]);
 
@@ -116,7 +122,7 @@ export const useFormularioPago = (onClose) => {
     try {
       const formData = new FormData();
       formData.append('operacion', 'registrar_pago');
-      formData.append('es_propietario', '1'); // Simulación de rol
+      formData.append('es_propietario', esAdmin ? '0' : '1');
       
       // Datos de Cabecera
       formData.append('apartamento_id', data.apartamento_id);
@@ -128,16 +134,19 @@ export const useFormularioPago = (onClose) => {
       formData.append('fecha_pago[0]', hoy);
       formData.append('monto[0]', data.monto);
       formData.append('tipo_pago[0]', data.tipo_pago);
-      formData.append('referencia[0]', data.referencia);
-      formData.append('banco_id[0]', data.banco_id);
 
-      // Imagen (Usando el formato que espera imagen_0)
-      if (data.comprobante) {
-        const localUri = data.comprobante;
-        const filename = localUri.split('/').pop();
-        const type = `image/${filename.split('.').pop()}`;
+      // Enviamos datos bancarios solo si aplica
+      if (requiereBanco) {
+        formData.append('referencia[0]', data.referencia);
+        formData.append('banco_id[0]', data.banco_id);
 
-        formData.append('imagen_0', { uri: localUri, name: filename, type });
+        if (data.comprobante) {
+          const localUri = data.comprobante;
+          const filename = localUri.split('/').pop() || 'comprobante.jpg';
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : `image`;
+          formData.append('imagen_0', { uri: localUri, name: filename, type });
+        }
       }
 
       const datosVisuales = {
@@ -154,15 +163,17 @@ export const useFormularioPago = (onClose) => {
       onClose();
       reset();
     } catch (error) {
-      Alert.alert('Error', error);
+      Alert.alert('Error al procesar pago', typeof error === 'string' ? error : 'Intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const canSubmit = isValid && !isSubmitting && (!requiereBanco || (watch('banco_id') && watch('referencia')));
+
   return { 
-    control, errors, comprobanteUri, isSubmitting, isValid, handleSubmit, 
+    control, errors, comprobanteUri, isSubmitting, isValid: canSubmit, handleSubmit, 
     handleImagePick, onSubmit, removeImage: () => setValue('comprobante', null),
-    bancosDisponibles, apartamentosDisponibles, mesesPendientes 
+    bancosDisponibles, apartamentosDisponibles, mesesPendientes, requiereBanco 
   };
 };

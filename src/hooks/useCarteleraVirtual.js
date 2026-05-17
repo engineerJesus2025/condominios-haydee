@@ -5,7 +5,7 @@ import { fetchPublicaciones } from '../store/slices/publicacionesSlice';
 // Recibimos los colores como parámetro
 export const useCarteleraVirtual = (colores) => {
   const dispatch = useDispatch();
-  const { listaPublicaciones, cargando, error } = useSelector(state => state.publicaciones);
+  const { listaPublicaciones, cargando, error, hayMas, paginaActual } = useSelector(state => state.publicaciones);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalEdicionVisible, setModalEdicionVisible] = useState(false);
@@ -14,9 +14,21 @@ export const useCarteleraVirtual = (colores) => {
   // estado del calendario
   const [fechaSeleccionada, setFechaSeleccionada] = useState('');
 
+  const [cargandoMas, setCargandoMas] = useState(false);
+
   const obtenerPublicaciones = (forzar = false) => {
-    if (forzar || listaPublicaciones.length === 0) {
-      dispatch(fetchPublicaciones());
+    if (forzar) {
+      dispatch(fetchPublicaciones({ pagina: 1, recargar: true }));
+    } else if (listaPublicaciones.length === 0) {
+      dispatch(fetchPublicaciones({ pagina: 1 }));
+    }
+  };
+
+  const cargarMasPublicaciones = async () => {
+    if (!cargando && !cargandoMas && hayMas && !fechaSeleccionada) {
+      setCargandoMas(true);
+      await dispatch(fetchPublicaciones({ pagina: paginaActual + 1 }));
+      setCargandoMas(false);
     }
   };
 
@@ -84,8 +96,10 @@ export const useCarteleraVirtual = (colores) => {
     fechaSeleccionada,
     setFechaSeleccionada,
     cargando, 
-    error,   
+    error,
+    cargandoMas,
     obtenerPublicaciones,
+    cargarMasPublicaciones,
     modalVisible,
     modalEdicionVisible,
     publicacionSeleccionada,

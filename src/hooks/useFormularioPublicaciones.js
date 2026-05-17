@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import * as ImagePicker from 'expo-image-picker'
 import { Alert } from 'react-native'
 import { fetchPublicaciones, crearPublicacion } from '../store/slices/publicacionesSlice';
+import { procesarErrorApi } from '../utils/gestorErroresUI';
 
 export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => { 
   const dispatch = useDispatch()
@@ -143,9 +144,8 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
         resetForm();
       }, 400);
 
-    } catch (error) {
-      console.error('Error al publicar:', error);
-      Alert.alert('Error', typeof error === 'string' ? error : 'No se pudo guardar la publicación en el servidor.');
+    } catch (errorObj) {
+      procesarErrorApi(errorObj);
     } finally {
       setIsSubmitting(false);
     }

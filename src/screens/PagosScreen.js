@@ -9,6 +9,7 @@ import ModalFormularioPago from '../components/ModalFormularioPago';
 import ModalEstadoCuenta from '../components/ModalEstadoCuenta';
 import ListaRefrescable from '../components/ListaRefrescable';
 import BotonRegistrar from '../components/BotonRegistrar';
+import CargandoOverlay from '../components/CargandoOverlay';
 
 import { useTema } from './../hooks/useTema';
 import { usePagos } from '../hooks/usePagos';
@@ -26,6 +27,7 @@ export default function PagosScreen() {
     modalVisible,
     modalPagoVisible,
     modalEstadoCuentaVisible,
+    cargandoDetalle,
     pagoSeleccionado,
     setModalPagoVisible,
     setModalEstadoCuentaVisible,
@@ -125,6 +127,11 @@ export default function PagosScreen() {
         onClose={() => setModalEstadoCuentaVisible(false)}
         totalDeuda={150.75}
         moneda="$"
+      />
+
+      <CargandoOverlay 
+        visible={cargandoDetalle} 
+        mensaje="Obteniendo recibo..." 
       />
     </View>
   );

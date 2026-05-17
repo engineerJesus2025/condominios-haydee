@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Text, View, ActivityIndicator } from 'react-native';
 import { useTema } from '../hooks/useTema';
 
 export default function ListaRefrescable({ 
@@ -11,6 +11,8 @@ export default function ListaRefrescable({
   ListHeaderComponent,
   mensajeVacio = "No hay información disponible.",
   contentContainerStyle,
+  onEndReached,
+  cargandoMas = false,
   ...restoProps 
 }) {
   const { colores } = useTema();
@@ -23,6 +25,15 @@ export default function ListaRefrescable({
       ListHeaderComponent={ListHeaderComponent}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={contentContainerStyle || { paddingBottom: 100, paddingHorizontal: 16, paddingTop: 10 }}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={
+        cargandoMas ? (
+          <View style={{ paddingVertical: 20 }}>
+             <ActivityIndicator size="small" color={colores.primario} />
+          </View>
+        ) : null
+      }
       ListEmptyComponent={
         !cargando ? (
           <Text style={{ color: colores.textPlaceholder, textAlign: 'center', marginTop: 20 }}>

@@ -30,12 +30,14 @@ export default function InicioScreen({ navigation }) {
   const { eventos } = useEventos();
   
   const { listaPublicaciones, cargando: loadingPublicaciones } = useSelector(state => state.publicaciones);
-
+  console.log(listaPublicaciones)
   const noticiasGenerales = (listaPublicaciones || []).filter(post => post.tipo?.toLowerCase() !== 'evento');
 
   useEffect(() => {
     if (obtenerDatos) obtenerDatos();
-    dispatch(fetchPublicaciones());
+    if (listaPublicaciones.length === 0) {
+        dispatch(fetchPublicaciones({ pagina: 1, limite: 20 }));
+    }
   }, [dispatch]);
 
   const handleVerDetalleDeuda = () => {
@@ -53,7 +55,7 @@ export default function InicioScreen({ navigation }) {
       return <ActivityIndicator size="large" color={colores.primario} style={{ marginTop: 40 }} />;
     }
     if (error) {
-      return <Text style={{ color: '#e74c3c', textAlign: 'center', marginTop: 20 }}>{error}</Text>;
+      return <Text style={{ color: '#e74c3c', textAlign: 'center', marginTop: 20 }}>{error.mensaje}</Text>;
     }
 
     return (
@@ -121,7 +123,7 @@ export default function InicioScreen({ navigation }) {
         keyExtractor={(item) => item.id.toString()}
         cargando={isRefreshing}
         onRefresh={() => {
-          dispatch(fetchPublicaciones()); 
+          dispatch(fetchPublicaciones({ pagina: 1, recargar: true })); 
           if (obtenerDatos) obtenerDatos(true); 
         }}
         ListHeaderComponent={renderHeader}
@@ -151,3 +153,15 @@ const getEstilosInicio = (colores) => StyleSheet.create({
     paddingHorizontal: 4
   }
 });
+/*
+[
+  {"descripcion": "bienvenidos al 2026", "fecha": "2100-10-10 00:00:00", "tipo": "noticia", "titulo": "Bienvenidos"}, 
+  {"descripcion": "Hola chamo", "fecha": "2026-05-14 13:03:54", "tipo": "evento", "titulo": "Hola "}, 
+  {"descripcion": "Hola ora vez ", "fecha": "2026-05-14 12:53:10","tipo": "noticia", "titulo": "Hola "}, 
+  {"descripcion": "Publicacion genérica ", "fecha": "2026-05-12 11:30:42", "tipo": "noticia", "titulo": "Publicacion"}, 
+  {"descripcion": "Soy un mensaje encriptado ", "fecha": "2026-05-12 11:01:12" "tipo": "evento", "titulo": "Hola"}, 
+  {"descripcion": "Jdjdkdkddd", "fecha": "2026-05-10 01:13:49","tipo": "evento", "titulo": "Hola mi vida "}, 
+  {"descripcion": "Gkdksksslsmsmd", "fecha": "2026-05-10 01:08:24", "tipo": "evento", "titulo": "Hola mi amor "}, {"autor": "Jesus", "descripcion": "Hola buenas ", "fecha": "2026-05-10 01:07:28", "id": 41, "imagen": null, "tipo": "aviso", "titulo": "Hola buenas "}, 
+  {"descripcion": "Hola buenas ", "fecha": "2026-05-10 01:07:08",  "tipo": "aviso", "titulo": "Hola"}, {"autor": "Jesus", "descripcion": "Ya casi", "fecha": "2026-04-30 11:50:54", "id": 39, "imagen": "http://192.168.1.39/haydee-app/recursos/img/cartelera_virtual/f44e1ac5-7768-4f6c-944f-1989807ebe7b_1777564254_220.png", "tipo": "evento", "titulo": "Ya casi"}
+] 
+*/

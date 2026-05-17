@@ -74,17 +74,38 @@ clienteApi.interceptors.request.use(
             if (esArchivo) {
               // Leemos el archivo y lo convertimos a texto Base64
               const base64Str = await FileSystem.readAsStringAsync(value.uri, { 
-                encoding: 'base64' // Usamos el string literal directamente
+                encoding: 'base64' 
               });
               
-              // Lo empaquetamos para cifrarlo
               datosParaCifrar['_archivos_adjuntos'][key] = {
                 name: value.name,
                 type: value.type,
                 base64: base64Str
               };
             } else {
-              datosParaCifrar[key] = value; 
+              // Verificamos si la llave tiene formato de arreglo (ej. "monto[0]" o "monto[]")
+              const arrayMatch = key.match(/^(.+)\[(\d*)\]$/);
+              
+              if (arrayMatch) {
+                const baseKey = arrayMatch[1]; // ej. "monto"
+                const index = arrayMatch[2];   // ej. "0"
+                
+                // Si no existe el arreglo en nuestro JSON, lo creamos
+                if (!datosParaCifrar[baseKey]) {
+                  datosParaCifrar[baseKey] = [];
+                }
+                
+                if (index === '') {
+                  // Si mandan "campo[]", lo empujamos al final
+                  datosParaCifrar[baseKey].push(value);
+                } else {
+                  // Si mandan "campo[0]", respetamos el índice
+                  datosParaCifrar[baseKey][parseInt(index)] = value;
+                }
+              } else {
+                // Campos normales (ej. "clasificacion")
+                datosParaCifrar[key] = value; 
+              }
             }
           }
         } else {
@@ -140,17 +161,37 @@ clienteApi.interceptors.response.use(
     return response;
   },
   (error) => {
-    // EL MVP DE CIERRE DE SESIÓN FORZADO (temporal)
-    if (error.response && error.response.status === 401) {
-      console.log("🔒 Seguridad: JWT expirado o inválido. Cerrando sesión...");
+    let errorFormateado = { tipo: 'DESCONOCIDO', mensaje: error.message, status: null };
+    if (error.response) {
       
-      // Si el store fue inyectado, despachamos el logout globalmente
-      if (reduxStore) {
+    console.log(error.response.data)
+      // DESCIFRADO DE EMERGENCIA: Si el servidor envió un error cifrado (ej. 401 o 429)
+      let dataServidor = error.response.data;
+      if (dataServidor && dataServidor.cifrado === true) {
+        try {
+          dataServidor = criptografiaMovil.descifrarPayload(dataServidor.payload, dataServidor.iv, dataServidor.tag);
+        } catch (e) {
+          console.error("No se pudo descifrar el error del servidor");
+        }
+      }
+
+      errorFormateado = { 
+        tipo: 'SERVIDOR', 
+        status: error.response.status, 
+        mensaje: dataServidor?.mensaje || 'Error interno del servidor.' 
+      };
+
+      // LOGOUT GLOBAL INTELIGENTE: Cerramos sesión SOLO si no estamos en la pantalla de Login
+      const endpoint = error.config?.params?.endpoint;
+      if (errorFormateado.status === 401 && reduxStore && endpoint !== 'login') {
+        console.log("🔒 Seguridad: JWT expirado o inválido. Cerrando sesión...");
         reduxStore.dispatch({ type: 'usuario/logout' }); 
       }
+    } else if (error.request) {
+      errorFormateado = { tipo: 'RED', mensaje: 'El servidor tardó demasiado o no hay conexión.', status: 0 };
     }
-    
-    return Promise.reject(error);
+
+    return Promise.reject(errorFormateado);
   }
 );
 

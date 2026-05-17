@@ -8,6 +8,7 @@ import MensualidadCard from '../components/MensualidadCard';
 import ProgresoPresupuesto from '../components/ProgresoPresupuesto';
 import ModalDesgloseMensualidad from '../components/ModalDesgloseMensualidad';
 import ListaRefrescable from '../components/ListaRefrescable';
+import CargandoOverlay from '../components/CargandoOverlay';
 
 import { useTema } from './../hooks/useTema';
 import { useMensualidades } from '../hooks/useMensualidades'; 
@@ -22,12 +23,13 @@ export default function MensualidadesScreen () {
     obtenerMensualidades,
     manejarVerDetalles,
     modalVisible,
+    cargandoDetalle,
     setModalVisible,
     mensualidadSeleccionada,
     gastado,
     presupuestoTotal
   } = useMensualidades();
-
+  console.log(cargandoDetalle)
   useEffect(() => {
     obtenerMensualidades();
   }, []);
@@ -65,8 +67,7 @@ export default function MensualidadesScreen () {
             keyExtractor={(item) => item.id.toString()}
             cargando={loading}
             onRefresh={() => {
-              obtenerDatos(true); // Refresca las barras y KPIs
-              dispatch(fetchMensualidades()); // Refresca la lista histórica
+              obtenerMensualidades(true);
             }}
             ListHeaderComponent={renderHeader}
             renderItem={({ item }) => (
@@ -85,6 +86,11 @@ export default function MensualidadesScreen () {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         mensualidad={mensualidadSeleccionada}
+      />
+
+      <CargandoOverlay 
+        visible={cargandoDetalle} 
+        mensaje="Obteniendo recibo..." 
       />
     </View>
   );

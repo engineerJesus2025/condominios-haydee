@@ -37,6 +37,8 @@ export default function CarteleraVirtualScreen () {
     setFechaSeleccionada,
     cargando,
     error,
+    cargandoMas,
+    cargarMasPublicaciones,
     obtenerPublicaciones,
     modalVisible,
     modalEdicionVisible,
@@ -126,6 +128,8 @@ export default function CarteleraVirtualScreen () {
             keyExtractor={(item) => item.id.toString()}
             cargando={cargando}
             onRefresh={() => obtenerPublicaciones(true)}
+            onEndReached={cargarMasPublicaciones}
+            cargandoMas={cargandoMas}
             ListHeaderComponent={renderHeader}
             renderItem={({ item }) => <PublicacionCard post={item} />}
             mensajeVacio="No hay publicaciones para esta fecha."

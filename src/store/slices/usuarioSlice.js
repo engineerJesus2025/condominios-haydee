@@ -19,19 +19,15 @@ export const loginUsuario = createAsyncThunk(
       );
 
       const json = respuesta.data;
-
       if (json.estatus) {
-        const { datos, token } = json;
-        // Persistimos el token y los datos básicos
-        await AsyncStorage.setItem('userToken', token);
+        const { datos, token_jwt } = json;
+        await AsyncStorage.setItem('userToken', token_jwt);
         await AsyncStorage.setItem('userData', JSON.stringify(datos));
         return datos;
       }
-      return rejectWithValue(json.mensaje);
+      return rejectWithValue({ tipo: 'LOGICA', mensaje: json.mensaje });
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.mensaje || 'Error de conexión con el servidor'
-      );
+      return rejectWithValue(error);
     }
   }
 );

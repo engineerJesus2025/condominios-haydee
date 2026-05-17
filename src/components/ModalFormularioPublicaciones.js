@@ -50,7 +50,8 @@ const ModalFormularioPublicaciones = ({
         titulo={esEdicion ? 'Actualizar' : 'Publicar'}
         evento={handleSubmit(onSubmit)}
         icono={{ nombre: esEdicion ? 'save-outline' : 'send-outline', color: '#fff' }}
-        disabled={!canSubmit || isSubmitting}
+        disabled={!canSubmit}
+        loading={isSubmitting}
         estilos={{ backgroundColor: '#27ae60', opacity: (!canSubmit || isSubmitting) ? 0.6 : 1 }}
         fuente={16}
       />

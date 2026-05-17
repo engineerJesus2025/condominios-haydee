@@ -10,7 +10,7 @@ export const useMensualidades = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [mensualidadSeleccionada, setMensualidadSeleccionada] = useState(null);
-  const [cargandoDetalleId, setCargandoDetalleId] = useState(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(null);
 
   const obtenerMensualidades = (forzar = false) => {
     if (forzar || listaMensualidades.length === 0) {
@@ -25,7 +25,7 @@ export const useMensualidades = () => {
       
       // Si aún no hemos descargado la lista de apartamentos para este mes
       if (!mensualidad.apartamentos) {
-        setCargandoDetalleId(mensualidad.id);
+        setCargandoDetalle(true);
         const result = await dispatch(fetchDetalleMensualidad({
           id: mensualidad.id,
           mes: mensualidad.mes_raw,
@@ -41,7 +41,7 @@ export const useMensualidades = () => {
     } catch (err) {
       console.error("Error al cargar el detalle de apartamentos:", err);
     } finally {
-      setCargandoDetalleId(null);
+      setCargandoDetalle(null);
     }
   };
 
@@ -56,6 +56,6 @@ export const useMensualidades = () => {
     modalVisible,
     setModalVisible,
     mensualidadSeleccionada,
-    cargandoDetalleId
+    cargandoDetalle
   };
 };

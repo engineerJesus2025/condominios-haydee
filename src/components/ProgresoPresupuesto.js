@@ -19,7 +19,7 @@ const ProgresoPresupuesto = ({ gastado = 0, total = 0, moneda = "Bs" }) => {
   }
 
   // Ancho de pantalla 
-  const anchoTotal = SCREEN_WIDTH - 90; 
+  const anchoTotal = SCREEN_WIDTH - 120; 
   const anchoProgreso = (porcentaje / 100) * anchoTotal;
 
   return (

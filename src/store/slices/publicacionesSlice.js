@@ -3,12 +3,14 @@ import clienteApi from '../../utils/clienteApi';
 
 export const fetchPublicaciones = createAsyncThunk(
   'publicaciones/fetchPublicaciones',
-  async (_, { rejectWithValue }) => {
+  async ({ pagina = 1, limite = 10, recargar = false } = {}, { rejectWithValue }) => {
     try {
       const respuesta = await clienteApi.get('', {
         params: {
           endpoint: 'cartelera',
-          operacion: 'consulta'
+          operacion: 'consulta',
+          pagina, 
+          limite
         }
       });
 
@@ -17,8 +19,7 @@ export const fetchPublicaciones = createAsyncThunk(
       if (json.estatus) {
         const URL_BASE = process.env.EXPO_PUBLIC_URL_BASE;
         
-        // Retornamos los datos mapeados. Esto se convertirá en el action.payload
-        return json.datos.map(item => ({
+        const datosMapeados = json.datos.map(item => ({
           id: item.id_cartelera,
           titulo: item.titulo,
           descripcion: item.descripcion,
@@ -27,21 +28,14 @@ export const fetchPublicaciones = createAsyncThunk(
           autor: item.nombre_usuario,
           imagen: item.imagen ? `${URL_BASE}/recursos/img/cartelera_virtual/${item.imagen}` : null
         }));
+
+        // Retornamos los datos junto con la metadata de la página
+        return { datos: datosMapeados, recargar, pagina, limite };
       } else {
-        // Si el PHP dice estatus: false, disparamos un error controlado
         return rejectWithValue(json.mensaje);
       }
     } catch (error) {
-      // Así es como se extrae el "chisme" completo que mandó PHP
-      // console.log("=== ERROR DEL SERVIDOR ===");
-      // console.log("Status:", error.response?.status);
-      // console.log("Mensaje de la API:", error.response?.data?.mensaje);
-      // console.log("Datos completos:", error.response?.data);
-      // console.log("==========================");
-
-      return rejectWithValue(
-        error.response?.data?.mensaje || 'Error de conexión con el servidor'
-      );
+      return rejectWithValue(error);
     }
   }
 );
@@ -50,7 +44,9 @@ export const crearPublicacion = createAsyncThunk(
   'publicaciones/crearPublicacion',
   async ({ datosVisuales, formData }, { rejectWithValue }) => {
     try {
-      const respuesta = await clienteApi.post('?endpoint=cartelera', formData);
+      const respuesta = await clienteApi.post('', formData, {
+        params: { endpoint: 'cartelera' }
+      });
 
       const json = respuesta.data;
       
@@ -71,9 +67,7 @@ export const crearPublicacion = createAsyncThunk(
       console.log("err:", error);
       console.log("==========================");
 
-      return rejectWithValue(
-        error.response?.data?.mensaje || 'Error de conexión con el servidor'
-      );
+      return rejectWithValue(error);
     }
   }
 );
@@ -83,7 +77,9 @@ const publicacionesSlice = createSlice({
   initialState: {
     listaPublicaciones: [],
     cargando: false,
-    error: null
+    error: null,
+    paginaActual: 1,
+    hayMas: true
   },
   reducers: {
     editarPublicacion: (state, action) => {
@@ -98,13 +94,29 @@ const publicacionesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPublicaciones.pending, (state) => {
-        state.cargando = true;
+      .addCase(fetchPublicaciones.pending, (state, action) => {
+        if (!action.meta.arg || action.meta.arg.recargar) {
+           state.cargando = true;
+        }
         state.error = null;
       })
       .addCase(fetchPublicaciones.fulfilled, (state, action) => {
         state.cargando = false;
-        state.listaPublicaciones = action.payload; 
+        if (action.payload.recargar || action.payload.pagina === 1) {
+          // Si es recarga o página 1, reemplazamos la lista entera
+          state.listaPublicaciones = action.payload.datos;
+        } else {
+          // Si es paginación, concatenamos evitando duplicados por seguridad
+          const nuevos = action.payload.datos.filter(
+            nuevo => !state.listaPublicaciones.some(existente => existente.id === nuevo.id)
+          );
+          state.listaPublicaciones = [...state.listaPublicaciones, ...nuevos];
+        }
+
+        state.paginaActual = action.payload.pagina;
+        
+        // Si el servidor nos devolvió menos datos que el límite, significa que ya no hay más páginas
+        state.hayMas = action.payload.datos.length === action.payload.limite; 
       })
       .addCase(fetchPublicaciones.rejected, (state, action) => {
         state.cargando = false;

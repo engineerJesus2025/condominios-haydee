@@ -40,7 +40,7 @@ export const fetchPagos = createAsyncThunk(
         return rejectWithValue(json.mensaje);
       }
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error);
     }
   }
 );
@@ -49,8 +49,8 @@ export const registrarPagoServidor = createAsyncThunk(
   'pagos/registrarPagoServidor',
   async ({ datosVisuales, formData }, { rejectWithValue }) => {
     try {
-      const respuesta = await clienteApi.post('?endpoint=pagos', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const respuesta = await clienteApi.post('', formData, {
+        params: { endpoint: 'pagos' }
       });
 
       const json = respuesta.data;
@@ -64,7 +64,7 @@ export const registrarPagoServidor = createAsyncThunk(
         return rejectWithValue(json.mensaje || 'Error al registrar el pago');
       }
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error);
     }
   }
 );
