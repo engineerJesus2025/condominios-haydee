@@ -25,12 +25,22 @@ export default function ListaRefrescable({
       ListHeaderComponent={ListHeaderComponent}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={contentContainerStyle || { paddingBottom: 100, paddingHorizontal: 16, paddingTop: 10 }}
+
+      initialNumToRender={5}
+      maxToRenderPerBatch={4}
+      updateCellsBatchingPeriod={50}
+      windowSize={5}
+      removeClippedSubviews={true}
+
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}
       ListFooterComponent={
         cargandoMas ? (
-          <View style={{ paddingVertical: 20 }}>
-             <ActivityIndicator size="small" color={colores.primario} />
+          <View style={{ paddingVertical: 20, alignItems: 'center', justifyContent: 'center' }}>
+             <ActivityIndicator size="small" color={colores.primario || '#007BFF'} />
+             <Text style={{ marginTop: 6, fontSize: 12, color: colores.textPlaceholder }}>
+               Cargando más publicaciones...
+             </Text>
           </View>
         ) : null
       }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { Alert } from 'react-native';
@@ -6,19 +6,23 @@ import * as ImagePicker from 'expo-image-picker';
 import { registrarPagoServidor } from '../store/slices/pagosSlice';
 import clienteApi from '../utils/clienteApi';
 import { usePermisos } from './usePermisos';
+import { procesarErrorApi } from '../utils/gestorErroresUI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export const useFormularioPago = (onClose) => {
   const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Estados para los catálogos
+  
+  const [tasaDolar, setTasaDolar] = useState('1.00'); 
+  
   const [bancosDisponibles, setBancosDisponibles] = useState([]);
   const [apartamentosDisponibles, setApartamentosDisponibles] = useState([]);
   const [mesesPendientes, setMesesPendientes] = useState([]);
 
   const { esAdmin, usuario } = usePermisos();
 
-  const { control, handleSubmit, formState: { errors, isValid }, reset, setValue, watch } = useForm({
+  const { control, handleSubmit, formState: { errors, isValid }, reset, setValue, watch, setError } = useForm({
     mode: 'onChange',
     defaultValues: {
       apartamento_id: '',
@@ -27,16 +31,28 @@ export const useFormularioPago = (onClose) => {
       banco_id: '',
       tipo_pago: 'Transferencia',
       mensualidad_id: '',
-      comprobante: null
+      comprobante: null,
+      estado: 'PENDIENTE'
     }
   });
 
   const comprobanteUri = watch('comprobante');
   const apartamentoSeleccionado = watch('apartamento_id'); 
   const tipoPagoSeleccionado = watch('tipo_pago');
+  const montoIngresado = watch('monto'); 
 
-  // Lógica para saber si requerimos validaciones bancarias
   const requiereBanco = (tipoPagoSeleccionado === 'Transferencia' || tipoPagoSeleccionado === 'Pago Movil');
+
+  // CONVERSIÓN DE DIVISAS
+  const equivalenteDolares = useMemo(() => {
+    const montoBase = parseFloat(montoIngresado);
+    const tasa = parseFloat(tasaDolar);
+    
+    if (!isNaN(montoBase) && !isNaN(tasa) && tasa > 0) {
+      return (montoBase / tasa).toFixed(2);
+    }
+    return '0.00';
+  }, [montoIngresado, tasaDolar]);
 
   // CARGA INICIAL
   useEffect(() => {
@@ -62,10 +78,24 @@ export const useFormularioPago = (onClose) => {
           }
         }
       } catch (error) {
-        console.error("Error cargando catálogos unificados", error);
+        procesarErrorApi(error);
       }
     };
 
+    const leerTasaDeCacheLocal = async () => {
+      try {
+        const tasaGuardada = await AsyncStorage.getItem('tasa_dolar');
+        if (tasaGuardada) {
+          setTasaDolar(tasaGuardada);
+        } else {
+          setTasaDolar('1.00'); // en caso de error crítico de hardware
+        }
+      } catch (e) {
+        setTasaDolar('1.00');
+      }
+    };
+
+    leerTasaDeCacheLocal();
     cargarCatalogosIniciales();
   }, []);
 
@@ -95,7 +125,7 @@ export const useFormularioPago = (onClose) => {
           setMesesPendientes(deudasFormateadas);
         }
       } catch (error) {
-        console.error("Error buscando deudas", error);
+        procesarErrorApi(error);
       }
     };
 
@@ -104,20 +134,26 @@ export const useFormularioPago = (onClose) => {
   }, [apartamentoSeleccionado]);
 
   const handleImagePick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 0.7,
+    // Verificamos permisos si es necesario
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, // Permite al usuario recortar los bordes negros del recibo
+      aspect: [4, 5],      // Proporción estándar para recibos
+      quality: 0.4, // Reduce la calidad al 40% (es un recibo, no hace falta el hd aqui -_-)
+      base64: true
     });
 
     if (!result.canceled) {
       setValue('comprobante', result.assets[0].uri, { shouldValidate: true });
     }
   };
-
+  
   const onSubmit = async (data) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+
+    // Pausamos para que tenga tiempo de pintar el Spinner
+    await new Promise(resolve => setTimeout(resolve, 50)); // Esto se llama THREAD YIELDING mi estimado
 
     try {
       const formData = new FormData();
@@ -128,6 +164,9 @@ export const useFormularioPago = (onClose) => {
       formData.append('apartamento_id', data.apartamento_id);
       formData.append('mensualidad_id', data.mensualidad_id);
       formData.append('observacion', 'Pago registrado desde la App');
+
+      formData.append('estado', data.estado); 
+      formData.append('tasa_dolar', tasaDolar);
 
       // Datos de Detalles (Renglón 0)
       const hoy = new Date().toISOString().split('T')[0];
@@ -163,7 +202,24 @@ export const useFormularioPago = (onClose) => {
       onClose();
       reset();
     } catch (error) {
-      Alert.alert('Error al procesar pago', typeof error === 'string' ? error : 'Intenta de nuevo.');
+      procesarErrorApi(error, (status, mensaje, erroresFormulario) => {
+        // Si es un error 400 y trae detalles por campo
+        if (status === 400 && erroresFormulario) {
+          Object.keys(erroresFormulario).forEach(campo => {
+            setError(campo, {
+              type: 'server',
+              message: erroresFormulario[campo][0]
+            });
+          });
+          
+          //Feedback general
+          Alert.alert('Datos Inválidos', mensaje || 'Revise los campos marcados en rojo.');
+          
+          return true;
+        }
+        
+        return false; // Si es un 401, 403, 500, etc.
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -172,8 +228,23 @@ export const useFormularioPago = (onClose) => {
   const canSubmit = isValid && !isSubmitting && (!requiereBanco || (watch('banco_id') && watch('referencia')));
 
   return { 
-    control, errors, comprobanteUri, isSubmitting, isValid: canSubmit, handleSubmit, 
-    handleImagePick, onSubmit, removeImage: () => setValue('comprobante', null),
-    bancosDisponibles, apartamentosDisponibles, mesesPendientes, requiereBanco 
+    control, 
+    errors,
+    comprobanteUri,
+    isSubmitting,
+    isValid: canSubmit,
+    handleSubmit,
+    handleImagePick,
+    onSubmit,
+    removeImage: () => setValue('comprobante',
+    null),
+    bancosDisponibles,
+    apartamentosDisponibles,
+    mesesPendientes,
+    requiereBanco ,
+    esAdmin,
+    tasaDolar, 
+    equivalenteDolares,
+    apartamentoSeleccionado
   };
 };

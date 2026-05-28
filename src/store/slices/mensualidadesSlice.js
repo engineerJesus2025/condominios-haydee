@@ -1,7 +1,13 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { 
+  createSlice, 
+  createAsyncThunk, 
+  isPending, 
+  isRejected, 
+  isFulfilled 
+} from '@reduxjs/toolkit';
 import clienteApi from '../../utils/clienteApi';
 
-// Historial de Mensualidades (Lista)
+// Historial de Mensualidades 
 export const fetchMensualidades = createAsyncThunk(
   'mensualidades/fetchMensualidades',
   async (_, { rejectWithValue }) => {
@@ -17,7 +23,7 @@ export const fetchMensualidades = createAsyncThunk(
   }
 );
 
-// Resumen Financiero (KPIs)
+// Resumen Financiero 
 export const fetchResumenFinanciero = createAsyncThunk(
   'mensualidades/fetchResumenFinanciero',
   async (_, { rejectWithValue }) => {
@@ -25,6 +31,7 @@ export const fetchResumenFinanciero = createAsyncThunk(
       const respuesta = await clienteApi.get('', {
         params: { endpoint: 'mensualidades', operacion: 'consultar_kpis' }
       });
+
       if (respuesta.data.estatus) return respuesta.data.datos;
       return rejectWithValue(respuesta.data.mensaje);
     } catch (error) {
@@ -40,7 +47,7 @@ export const fetchDetalleMensualidad = createAsyncThunk(
       const respuesta = await clienteApi.get('', {
         params: { 
           endpoint: 'mensualidades', 
-          operacion: 'consultar_mensualidades_apartamentos', 
+          operacion: 'consultar_mensualidad_apartamentos', 
           mes: mes,
           anio: anio 
         }
@@ -71,9 +78,7 @@ const mensualidadesSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchMensualidades.pending, (state) => { state.loading = true; })
       .addCase(fetchMensualidades.fulfilled, (state, action) => {
-        state.loading = false;
         const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         
         state.listaMensualidades = action.payload.map(item => {
@@ -101,17 +106,35 @@ const mensualidadesSlice = createSlice({
       .addCase(fetchResumenFinanciero.fulfilled, (state, action) => {
         const deuda = parseFloat(action.payload.deuda_total || 0);
         const recaudado = parseFloat(action.payload.recaudado_mes || 0);
+        const gastado = parseFloat(action.payload.gastado_mes || 0);
+
         state.resumen = {
           deudaTotal: deuda,
-          gastado: recaudado,
-          presupuestoTotal: deuda + recaudado
+          recaudado: recaudado,
+          gastado: gastado,
+          presupuestoTotal: recaudado 
         };
       })
       .addMatcher(
-        (action) => action.type.endsWith('/rejected'),
+        isPending(fetchMensualidades, fetchResumenFinanciero, fetchDetalleMensualidad),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      // Apaga el "loading" cuando cualquiera de estos termina con éxito
+      .addMatcher(
+        isFulfilled(fetchMensualidades, fetchResumenFinanciero, fetchDetalleMensualidad),
+        (state) => {
+          state.loading = false;
+        }
+      )
+      // Atrapa los errores SOLO si provienen de estos thunks específicos
+      .addMatcher(
+        isRejected(fetchMensualidades, fetchResumenFinanciero, fetchDetalleMensualidad),
         (state, action) => {
           state.loading = false;
-          state.error = action.payload;
+          state.error = action.payload || 'Ocurrió un error inesperado.';
         }
       );
   }

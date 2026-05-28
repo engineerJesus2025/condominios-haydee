@@ -10,39 +10,44 @@ export default function HeaderFormulario ({ icono = false, titulo, evento, estil
 
   return (
     <View style={[estilosHeaderFormulario.header, estilos]}>
-      <Icon name={icono.name} size={24} color={icono.color} />
+      <View style={estilosHeaderFormulario.actionContainer}>
+        {icono && <Icon name={icono.name} size={24} color={icono.color} />}
+      </View>
+      
       <Text style={estilosHeaderFormulario.title}>
         {titulo}
       </Text>
-      <CustomBoton
-        titulo=''
-        evento={evento}
-        icono={{ nombre: 'close-outline', color: '#E1E1F7' }}
-        estilos={estilosHeaderFormulario.closeButton}
-        fuente={24}
-        noDark={false}
-      />
 
+      {/* 2. El botón derecho ahora tiene un contenedor balanceado */}
+      <View style={estilosHeaderFormulario.actionContainer}>
+        <CustomBoton
+          titulo=''
+          evento={evento}
+          icono={{ nombre: 'close-outline', color: '#E1E1F7' }}
+          estilos={estilosHeaderFormulario.closeButton}
+          fuente={24}
+          noDark={false}
+        />
+      </View>
     </View>
-
   )
 };
 
 const getEstilosHeaderFormulario = (colores, noDark = false) => StyleSheet.create({
   header: {
     backgroundColor: noDark?'#007BFF':colores.backgroundBotones,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: noDark?'#2c3e50':colores.text,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
+  },
+  actionContainer: {
+    width: 40, 
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   title: {
     fontSize: 20,
@@ -53,10 +58,15 @@ const getEstilosHeaderFormulario = (colores, noDark = false) => StyleSheet.creat
     marginHorizontal: 10
   },
   closeButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 4,
+    paddingVertical: 0,
+    paddingTop: 5,
+    paddingHorizontal: 0,
     elevation: 0,
     marginBottom: 0,
-    marginTop: 8
+    marginTop: 0, 
+    minWidth: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'start'
   }
 })

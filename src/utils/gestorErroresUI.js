@@ -3,27 +3,43 @@ import { HTTP_CODIGO } from './HttpCodigos';
 
 export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null) => {
   if (errorObj.tipo === 'SERVIDOR') {
-    console.log(errorObj)
-    // El formulario quiere manejar este error HTTP por su cuenta
+    // El formulario quiere manejar este error de validación por su cuenta
     if (manejadorEspecificoFormulario) {
-      const errorManejado = manejadorEspecificoFormulario(errorObj.status, errorObj.mensaje);
-      // Si el componente devolvió true, significa que pintó sus propios errores Cortamos ejecución.
+      const errorManejado = manejadorEspecificoFormulario(
+        errorObj.status, 
+        errorObj.mensaje, 
+        errorObj.erroresFormulario 
+      );
       if (errorManejado) return; 
     }
-    // console.log(errorObj)
-    // COMPORTAMIENTO POR DEFECTO (Si el formulario no lo manejó, o no se pasó callback)
+
     switch (errorObj.status) {
-      case HTTP_CODIGO.RATE_LIMIT:
+      case HTTP_CODIGO.RATE_LIMIT: // 429
         Alert.alert('Bloqueo de Seguridad', errorObj.mensaje);
         break;
-      case HTTP_CODIGO.NO_AUTORIZADO:
-        // En peticiones internas, un 401 significa Token Expirado. El interceptor cerrará sesión,
-        // pero avisamos al usuario por qué la pantalla cambió de repente.
+
+      case HTTP_CODIGO.NO_AUTORIZADO: // 401
         Alert.alert('Sesión expirada', 'Por favor, inicie sesión nuevamente.');
         break;
-      case HTTP_CODIGO.BAD_REQUEST:
+
+      case HTTP_CODIGO.PROHIBIDO: // 403
+        Alert.alert(
+          'Fallo de Integridad', 
+          'No tiene los permisos requeridos para realizar esta acción'
+        );
+        break;
+
+      case HTTP_CODIGO.BAD_REQUEST: // 400
         Alert.alert('Datos Inválidos', errorObj.mensaje);
         break;
+
+      case HTTP_CODIGO.NO_ENCONTRADO: // 404
+        Alert.alert(
+          'Registro no encontrado', 
+          errorObj.mensaje || 'El elemento que intenta consultar o modificar ya no existe en el sistema.'
+        );
+        break;
+
       default:
         Alert.alert('Error del Servidor', errorObj.mensaje || 'Operación fallida.');
     }
@@ -31,6 +47,10 @@ export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null)
   } else if (errorObj.tipo === 'RED') {
     Alert.alert('Problema de conexión', errorObj.mensaje);
   } else {
-    Alert.alert('Error', 'Ha ocurrido un error inesperado.');
+    // Captura errores de JavaScript puro o fallos de descifrado locales lanzados con throw
+    Alert.alert(
+      'Fallo de Seguridad Local', 
+      errorObj.mensaje || 'No se pudo verificar la firma de autenticidad de la respuesta.'
+    );
   }
 };

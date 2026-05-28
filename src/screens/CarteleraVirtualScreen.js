@@ -1,12 +1,15 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { Calendar, LocaleConfig } from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
+import { configurarCalendarioIdioma } from '../utils/configuracionCalendario';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import ModalFormularioPublicaciones from '../components/ModalFormularioPublicaciones';
 import PublicacionCard from '../components/PublicacionCard'; 
 import ListaRefrescable from '../components/ListaRefrescable';
 import BotonRegistrar from '../components/BotonRegistrar';
+import SkeletonCard from '../components/SkeletonCard';
+import ModalDetallePublicacion from '../components/ModalDetallePublicacion';
 
 import { useTema } from '../hooks/useTema';
 import { useCarteleraVirtual } from '../hooks/useCarteleraVirtual';
@@ -14,19 +17,19 @@ import { usePermisos } from '../hooks/usePermisos';
 
 import { criptografiaMovil } from '../utils/criptografiaMovil'; 
 
-LocaleConfig.locales['es'] = {
-  monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-  monthNamesShort: ['Ene.', 'Feb.', 'Mar', 'Abr', 'May', 'Jun', 'Jul.', 'Ago', 'Sept.', 'Oct.', 'Nov.', 'Dic.'],
-  dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
-  dayNamesShort: ['Dom.', 'Lun.', 'Mar.', 'Mié.', 'Jue.', 'Vie.', 'Sáb.'],
-  today: 'Hoy'
-};
-LocaleConfig.defaultLocale = 'es';
+configurarCalendarioIdioma();
 
 export default function CarteleraVirtualScreen () {
-// console.log('¿Hay clave AES?', criptografiaMovil.claveAESSesion);
   const { colores } = useTema();
-  const estilosCarteleraVirtual = getEstilosCarteleraVirtual(colores);
+  const estilosCarteleraVirtual = useMemo(() => getEstilosCarteleraVirtual(colores), [colores]);
+  const calendarTheme = useMemo(() => ({
+    calendarBackground: colores.card,
+    textSectionTitleColor: colores.textPlaceholder,
+    dayTextColor: colores.text,
+    todayTextColor: '#007BFF',
+    monthTextColor: colores.textTitle,
+    arrowColor: '#007BFF',
+  }), [colores]);
 
   const { puedePublicarCartelera, usuario: user } = usePermisos();
 
@@ -41,20 +44,23 @@ export default function CarteleraVirtualScreen () {
     cargarMasPublicaciones,
     obtenerPublicaciones,
     modalVisible,
-    modalEdicionVisible,
+    modalDetalleVisible,
     publicacionSeleccionada,
     abrirModalNuevaPublicacion,
     cerrarModalNuevaPublicacion,
-    cerrarModalEdicion,
+    abrirModalDetalle,
+    cerrarModalDetalle,
     handleGuardarEdicion
   } = useCarteleraVirtual(colores);
 
-  useEffect(() => {
-    obtenerPublicaciones();
-  }, []);
+  const renderPublicacion = useCallback(({ item }) => (
+    <PublicacionCard 
+      post={item} 
+      onPress={abrirModalDetalle} 
+    />
+  ), [abrirModalDetalle]);
 
-
-  const renderHeader = () => (
+  const headerComponent = useMemo(() => (
     <View style={{ marginBottom: 20 }}>
       <Text style={[estilosCarteleraVirtual.title, { marginBottom: 10 }]}>Cartelera Virtual</Text>
       
@@ -65,14 +71,7 @@ export default function CarteleraVirtualScreen () {
             setFechaSeleccionada(fechaSeleccionada === day.dateString ? '' : day.dateString);
           }}
           markedDates={markedDates}
-          theme={{
-            calendarBackground: colores.card,
-            textSectionTitleColor: colores.textPlaceholder,
-            dayTextColor: colores.text,
-            todayTextColor: '#007BFF',
-            monthTextColor: colores.textTitle,
-            arrowColor: '#007BFF',
-          }}
+          theme={calendarTheme} 
         />
       </View>
 
@@ -103,7 +102,16 @@ export default function CarteleraVirtualScreen () {
         ) : null}
       </View>
     </View>
-  );
+  ), [fechaSeleccionada, markedDates, estilosCarteleraVirtual, calendarTheme]);
+
+  const ALTURA_HEADER_CALENDARIO = 450;
+  const ALTURA_ITEM_POST = 340;
+
+  const elGetItemLayout = useCallback((data, index) => ({
+    length: ALTURA_ITEM_POST,
+    offset: (ALTURA_ITEM_POST * index) + ALTURA_HEADER_CALENDARIO,
+    index,
+  }), []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.background }}>
@@ -130,9 +138,10 @@ export default function CarteleraVirtualScreen () {
             onRefresh={() => obtenerPublicaciones(true)}
             onEndReached={cargarMasPublicaciones}
             cargandoMas={cargandoMas}
-            ListHeaderComponent={renderHeader}
-            renderItem={({ item }) => <PublicacionCard post={item} />}
+            ListHeaderComponent={headerComponent}
+            renderItem={renderPublicacion}
             mensajeVacio="No hay publicaciones para esta fecha."
+            getItemLayout={elGetItemLayout}
           />
         )}
       </View>
@@ -147,11 +156,11 @@ export default function CarteleraVirtualScreen () {
         onClose={cerrarModalNuevaPublicacion}
       />
 
-      <ModalFormularioPublicaciones
-        visible={modalEdicionVisible}
-        onClose={cerrarModalEdicion}
-        publicacionEditar={publicacionSeleccionada}
-        onGuardar={handleGuardarEdicion}
+      {/* MODAL DE DETALLES */}
+      <ModalDetallePublicacion
+        visible={modalDetalleVisible}
+        onClose={cerrarModalDetalle}
+        publicacion={publicacionSeleccionada}
       />
     </View>
   );
@@ -205,20 +214,4 @@ const getEstilosCarteleraVirtual = (colores) => StyleSheet.create({
     marginTop: 15,
     paddingHorizontal: 5
   },
-  fab: {
-    position: 'absolute',
-    bottom: 120,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    zIndex: 100,
-  }
 })

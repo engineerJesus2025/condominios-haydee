@@ -5,12 +5,14 @@ import * as ImagePicker from 'expo-image-picker'
 import { Alert } from 'react-native'
 import { fetchPublicaciones, crearPublicacion } from '../store/slices/publicacionesSlice';
 import { procesarErrorApi } from '../utils/gestorErroresUI';
+import { usePermisos } from './usePermisos';
 
 export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => { 
   const dispatch = useDispatch()
   const [permissionStatus, requestPermission] = ImagePicker.useMediaLibraryPermissions();
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const { usuario } = usePermisos();
+  
   const {
     control,
     handleSubmit,
@@ -61,29 +63,28 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
   const handleImagePick = async () => {
     try {
       if (!permissionStatus?.granted) {
-        const permissionResult = await requestPermission()
+        const permissionResult = await requestPermission();
         if (!permissionResult.granted) {
-          Alert.alert('Permisos necesarios', 'Se necesitan permisos de galería para seleccionar una imagen.')
-          return
+          Alert.alert('Permisos necesarios', 'Se necesitan permisos de galería para seleccionar una imagen.');
+          return;
         }
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-        base64: false
-      })
+        aspect: [4, 3], // Formato horizontal para noticias en la cartelera
+        quality: 0.4, 
+        base64: true
+      });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setValue('imagen', result.assets[0].uri, { shouldValidate: true })
+        setValue('imagen', result.assets[0].uri, { shouldValidate: true });
       }
     } catch (error) {
-      console.error('Error al seleccionar imagen:', error)
-      Alert.alert('Error', 'No se pudo seleccionar la imagen')
+      procesarErrorApi(error);
     }
-  }
+  };
 
   const removeImage = () => {
     setValue('imagen', null, { shouldValidate: true })
@@ -92,20 +93,17 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
   const onSubmit = async (data) => {
     if (isSubmitting) return;
 
-    if (data.imagen && data.imagen.startsWith('data:')) {
-      Alert.alert('Formato no soportado', 'La imagen está en un formato no optimizado. Por favor selecciona otra.');
-      return;
-    }
+    // Pausamos para que tenga tiempo de pintar el Spinner
+    await new Promise(resolve => setTimeout(resolve, 50)); // Esto se llama THREAD YIELDING mi estimado
 
     setIsSubmitting(true);
 
     try {
-      // FormData estándar
       const formData = new FormData();
       formData.append('operacion', 'registrar_cartelera');
       formData.append('titulo', data.titulo);
       formData.append('descripcion', data.descripcion);
-      formData.append('usuario_id', 1); // Temporal hasta usar Tokens de sesión
+      formData.append('usuario_id', usuario?.id_usuario); // Temporal hasta usar Tokens de sesión
 
       let prioridad = 3; // Por defecto Noticia
       if (data.tipo === 'aviso') prioridad = 1;
@@ -144,8 +142,25 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
         resetForm();
       }, 400);
 
-    } catch (errorObj) {
-      procesarErrorApi(errorObj);
+    } catch (error) {
+      procesarErrorApi(error, (status, mensaje, erroresFormulario) => {
+        // Si es un error 400 y trae detalles por campo
+        if (status === 400 && erroresFormulario) {
+          Object.keys(erroresFormulario).forEach(campo => {
+            setError(campo, {
+              type: 'server',
+              message: erroresFormulario[campo][0]
+            });
+          });
+          
+          //Feedback general
+          Alert.alert('Datos Inválidos', mensaje || 'Revise los campos marcados en rojo.');
+          
+          return true;
+        }
+        
+        return false; // Si es un 401, 403, 500, etc.
+      });
     } finally {
       setIsSubmitting(false);
     }

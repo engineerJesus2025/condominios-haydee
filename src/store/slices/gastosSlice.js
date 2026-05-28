@@ -1,22 +1,30 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { 
+  createSlice, 
+  createAsyncThunk, 
+  isPending, 
+  isRejected, 
+  isFulfilled 
+} from '@reduxjs/toolkit';
 import clienteApi from '../../utils/clienteApi';
 
 // Thunk para consultar la lista general
 export const fetchGastos = createAsyncThunk(
   'gastos/fetchGastos',
-  async (_, { rejectWithValue }) => {
+  async ({ mes, anio} = {}, { rejectWithValue }) => {
     try {
       const respuesta = await clienteApi.get('', {
         params: {
           endpoint: 'gastos',
-          operacion: 'consulta'
+          operacion: 'listar_gastos_mes',
+          mes:mes,
+          anio:anio
         }
       });
 
       const json = respuesta.data;
       
       if (json.estatus) {
-        return json.datos; // Retornamos los datos crudos de MySQL
+        return json.datos;
       } else {
         return rejectWithValue(json.mensaje);
       }
@@ -56,15 +64,15 @@ export const crearGasto = createAsyncThunk(
       if (json.estatus) {
         return {
           ...datosVisuales,
-          id: json.id || Date.now().toString() // Si tu PHP devuelve el ID generado, lo usamos
+          id: json.id
         };
       } else {
-        // Si hay errores de validación de tu clase Validador, los formateamos
+        // Si hay errores de validación, los formateamos
         const errorMsg = json.mensaje || (json.errores ? Object.values(json.errores)[0] : 'Error al registrar');
         return rejectWithValue(errorMsg);
       }
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error);
     }
   }
 );
@@ -97,19 +105,11 @@ const gastosSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchGastos.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(fetchGastos.fulfilled, (state, action) => {
-        state.loading = false;
-        
-        // Mapeamos los datos de MySQL a lo que espera la GastoCard
         state.listaGastos = action.payload.map(item => ({
           id: item.id_gasto,
-          // Formateamos la fecha (viene como YYYY-MM-DD HH:MM:SS)
           fecha: item.ultima_fecha ? item.ultima_fecha.split(' ')[0] : 'Sin fecha',
-          monto: `${parseFloat(item.monto_total || 0).toFixed(2)} Bs.`, // Formato de moneda
+          monto: parseFloat(item.monto_total || 0).toFixed(2), // Formato de moneda
           tipo: item.clasificacion || 'Variable', // Fijo o Variable
           tipo_gasto: item.tipo || 'General',     // Categoría
           proveedor: item.proveedor || 'No especificado',
@@ -118,26 +118,50 @@ const gastosSlice = createSlice({
           comprobante: null 
         }));
 
-        // Calculamos el total (Sumamos todos los montos de la lista actual)
-        const total = action.payload.reduce((sum, item) => sum + parseFloat(item.monto_total || 0), 0);
-        state.totalGastadoMes = total.toFixed(2);
-      })
-      .addCase(fetchGastos.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        state.totalGastadoMes = recalcularTotal(state.listaGastos);
       })
       .addCase(crearGasto.fulfilled, (state, action) => {
         // Agregamos el gasto a la lista visible
         state.listaGastos.unshift(action.payload);
         
         // Sumamos el monto crudo al Total del Mes
-        const nuevoTotal = parseFloat(state.totalGastadoMes) + parseFloat(action.payload.montoCrudo || 0);
-        state.totalGastadoMes = nuevoTotal.toFixed(2);
+        state.totalGastadoMes = recalcularTotal(state.listaGastos);
       })
       .addCase(fetchCatalogosGastos.fulfilled, (state, action) => {
         state.catalogos = action.payload;
-      });
+      })
+      .addMatcher(
+        isPending(fetchGastos, fetchCatalogosGastos),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      // Apaga el "loading" cuando cualquiera de estos termina con éxito
+      .addMatcher(
+        isFulfilled(fetchGastos, crearGasto, fetchCatalogosGastos),
+        (state) => {
+          state.loading = false;
+        }
+      )
+      // Atrapa los errores SOLO si provienen de estos thunks específicos
+      .addMatcher(
+        isRejected(fetchGastos, crearGasto, fetchCatalogosGastos),
+        (state, action) => {
+          state.loading = false;
+          state.error = action.payload || 'Ocurrió un error inesperado.';
+        }
+      );
   }
 });
 
 export default gastosSlice.reducer;
+
+const recalcularTotal = (lista) => {
+  const total = lista.reduce((sum, item) => {
+    // Si viene de fetchGastos usa monto_total, si viene de crearGasto usa montoCrudo
+    const valor = parseFloat(item.monto || item.montoCrudo || 0);
+    return sum + valor;
+  }, 0);
+  return total.toFixed(2);
+};

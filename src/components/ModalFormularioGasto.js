@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native'; 
-import { useFormularioGasto } from '../hooks/useFormularioGasto';
 import { useTema } from '../hooks/useTema';
+import { useFormularioGasto } from '../hooks/useFormularioGasto';
+import useValidaciones from '../hooks/useValidaciones';
 import { Controller } from 'react-hook-form';
 
 import ModalGeneral from './ModalGeneral'; 
@@ -24,15 +25,18 @@ export default function ModalFormularioGasto({ visible, onClose }) {
     catalogos, requiereBanco
   } = useFormularioGasto(onClose);
 
-  const reglas = {
-    requerido: { required: { value: true, message: 'Este campo es obligatorio' }, maxLength: { value: 255 } },
-    monto: { required: { value: true, message: 'El monto es obligatorio' }, pattern: { value: /^[0-9]+(\.[0-9]{1,2})?$/, message: 'Ej. 150.50' } }
-  };
+  const validaciones = useValidaciones();
 
   const BotonesFooter = (
     <>
       <CustomBoton titulo="Cancelar" evento={handleCancel} icono={{ nombre: 'close-circle-outline', color: '#fff' }} estilos={{ backgroundColor: '#95a5a6', flex: 1 }} fuente={16} />
-      <CustomBoton titulo="Registrar" evento={handleSubmit(onSubmit)} icono={{ nombre: 'save-outline', color: '#fff' }} disabled={!canSubmit || isSubmitting} estilos={{ backgroundColor: '#27ae60', opacity: canSubmit && !isSubmitting ? 1 : 0.6 }} fuente={16} />
+      <CustomBoton titulo="Registrar" evento={handleSubmit(onSubmit)} 
+        icono={{ nombre: 'save-outline', color: '#fff' }} 
+        disabled={!canSubmit || isSubmitting} 
+        estilos={{ backgroundColor: '#27ae60', opacity: canSubmit && !isSubmitting ? 1 : 0.6 }} 
+        fuente={16} 
+        loading={isSubmitting}
+      />
     </>
   );
 
@@ -51,7 +55,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
         name="clasificacion"
         render={({ field: { onChange, value } }) => (
           <View style={{ flexDirection: 'row', marginBottom: 15, gap: 10 }}>
-            {['Fijo', 'Variable'].map((opcion) => {
+            {['FIJO', 'VARIABLE'].map((opcion) => {
               const isSelected = value === opcion;
               return (
                 <TouchableOpacity
@@ -68,7 +72,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
                     color: isSelected ? (colores.primario || '#3498db') : colores.textPlaceholder,
                     fontWeight: isSelected ? 'bold' : '500',
                   }}>
-                    {opcion}
+                    {opcion.charAt(0).toUpperCase() + opcion.toLowerCase().slice(1)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -76,12 +80,13 @@ export default function ModalFormularioGasto({ visible, onClose }) {
           </View>
         )}
       />
+      <ErrorFormulario error={errors.clasificacion} />
 
       <LabelInput titulo="Categoría" icono={{ nombre: 'grid-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="tipo_gasto_id"
-        rules={{ required: 'Selecciona una categoría' }}
+        rules={validaciones.requeridoSimple('Selecciona una categoría')}
         render={({ field: { onChange, value } }) => (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
             {catalogos.tipos_gasto.map((tipo) => {
@@ -111,24 +116,12 @@ export default function ModalFormularioGasto({ visible, onClose }) {
       />
       <ErrorFormulario error={errors.tipo_gasto_id} />
 
-      <LabelInput titulo="Proveedor (Opcional)" icono={{ nombre: 'business-outline', color: '#3498db' }} />
+      <LabelInput titulo="Proveedor" icono={{ nombre: 'business-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="proveedor_id"
         render={({ field: { onChange, value } }) => (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
-             <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => onChange('')}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, marginRight: 8,
-                    borderColor: value === '' ? (colores.primario || '#3498db') : colores.border,
-                    backgroundColor: value === '' ? (colores.primario + '15' || '#eaf4fc') : colores.card,
-                  }}
-                >
-                  <Text style={{ color: value === '' ? colores.primario : colores.textPlaceholder }}>Ninguno</Text>
-            </TouchableOpacity>
-
             {catalogos.proveedores.map((prov) => {
               const isSelected = value === prov.id_proveedor;
               return (
@@ -151,13 +144,14 @@ export default function ModalFormularioGasto({ visible, onClose }) {
           </ScrollView>
         )}
       />
+      <ErrorFormulario error={errors.proveedor_id} />
 
       <CampoFormulario
         tituloLabel="Descripción del Gasto"
         iconoLabel={{ nombre: 'document-text-outline', color: '#3498db' }}
         control={control}
         name="descripcion_gasto"
-        rules={reglas.requerido}
+        rules={validaciones.descripcionGasto}
         iconoInput={{ nombre: 'reader-outline', color: '#95a5a6' }}
         error={errors.descripcion_gasto}
         placeholder="Motivo detallado..."
@@ -171,7 +165,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
         iconoLabel={{ nombre: 'cash-outline', color: '#3498db' }}
         control={control}
         name="monto"
-        rules={reglas.monto}
+        rules={validaciones.monto}
         iconoInput={{ nombre: 'cash', color: '#95a5a6' }}
         error={errors.monto}
         placeholder="Ejm: 250.00"
@@ -215,7 +209,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
           <Controller
             control={control}
             name="banco_id"
-            rules={{ required: 'Selecciona un banco' }}
+            rules={validaciones.requeridoSimple('Selecciona un banco')}
             render={({ field: { onChange, value } }) => (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
                 {catalogos.bancos.map((banco) => {
@@ -247,7 +241,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
             iconoLabel={{ nombre: 'barcode-outline', color: '#3498db' }}
             control={control}
             name="referencia"
-            rules={{ required: { value: true, message: 'La referencia es obligatoria' } }}
+            rules={validaciones.referencia}
             iconoInput={{ nombre: 'keypad', color: '#95a5a6' }}
             error={errors.referencia}
             placeholder="Ejm: 00123456"

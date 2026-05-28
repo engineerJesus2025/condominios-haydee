@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTema } from '../hooks/useTema';
+import { formatearFechaLegible } from '../utils/dateUtils';
 
 export default function GastoCard({ gasto, onPressDetalles }) {
   const { colores } = useTema();
@@ -26,11 +27,11 @@ export default function GastoCard({ gasto, onPressDetalles }) {
       <View style={styles.body}>
         <View style={[styles.etiquetaTipo, { backgroundColor: colorTipo + '20' }]}>
           <Icon name={iconoTipo} size={14} color={colorTipo} style={{ marginRight: 4 }} />
-          <Text style={[styles.textoTipo, { color: colorTipo }]}>Gasto {gasto.tipo}</Text>
+          <Text style={[styles.textoTipo, { color: colorTipo }]}>Gasto {gasto.tipo.charAt(0).toUpperCase() + gasto.tipo.toLowerCase().slice(1)}</Text>
         </View>
-        <Text style={styles.fecha}>{gasto.fecha}</Text>
-      </View>
 
+        <Text style={styles.fecha}>{formatearFechaLegible(gasto.fecha)}</Text>
+      </View>
       <TouchableOpacity 
         style={[styles.botonVerMas, { borderTopColor: colores.border }]} 
         onPress={() => onPressDetalles(gasto)}

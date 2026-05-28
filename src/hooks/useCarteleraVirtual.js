@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchPublicaciones } from '../store/slices/publicacionesSlice';
 
@@ -8,7 +8,7 @@ export const useCarteleraVirtual = (colores) => {
   const { listaPublicaciones, cargando, error, hayMas, paginaActual } = useSelector(state => state.publicaciones);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalEdicionVisible, setModalEdicionVisible] = useState(false);
+  const [modalDetalleVisible, setModalDetalleVisible] = useState(false);
   const [publicacionSeleccionada, setPublicacionSeleccionada] = useState(null);
   
   // estado del calendario
@@ -80,6 +80,16 @@ export const useCarteleraVirtual = (colores) => {
   // Funciones de modales
   const abrirModalNuevaPublicacion = () => setModalVisible(true);
   const cerrarModalNuevaPublicacion = () => setModalVisible(false);
+
+  const abrirModalDetalle = (publicacion) => {
+    setPublicacionSeleccionada(publicacion);
+    setModalDetalleVisible(true);
+  };
+  const cerrarModalDetalle = () => {
+    setPublicacionSeleccionada(null);
+    setModalDetalleVisible(false);
+  };
+
   const abrirModalEdicion = (publicacion) => {
     setPublicacionSeleccionada(publicacion);
     setModalEdicionVisible(true);
@@ -89,6 +99,10 @@ export const useCarteleraVirtual = (colores) => {
     setModalEdicionVisible(false);
   };
   const handleGuardarEdicion = () => cerrarModalEdicion();
+
+  useEffect(() => {
+    obtenerPublicaciones();
+  }, []);
 
   return {
     listaPublicacionesMostrar,
@@ -101,12 +115,12 @@ export const useCarteleraVirtual = (colores) => {
     obtenerPublicaciones,
     cargarMasPublicaciones,
     modalVisible,
-    modalEdicionVisible,
+    modalDetalleVisible,
     publicacionSeleccionada,
     abrirModalNuevaPublicacion,
     cerrarModalNuevaPublicacion,
-    abrirModalEdicion,
-    cerrarModalEdicion,
+    abrirModalDetalle,
+    cerrarModalDetalle,
     handleGuardarEdicion
   };
 };

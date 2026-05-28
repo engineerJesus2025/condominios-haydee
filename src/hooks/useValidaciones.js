@@ -1,4 +1,11 @@
-import { CONTRA_REGEX, CORREO_REGEX, TITULO_REGEX, DESCRIPCION_REGEX } from '../utils/regex';
+import { 
+  CONTRA_REGEX, 
+  CORREO_REGEX, 
+  TITULO_REGEX, 
+  DESCRIPCION_REGEX,
+  MONTO_REGEX,
+  REFERENCIA_REGEX
+} from '../utils/regex';
 
 export default function useValidaciones() {
   return {
@@ -25,6 +32,24 @@ export default function useValidaciones() {
       minLength: { value: DESCRIPCION_REGEX.limites.minimo, message: DESCRIPCION_REGEX.limites.mensaje_min },
       maxLength: { value: DESCRIPCION_REGEX.limites.maximo, message: DESCRIPCION_REGEX.limites.mensaje_max },
       pattern: { value: DESCRIPCION_REGEX.patron, message: DESCRIPCION_REGEX.mensaje }
-    }
+    },
+    monto: {
+      required: MONTO_REGEX.requerido,
+      pattern: { value: MONTO_REGEX.patron, message: MONTO_REGEX.mensaje }
+    },
+    referencia: {
+      required: REFERENCIA_REGEX.requerido,
+      minLength: { value: REFERENCIA_REGEX.limites.minimo, message: REFERENCIA_REGEX.limites.mensaje_min },
+      maxLength: { value: REFERENCIA_REGEX.limites.maximo, message: REFERENCIA_REGEX.limites.mensaje_max },
+      pattern: { value: REFERENCIA_REGEX.patron, message: REFERENCIA_REGEX.mensaje }
+    },
+    descripcionGasto: {
+      required: { value: true, message: 'La descripción es obligatoria' },
+      maxLength: { value: 255, message: 'Máximo 255 caracteres' }
+    },
+    // para Selects (Apartamentos, Bancos, etc.)
+    requeridoSimple: (mensajePersonalizado = 'Este campo es obligatorio') => ({
+      required: { value: true, message: mensajePersonalizado }
+    })
   };
 }

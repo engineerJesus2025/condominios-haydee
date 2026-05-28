@@ -1,21 +1,17 @@
-import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator, FlatList, Dimensions, StyleSheet } from 'react-native';
-
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useMemo } from 'react';
+import { View, Dimensions, StyleSheet, Text, FlatList, TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import PublicacionCard from '../components/PublicacionCard';
-import DeudaResumenCard from '../components/DeudaResumenCard';
-import EventoCard from '../components/EventoCard';
+import ResumenFinancieroCard from '../components/ResumenFinancieroCard';
 import ProgresoPresupuesto from '../components/ProgresoPresupuesto';
 import ListaRefrescable from '../components/ListaRefrescable';
+import ModalDetallePublicacion from '../components/ModalDetallePublicacion';
+import SkeletonCard from '../components/SkeletonCard';
 
 import { useTema } from '../hooks/useTema';
-import { useResumenFinanciero } from '../hooks/useResumenFinanciero';
-import { useEventos } from '../hooks/useEventos';
-
-
-import { fetchPublicaciones } from '../store/slices/publicacionesSlice';
+import { useInicio } from '../hooks/useInicio';
 
 const { width } = Dimensions.get('window');
 const SNAP_INTERVAL = (width * 0.75) + 12; 
@@ -24,115 +20,119 @@ export default function InicioScreen({ navigation }) {
   const { colores } = useTema();
   const estilosInicio = getEstilosInicio(colores);
 
-  const dispatch = useDispatch();
+  const {
+    deudaTotal, 
+    gastado, 
+    presupuestoTotal, 
+    loadingFinanzas, 
+    listaPublicaciones, 
+    loadingCartelera, 
+    refreshing,
+    cargarDatosInicio,
+    error,
+    obtenerItemLayout,
+    modalDetalleVisible,
+    publicacionSeleccionada,
+    abrirModalDetalle,
+    cerrarModalDetalle,
+    puedeVerGastos,
+    puedeVerMensualidad,
+    recaudado
+  } = useInicio();
 
-  const { deudaTotal, gastado, presupuestoTotal, loading: loadingFinanzas, error, obtenerDatos } = useResumenFinanciero();
-  const { eventos } = useEventos();
-  
-  const { listaPublicaciones, cargando: loadingPublicaciones } = useSelector(state => state.publicaciones);
-  console.log(listaPublicaciones)
-  const noticiasGenerales = (listaPublicaciones || []).filter(post => post.tipo?.toLowerCase() !== 'evento');
+  const DIMENSIONES_VISTA = useMemo(() => ({
+    alturaItem: 340,        
+    alturaHeaderBase: 380,  
+    alturaEventos: 150,     
+  }), []);
 
-  useEffect(() => {
-    if (obtenerDatos) obtenerDatos();
-    if (listaPublicaciones.length === 0) {
-        dispatch(fetchPublicaciones({ pagina: 1, limite: 20 }));
-    }
-  }, [dispatch]);
+  const getItemLayoutInicio = useMemo(
+    () => obtenerItemLayout(DIMENSIONES_VISTA),
+    [obtenerItemLayout, DIMENSIONES_VISTA]
+  );
 
-  const handleVerDetalleDeuda = () => {
-    navigation.navigate('Pagos');
-  };
+  const renderFinanzasDashboard = () => (
+    <View style={{ marginVertical: 4 }}>
+      
+      <ResumenFinancieroCard 
+        monto={deudaTotal} 
+        titulo="Tu Deuda Pendiente" 
+        moneda="Bs." 
+        tipo="deuda"
+        onAccion={() => navigation.navigate('Pagos')}
+        textoAccion="Pagar"
+        cargando={loadingFinanzas} 
+      />
 
-  const handleEventoPress = (evento) => {
-    navigation.navigate('Cartelera'); 
-  };
-
-
-  const renderHeader = () => {
-    if (loadingFinanzas && !gastado) {
-      // Solo mostramos el spinner gigante si es la primera carga y no hay datos
-      return <ActivityIndicator size="large" color={colores.primario} style={{ marginTop: 40 }} />;
-    }
-    if (error) {
-      return <Text style={{ color: '#e74c3c', textAlign: 'center', marginTop: 20 }}>{error.mensaje}</Text>;
-    }
-
-    return (
-      <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
-        
-        <Text style={[estilosInicio.title, { marginBottom: 10, paddingHorizontal: 0 }]}>
-          Mi Estado
-        </Text>
-        <DeudaResumenCard
-          totalDeuda={deudaTotal}
-          onVerDetalle={handleVerDetalleDeuda}
+      {puedeVerGastos && (
+        <ResumenFinancieroCard 
+          monto={gastado} 
+          titulo="Gastos Ejecutados" 
+          moneda="Bs." 
+          tipo="gasto"
+          onAccion={() => navigation.navigate('Gastos')}
+          textoAccion="Historial"
+          cargando={loadingFinanzas}
         />
+      )}
 
-        {eventos && eventos.length > 0 && (
-          <View style={{ marginTop: 20, marginBottom: 5 }}>
-            <Text style={[estilosInicio.title, { fontSize: 18, marginBottom: 12, paddingHorizontal: 0 }]}>
-              Próximos eventos
-            </Text>
-            
-            <FlatList
-              data={eventos}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <EventoCard evento={item} onPress={handleEventoPress} />
-              )}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              snapToAlignment="start"
-              decelerationRate="fast"
-              snapToInterval={SNAP_INTERVAL} 
-              style={{ marginHorizontal: -16 }} 
-              contentContainerStyle={{ paddingLeft: 16, paddingRight: 16, paddingVertical: 8 }} 
-            />
-            
-          </View>
-        )}
+      {puedeVerMensualidad && (
+        <ProgresoPresupuesto 
+          gastado={gastado} 
+          total={recaudado}
+          moneda="Bs."
+          titulo="Gastos del Condominio"
+          icono="business-outline"
+          cargando={loadingFinanzas}
+        />
+      )}
 
-        <View style={{ marginTop: 20 }}>
-          <Text style={[estilosInicio.title, { fontSize: 18, marginBottom: 10, paddingHorizontal: 0 }]}>
-            Gestión del mes
+      {loadingCartelera && (
+        <View style={{ paddingTop: 10 }}>
+          <Text style={[estilosInicio.title, { paddingHorizontal: 16, marginTop: 10, fontSize: 18, color: colores.textPlaceholder }]}>
+            Actualizando cartelera...
           </Text>
-          <ProgresoPresupuesto
-            gastado={gastado}
-            total={presupuestoTotal}
-            moneda="Bs"
-          />
+          <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+            <SkeletonCard tipo="publicacion" />
+            <SkeletonCard tipo="publicacion" />
+          </View>
         </View>
+      )}
 
-        <Text style={[estilosInicio.title, { fontSize: 18, marginTop: 24, marginBottom: 10, paddingHorizontal: 0 }]}>
-          Últimas noticias
-        </Text>
-      </View>
-    );
-  };
-
-  // Combinamos los estados de carga para el Pull-to-Refresh
-  const isRefreshing = loadingFinanzas || loadingPublicaciones;
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.background }}>
-      <HeaderPrincipal />
+      <HeaderPrincipal titulo="Condominio Haydee" />
       
-      <ListaRefrescable
-        data={noticiasGenerales}
-        keyExtractor={(item) => item.id.toString()}
-        cargando={isRefreshing}
-        onRefresh={() => {
-          dispatch(fetchPublicaciones({ pagina: 1, recargar: true })); 
-          if (obtenerDatos) obtenerDatos(true); 
-        }}
-        ListHeaderComponent={renderHeader}
-        renderItem={({ item }) => (
-          <View style={{ paddingHorizontal: 16 }}>
-            <PublicacionCard post={item} />
-          </View>
-        )}
-        mensajeVacio="No hay noticias recientes en el condominio."
+      <View style={[estilosInicio.mainContentContainer, { paddingHorizontal: 0 }]}>
+        
+        <ListaRefrescable
+          data={loadingCartelera ? [] : listaPublicaciones}
+          keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+          cargando={(loadingCartelera || loadingFinanzas) && listaPublicaciones.length > 0}
+          onRefresh={() => cargarDatosInicio(true)} 
+          
+          ListHeaderComponent={renderFinanzasDashboard()} // <-- ¡PARÉNTESIS VITALES AQUÍ!
+          
+          renderItem={({ item }) => (
+            <View style={{ paddingHorizontal: 14 }}>
+              <PublicacionCard 
+                post={item} 
+                onPress={abrirModalDetalle} 
+              />
+            </View>
+          )}
+          mensajeVacio="No hay actividad reciente en el condominio."
+          getItemLayout={getItemLayoutInicio}
+        />
+      </View>
+      
+      <ModalDetallePublicacion
+        visible={modalDetalleVisible}
+        onClose={cerrarModalDetalle}
+        publicacion={publicacionSeleccionada}
       />
     </View>
   );
@@ -142,8 +142,6 @@ const getEstilosInicio = (colores) => StyleSheet.create({
   mainContentContainer: {
     flexGrow: 1,
     paddingBottom: 20,
-    padding: 14,
-    paddingBottom: 40
   },
   title: {
     fontSize: 24,
@@ -153,15 +151,3 @@ const getEstilosInicio = (colores) => StyleSheet.create({
     paddingHorizontal: 4
   }
 });
-/*
-[
-  {"descripcion": "bienvenidos al 2026", "fecha": "2100-10-10 00:00:00", "tipo": "noticia", "titulo": "Bienvenidos"}, 
-  {"descripcion": "Hola chamo", "fecha": "2026-05-14 13:03:54", "tipo": "evento", "titulo": "Hola "}, 
-  {"descripcion": "Hola ora vez ", "fecha": "2026-05-14 12:53:10","tipo": "noticia", "titulo": "Hola "}, 
-  {"descripcion": "Publicacion genérica ", "fecha": "2026-05-12 11:30:42", "tipo": "noticia", "titulo": "Publicacion"}, 
-  {"descripcion": "Soy un mensaje encriptado ", "fecha": "2026-05-12 11:01:12" "tipo": "evento", "titulo": "Hola"}, 
-  {"descripcion": "Jdjdkdkddd", "fecha": "2026-05-10 01:13:49","tipo": "evento", "titulo": "Hola mi vida "}, 
-  {"descripcion": "Gkdksksslsmsmd", "fecha": "2026-05-10 01:08:24", "tipo": "evento", "titulo": "Hola mi amor "}, {"autor": "Jesus", "descripcion": "Hola buenas ", "fecha": "2026-05-10 01:07:28", "id": 41, "imagen": null, "tipo": "aviso", "titulo": "Hola buenas "}, 
-  {"descripcion": "Hola buenas ", "fecha": "2026-05-10 01:07:08",  "tipo": "aviso", "titulo": "Hola"}, {"autor": "Jesus", "descripcion": "Ya casi", "fecha": "2026-04-30 11:50:54", "id": 39, "imagen": "http://192.168.1.39/haydee-app/recursos/img/cartelera_virtual/f44e1ac5-7768-4f6c-944f-1989807ebe7b_1777564254_220.png", "tipo": "evento", "titulo": "Ya casi"}
-] 
-*/

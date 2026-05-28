@@ -9,6 +9,7 @@ import ProgresoPresupuesto from '../components/ProgresoPresupuesto';
 import ModalDesgloseMensualidad from '../components/ModalDesgloseMensualidad';
 import ListaRefrescable from '../components/ListaRefrescable';
 import CargandoOverlay from '../components/CargandoOverlay';
+import SkeletonCard from '../components/SkeletonCard';
 
 import { useTema } from './../hooks/useTema';
 import { useMensualidades } from '../hooks/useMensualidades'; 
@@ -27,12 +28,9 @@ export default function MensualidadesScreen () {
     setModalVisible,
     mensualidadSeleccionada,
     gastado,
-    presupuestoTotal
+    presupuestoTotal,
+    recaudado
   } = useMensualidades();
-  console.log(cargandoDetalle)
-  useEffect(() => {
-    obtenerMensualidades();
-  }, []);
 
   const renderHeader = () => (
     <View style={{ marginBottom: 15 }}>
@@ -43,12 +41,37 @@ export default function MensualidadesScreen () {
            <ActivityIndicator size="small" color={colores.primario} />
          </View>
       ) : (
-        <ProgresoPresupuesto gastado={gastado} total={presupuestoTotal} moneda="Bs" />
+        <ProgresoPresupuesto
+          gastado={gastado}
+          total={recaudado}
+          moneda="Bs"
+          titulo="Gastos del Condominio"
+          icono="business-outline"
+          cargando={loading}
+        />
       )}
       
       <Text style={[estilosMensualidad.title, { marginTop: 20, fontSize: 20 }]}>Historial de Mensualidades</Text>
     </View>
   );
+
+  const renderCargandoSkeletons = () => (
+    <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+      {renderHeader()}
+      <SkeletonCard tipo="mensualidad" />
+      <SkeletonCard tipo="mensualidad" />
+      <SkeletonCard tipo="mensualidad" />
+    </View>
+  );
+
+  const ALTURA_HEADER = 180;
+  const ALTURA_ITEM = 175;
+
+  const getItemLayoutMensualidades = React.useCallback((data, index) => ({
+    length: ALTURA_ITEM,
+    offset: (ALTURA_ITEM * index) + ALTURA_HEADER,
+    index,
+  }), []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.background }}> 
@@ -57,10 +80,7 @@ export default function MensualidadesScreen () {
       <View style={[estilosMensualidad.mainContentContainer, { flex: 1, paddingHorizontal: 0 }]}>
         
         {loading && listaMensualidades.length === 0 ? (
-           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-             <ActivityIndicator size="large" color={colores.primario || '#007BFF'} />
-             <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando mensualidades...</Text>
-           </View>
+          renderCargandoSkeletons()
         ) : (
           <ListaRefrescable
             data={listaMensualidades}
@@ -77,6 +97,7 @@ export default function MensualidadesScreen () {
               />
             )}
             mensajeVacio="No hay mensualidades registradas."
+            getItemLayout={getItemLayoutMensualidades}
           />
         )}
 

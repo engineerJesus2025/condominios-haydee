@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { crearGasto, fetchCatalogosGastos } from '../store/slices/gastosSlice';
+import { procesarErrorApi } from '../utils/gestorErroresUI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const useFormularioGasto = (onClose) => {
   const dispatch = useDispatch();
@@ -13,6 +15,7 @@ export const useFormularioGasto = (onClose) => {
   
   const [permissionStatus, requestPermission] = ImagePicker.useMediaLibraryPermissions();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tasaDolar, setTasaDolar] = useState('1.00');
 
   // Inicializamos los catálogos al abrir el modal (si no están cargados)
   useEffect(() => {
@@ -27,11 +30,12 @@ export const useFormularioGasto = (onClose) => {
     formState: { errors, isValid },
     reset,
     setValue,
-    watch
+    watch,
+    setError
   } = useForm({
     mode: 'onChange',
     defaultValues: {
-      clasificacion: 'Variable',
+      clasificacion: 'VARIABLE',
       tipo_gasto_id: '',
       proveedor_id: '',
       descripcion_gasto: '',
@@ -55,17 +59,26 @@ export const useFormularioGasto = (onClose) => {
 
   const handleImagePick = async () => {
     try {
+      // Verificamos permisos dinámicamente
+      if (!permissionStatus?.granted) {
+        const permissionResult = await requestPermission();
+        if (!permissionResult.granted) return;
+      }
+
+      // Disparamos la galería optimizada
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        quality: 0.8,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // o ['images']
+        allowsEditing: true, 
+        aspect: [4, 5],      
+        quality: 0.4,        
+        base64: true         
       });
 
-      if (!result.canceled && result.assets.length > 0) {
+      if (!result.canceled && result.assets && result.assets.length > 0) {
         setValue('comprobante', result.assets[0].uri, { shouldValidate: true });
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo seleccionar el comprobante');
+      procesarErrorApi(error);
     }
   };
 
@@ -75,6 +88,8 @@ export const useFormularioGasto = (onClose) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
+    // Pausamos para que tenga tiempo de pintar el Spinner
+    await new Promise(resolve => setTimeout(resolve, 50)); // Esto se llama THREAD YIELDING mi estimado
     try {
       const formData = new FormData();
       
@@ -83,14 +98,14 @@ export const useFormularioGasto = (onClose) => {
       formData.append('clasificacion', data.clasificacion);
       formData.append('descripcion_gasto', data.descripcion_gasto);
       formData.append('tipo_gasto_id', data.tipo_gasto_id); 
-      if (data.proveedor_id) formData.append('proveedor_id', data.proveedor_id);
+      formData.append('proveedor_id', data.proveedor_id);
+      formData.append('tasa_dolar', tasaDolar);
 
       // -- DETALLES DEL GASTO (Renglones) --
       const fechaHoy = new Date().toISOString().split('T')[0];
       formData.append('fecha_detalle[0]', fechaHoy);
       formData.append('monto[0]', data.monto);
       formData.append('metodo_pago[0]', data.metodo_pago);
-      formData.append('descripcion_detalle_gasto[0]', data.descripcion_gasto);
 
       // -- DATOS BANCARIOS (Si aplica) --
       if (requiereBanco) {
@@ -107,7 +122,7 @@ export const useFormularioGasto = (onClose) => {
         }
       }
 
-      // -- DATOS PARA OPTIMISTIC UI --
+      // -- DATOS PARA OPTIMISTIC UI PAPA --
       const tipoGastoObj = catalogos.tipos_gasto.find(t => t.id_tipo_gasto === data.tipo_gasto_id);
       const proveedorObj = catalogos.proveedores.find(p => p.id_proveedor === data.proveedor_id);
 
@@ -128,7 +143,24 @@ export const useFormularioGasto = (onClose) => {
       setTimeout(() => reset(), 400);
 
     } catch (error) {
-      Alert.alert('Error al registrar', typeof error === 'string' ? error : 'Revisa los datos e intenta de nuevo.');
+      procesarErrorApi(error, (status, mensaje, erroresFormulario) => {
+        // Si es un error 400 y trae detalles por campo
+        if (status === 400 && erroresFormulario) {
+          Object.keys(erroresFormulario).forEach(campo => {
+            setError(campo, {
+              type: 'server',
+              message: erroresFormulario[campo][0]
+            });
+          });
+          
+          //Feedback general
+          Alert.alert('Datos Inválidos', mensaje || 'Revise los campos marcados en rojo.');
+          
+          return true;
+        }
+        
+        return false; // Si es un 401, 403, 500, etc.
+      });
     } finally {
       setIsSubmitting(false);
     }

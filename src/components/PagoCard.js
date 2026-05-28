@@ -2,12 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTema } from '../hooks/useTema';
+import { formatearFechaLegible, formatearMesAnio } from '../utils/dateUtils';
 
 export default function PagoCard({ pago, onPressDetalles }) {
   const { colores } = useTema();
   
   const estado = pago.estado?.toLowerCase();
-  
+  const [mes,anio] = pago.mensualidad.split('/');
+
   let colorEstado = '#f39c12'; // (Pendiente)
   let iconoEstado = 'time';
 
@@ -35,13 +37,13 @@ export default function PagoCard({ pago, onPressDetalles }) {
         <View style={styles.detalleFila}>
           <Icon name="calendar-outline" size={16} color="#7f8c8d" />
           <Text style={[styles.detalleTexto, { color: colores.textTitle }]}>
-            Abono a: {pago.mensualidad}
+            Mensualidad pagada: {formatearMesAnio(mes,anio)}
           </Text>
         </View>
         <View style={styles.detalleFila}>
           <Icon name="cash-outline" size={16} color="#7f8c8d" />
           <Text style={[styles.detalleTexto, { color: colores.textPlaceholder }]}>
-            Fecha de pago: {pago.fecha}
+            Fecha de pago: {formatearFechaLegible(pago.fecha)}
           </Text>
         </View>
       </View>

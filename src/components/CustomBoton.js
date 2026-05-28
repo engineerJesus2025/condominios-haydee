@@ -16,7 +16,7 @@ export default function CustomBoton ({
   const estilosCustomBoton = getEstilosCustomBoton(colores, noDark)
 
   const isBotonDeshabilitado = disabled || loading;
-
+  
   return (
     <View style={estilosCustomBoton.topRow}>
       <TouchableOpacity
@@ -30,7 +30,12 @@ export default function CustomBoton ({
         disabled={isBotonDeshabilitado}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" size="small" />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
+            <Text style={[estilosCustomBoton.primaryBtnText, fuente && { fontSize: fuente }]}>
+              {titulo}
+            </Text>
+          </View>
         ) : (
           <Text style={[estilosCustomBoton.primaryBtnText, fuente && { fontSize: fuente }]}>
             {titulo} {icono && (<Icon name={icono.nombre} size={fuente || 16} color={icono.color} />)}

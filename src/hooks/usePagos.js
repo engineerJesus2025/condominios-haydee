@@ -1,41 +1,80 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Alert } from 'react-native';
-import { fetchPagos, cambiarEstadoPago } from '../store/slices/pagosSlice';
+import { fetchPagos, actualizarEstadoPagoServidor, fetchEstadoCuenta } from '../store/slices/pagosSlice';
 import { usePermisos } from './usePermisos';
 import clienteApi from '../utils/clienteApi'; 
+import { procesarErrorApi } from '../utils/gestorErroresUI';
 
-// URL Base para armar la ruta de las imágenes
 const URL_BASE = process.env.EXPO_PUBLIC_URL_BASE; 
 
 export const usePagos = () => {
   const dispatch = useDispatch();
 
-  // Estados de Redux
-  const { listaPagos, loading, error } = useSelector(state => state.pagos);
+  const { listaPagos, loading, error, listaDeudas, totalDeuda, loadingDeudas } = useSelector(state => state.pagos);
   const { esAdmin, puedeAprobarPagos } = usePermisos();
 
-  // Estados Locales (Modales)
+  // Estados para el filtro de fechas
+  const fechaActual = new Date();
+  const [mesFiltro, setMesFiltro] = useState(fechaActual.getMonth() + 1);
+  const [anioFiltro, setAnioFiltro] = useState(fechaActual.getFullYear());
+  const [periodosDisponibles, setPeriodosDisponibles] = useState([]);
+
   const [modalVisible, setModalVisible] = useState(false); 
   const [modalPagoVisible, setModalPagoVisible] = useState(false); 
   const [modalEstadoCuentaVisible, setModalEstadoCuentaVisible] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
-  
-  // Estado para saber si estamos buscando los detalles
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [procesandoEstado, setProcesandoEstado] = useState(false);
 
-  // Acciones Principales
-  const obtenerPagos = (forzar = false) => {
+  // Pasamos mes y año al Redux Thunk
+  const obtenerPagos = (forzar = false, mes = mesFiltro, anio = anioFiltro) => {
     if (forzar || listaPagos.length === 0) {
-      dispatch(fetchPagos());
+      dispatch(fetchPagos({ mes, anio }));
+      dispatch(fetchEstadoCuenta()); 
     }
   };
 
-  // Modificamos abrirDetalles para que consulte el servidor
-  const abrirDetalles = async (pagoCabecera) => {
-    // Si ya estamos buscando uno, evitamos dobles toques
-    if (cargandoDetalle) return;
+  const cargarPeriodos = useCallback(async () => {
+    try {
+      const respuesta = await clienteApi.get('', {
+        params: { endpoint: 'pagos', operacion: 'obtener_periodos' }
+      });
+
+      if (respuesta.data.estatus) {
+        const periodosBD = respuesta.data.datos;
+        setPeriodosDisponibles(periodosBD);
+
+        if (periodosBD.length > 0) {
+          const existeMesActual = periodosBD.some(
+            p => Number(p.mes) === mesFiltro && Number(p.anio) === anioFiltro
+          );
+
+          if (!existeMesActual) {
+            const ultimoPeriodo = periodosBD[0]; 
+            setMesFiltro(Number(ultimoPeriodo.mes));
+            setAnioFiltro(Number(ultimoPeriodo.anio));
+            obtenerPagos(true, Number(ultimoPeriodo.mes), Number(ultimoPeriodo.anio));
+            return; 
+          }
+        }
+      }
+    } catch (err) {
+      procesarErrorApi(error);
+    }
     
+    obtenerPagos();
+  }, [mesFiltro, anioFiltro]);
+
+  // Función para actualizar el filtro
+  const cambiarFiltroFecha = (nuevoMes, nuevoAnio) => {
+    setMesFiltro(nuevoMes);
+    setAnioFiltro(nuevoAnio);
+    obtenerPagos(true, nuevoMes, nuevoAnio);
+  };
+
+  const abrirDetalles = async (pagoCabecera) => {
+    if (cargandoDetalle) return;
     setCargandoDetalle(true);
     
     try {
@@ -49,21 +88,17 @@ export const usePagos = () => {
 
       if (respuesta.data.estatus) {
         const dataBackend = respuesta.data.datos;
-        
-        // Extraemos el primer detalle (donde suele estar la info bancaria)
         const detalleBancario = dataBackend.detalles && dataBackend.detalles.length > 0 
           ? dataBackend.detalles[0] 
           : {};
 
-        // Armamos la URL completa de la imagen si existe
         let urlImagen = null;
         if (detalleBancario.imagen && detalleBancario.imagen !== 'default.png') {
           urlImagen = `${URL_BASE}/recursos/img/pagos/${detalleBancario.imagen}`;
         }
 
-        // Combinamos la info visual de la lista con los datos fuertes del servidor
         setPagoSeleccionado({
-          ...pagoCabecera, // Mantenemos fecha visual, monto visual, etc.
+          ...pagoCabecera, 
           banco: detalleBancario.nombre_banco || pagoCabecera.banco || 'No aplica',
           referencia: detalleBancario.referencia || pagoCabecera.referencia || 'No aplica',
           imagen: urlImagen
@@ -71,10 +106,11 @@ export const usePagos = () => {
         
         setModalVisible(true);
       } else {
-        Alert.alert("Aviso", respuesta.data.mensaje || "No se pudieron cargar los detalles.");
+        // Si el estatus de negocio es false pero vino con un 200 HTTP, estructuramos el error
+        procesarErrorApi({ tipo: 'SERVIDOR', status: 400, mensaje: respuesta.data.mensaje });
       }
     } catch (err) {
-      Alert.alert("Error", "Problema de conexión al buscar el recibo.");
+      procesarErrorApi(err);
     } finally {
       setCargandoDetalle(false);
     }
@@ -85,10 +121,8 @@ export const usePagos = () => {
     setPagoSeleccionado(null);
   };
 
-  // Acciones de Administrador
   const handleAprobar = (pago) => {
     if (!puedeAprobarPagos) return;
-    
     Alert.alert(
       "Aprobar Pago",
       `¿Confirmas que el pago por ${pago.monto} es válido y está en la cuenta?`,
@@ -96,9 +130,18 @@ export const usePagos = () => {
         { text: "Cancelar", style: "cancel" },
         { 
           text: "Sí, Aprobar", 
-          onPress: () => {
-            dispatch(cambiarEstadoPago({ id: pago.id, nuevoEstado: 'Procesado' }));
-            setModalVisible(false); 
+          onPress: async () => {
+            setProcesandoEstado(true);
+            try {
+              await dispatch(actualizarEstadoPagoServidor({ id_pago: pago.id, nuevoEstado: 'PROCESADO' })).unwrap();
+              
+              obtenerPagos(true);
+            } catch (error) {
+              procesarErrorApi(error);
+            } finally {
+              setProcesandoEstado(false);
+              cerrarDetalles();
+            }
           }
         }
       ]
@@ -114,31 +157,58 @@ export const usePagos = () => {
         { 
           text: "Sí, Rechazar", 
           style: "destructive",
-          onPress: () => {
-            dispatch(cambiarEstadoPago({ id: pago.id, nuevoEstado: 'Rechazado' }));
-            setModalVisible(false);
+          onPress: async () => {
+            setProcesandoEstado(true);
+            try {
+              await dispatch(actualizarEstadoPagoServidor({ id_pago: pago.id, nuevoEstado: 'RECHAZADO' })).unwrap();
+              
+              obtenerPagos(true);
+            } catch (error) {
+              procesarErrorApi(error);
+            } finally {
+              setProcesandoEstado(false);
+              cerrarDetalles();
+            }
           }
         }
       ]
     );
   };
 
+  useEffect(() => {
+    if (typeof cargarPeriodos === 'function') {
+      cargarPeriodos();
+    } else {
+      obtenerPagos(); 
+    }
+  }, []);
+
   return {
     listaPagos,
     loading,
     error,
+    listaDeudas,
+    totalDeuda,
+    loadingDeudas,
     esAdmin,
+    puedeAprobarPagos,
+    mesFiltro,
+    setMesFiltro,
+    anioFiltro,
+    setAnioFiltro,
+    periodosDisponibles,
     modalVisible,
     modalPagoVisible,
     modalEstadoCuentaVisible,
     pagoSeleccionado,
-    cargandoDetalle, 
+    cargandoDetalle,
     setModalPagoVisible,
     setModalEstadoCuentaVisible,
     obtenerPagos,
     abrirDetalles,
     cerrarDetalles,
     handleAprobar,
-    handleRechazar
+    handleRechazar,
+    procesandoEstado
   };
 };

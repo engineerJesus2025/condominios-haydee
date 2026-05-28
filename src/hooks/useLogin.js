@@ -20,14 +20,14 @@ export default function useLogin() {
       // Si llega aquí, el login fue exitoso y el slice ya actualizó el estado
     } catch (errorObj) {
       procesarErrorApi(errorObj, (status, mensaje) => {
-        if (status === HTTP_CODIGO.BAD_REQUEST) {
+        if (status === HTTP_CODIGO.BAD_REQUEST || status === HTTP_CODIGO.NO_AUTORIZADO) {
           // Pintamos los inputs de rojo y le decimos al gestor global: "Yo me encargo"
           setError('correo', { type: 'manual', message: 'Credenciales incorrectas' });
           setError('contra', { type: 'manual', message: 'Credenciales incorrectas' });
           Alert.alert('Atención', mensaje);
           return true; 
         }
-        return false; // Si es otro error (ej. Rate Limit 429), dejamos que el gestor global muestre el Alert
+        return false;
       });
     }
   };
@@ -37,6 +37,6 @@ export default function useLogin() {
     handleSubmit: handleSubmit(onSubmit), 
     isValid, 
     errors,
-    loading // Para mostrar un spinner en el botón de ingresar
+    loading
   };
 }

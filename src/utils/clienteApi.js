@@ -17,9 +17,7 @@ const clienteApi = axios.create({
   timeout: 10000,
 });
 
-// ==========================================================
 // INTERCEPTOR DE PETICIÓN (SALIDA)
-// ==========================================================
 clienteApi.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('userToken');
@@ -139,9 +137,7 @@ clienteApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ==========================================================
 // INTERCEPTOR DE RESPUESTA (ENTRADA)
-// ==========================================================
 clienteApi.interceptors.response.use(
   (response) => {
     if (response.data && response.data.cifrado === true) {
@@ -165,7 +161,7 @@ clienteApi.interceptors.response.use(
     if (error.response) {
       
     console.log(error.response.data)
-      // DESCIFRADO DE EMERGENCIA: Si el servidor envió un error cifrado (ej. 401 o 429)
+      // Si el servidor envió un error cifrado (ej. 401 o 429)
       let dataServidor = error.response.data;
       if (dataServidor && dataServidor.cifrado === true) {
         try {
@@ -178,13 +174,14 @@ clienteApi.interceptors.response.use(
       errorFormateado = { 
         tipo: 'SERVIDOR', 
         status: error.response.status, 
-        mensaje: dataServidor?.mensaje || 'Error interno del servidor.' 
+        mensaje: dataServidor?.mensaje || 'Error interno del servidor.',
+        erroresFormulario: dataServidor?.errores || null 
       };
 
-      // LOGOUT GLOBAL INTELIGENTE: Cerramos sesión SOLO si no estamos en la pantalla de Login
+      // Cerramos sesión SOLO si no estamos en la pantalla de Login
       const endpoint = error.config?.params?.endpoint;
       if (errorFormateado.status === 401 && reduxStore && endpoint !== 'login') {
-        console.log("🔒 Seguridad: JWT expirado o inválido. Cerrando sesión...");
+        console.log("Seguridad: JWT expirado o inválido. Cerrando sesión...");
         reduxStore.dispatch({ type: 'usuario/logout' }); 
       }
     } else if (error.request) {

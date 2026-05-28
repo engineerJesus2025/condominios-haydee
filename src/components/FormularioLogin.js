@@ -12,8 +12,7 @@ import LabelInput from '../components/LabelInput'
 import BotonRecuperarContra from '../components/BotonRecuperarContra'
 import ModalRecuperarContrasena from './ModalRecuperarContrasena'
 
-// Recibimos la nueva prop
-export default function FormularioLogin ({ botonBloqueadoPorSeguridad }) {
+export default function FormularioLogin ({ botonBloqueadoPorSeguridad, estadoConexion, onReintentarConexion }) {
   const { colores } = useTema()
   const estilosFormulario = getEstilosFormularioLogin(colores)
   const contraRef = useRef(null);
@@ -27,15 +26,28 @@ export default function FormularioLogin ({ botonBloqueadoPorSeguridad }) {
   } = useLogin()
   const validaciones = useValidaciones()
 
-  // El botón se bloquea si el formulario tiene errores O si el handshake no ha terminado
-  const botonDesabilitado = !isValid || botonBloqueadoPorSeguridad || loading;
-
   let textoBoton = 'Ingresar';
-  if (botonBloqueadoPorSeguridad) {
-    textoBoton = 'Conectando canal...';
+  let accionBoton = handleSubmit;
+  let colorBoton = { backgroundColor: '#007BFF' };
+  let iconoBoton = { nombre: 'send', color: '#fff' };
+  let mostrarLoader = loading;
+  if (estadoConexion === 'conectando') {
+    textoBoton = 'Conectando...';
+    mostrarLoader = true;
+  } else if (estadoConexion === 'reintentando') {
+    textoBoton = 'Reintentando...';
+    mostrarLoader = true;
+  } else if (estadoConexion === 'fallo') {
+    textoBoton = 'Fallo de red. Reintentar';
+    accionBoton = onReintentarConexion; // Sobrescribimos el submit para que el botón intente reconectar
+    iconoBoton = { nombre: 'refresh-outline', color: '#fff' };
+    colorBoton = { backgroundColor: '#e74c3c' }; // Lo pintamos de rojo para indicar el fallo
+    mostrarLoader = false;
   } else if (loading) {
-    textoBoton = 'Cargando...'; // O simplemente 'Cargando...'
+    textoBoton = 'Autenticando...';
   }
+
+  const botonDesabilitado = (!isValid && estadoConexion === 'conectado') || estadoConexion === 'conectando' || estadoConexion === 'reintentando' || loading;
   
   const [modalRecuperarVisible, setModalRecuperarVisible] = useState(false)
 
@@ -87,11 +99,11 @@ export default function FormularioLogin ({ botonBloqueadoPorSeguridad }) {
 
       <CustomBoton
         titulo={textoBoton}
-        evento={handleSubmit}
-        icono={{ nombre: 'send', color: '#fff' }}
+        evento={accionBoton}
+        icono={iconoBoton}
         disabled={botonDesabilitado}
-        loading={loading || botonBloqueadoPorSeguridad}
-        estilos={estilosFormulario.button}
+        loading={mostrarLoader}
+        estilos={{...estilosFormulario.button,colorBoton}}
         fuente={18}
         noDark={true}
       />
@@ -115,7 +127,7 @@ const getEstilosFormularioLogin = (colores) => StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 8
+    elevation: 8,
   },
   title: {
     fontSize: 22,
@@ -125,6 +137,6 @@ const getEstilosFormularioLogin = (colores) => StyleSheet.create({
     textAlign: 'center'
   },
   button: {
-    alignSelf: 'center'
+    alignSelf: 'center',
   }
 })

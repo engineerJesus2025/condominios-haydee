@@ -1,15 +1,15 @@
 /**
- * Expresiones regulares para validaciones
+ * Expresiones regulares para validaciones (Sincronizado con Backend Zero Trust)
  */
 
 export const CORREO_REGEX = {
-  patron: /^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/,
-  mensaje: 'ejemplo@gmail.com',
+  patron: /^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/,
+  mensaje: 'Formato inválido. Ej: usuario@gmail.com',
   limites: {
     minimo: 3,
-    maximo: 40,
+    maximo: 50,
     mensaje_min: 'Al menos 3 caracteres',
-    mensaje_max: 'Maximo 40 caracteres'
+    mensaje_max: 'Máximo 50 caracteres'
   },
   requerido: {
     value: true,
@@ -18,13 +18,13 @@ export const CORREO_REGEX = {
 }
 
 export const CONTRA_REGEX = {
-  patron: /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
-  mensaje: 'Solo letras, números, espacios y signos de puntuación comunes',
+  patron: /^[A-Za-z0-9_.+*$#%&@-]{5,100}$/,
+  mensaje: 'Solo letras, números y símbolos permitidos (_.+*$#%&@-)',
   limites: {
     minimo: 5,
-    maximo: 50,
+    maximo: 100,
     mensaje_min: 'La contraseña debe tener mínimo 5 caracteres',
-    mensaje_max: 'Maximo 50 caracteres'
+    mensaje_max: 'Máximo 100 caracteres'
   },
   requerido: {
     value: true,
@@ -32,32 +32,60 @@ export const CONTRA_REGEX = {
   }
 }
 
+// ---------------- CARTELERA VIRTUAL ----------------
+
 export const TITULO_REGEX = {
-  patron: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,\- ]{3,50}$/,
-  mensaje: 'Solo letras, números, espacios y signos de puntuación comunes',
+  patron: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\- ]{3,200}$/,
+  mensaje: 'Contiene caracteres no permitidos',
   limites: {
     minimo: 3,
-    maximo: 50,
-    mensaje_min: 'El titulo debe tener mínimo 3 caracteres',
-    mensaje_max: 'El título no puede tener más de 50 caracteres'
+    maximo: 200,
+    mensaje_min: 'El título debe tener mínimo 3 caracteres',
+    mensaje_max: 'El título no puede exceder 200 caracteres'
   },
   requerido: {
     value: true,
-    message: 'El Titulo es requerido'
+    message: 'El título es requerido'
   }
 }
 
 export const DESCRIPCION_REGEX = {
-  patron: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,\- ]{5,100}$/,
-  mensaje: 'Solo letras, números, espacios y signos de puntuación comunes',
+  patron: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\- ]{3,200}$/,
+  mensaje: 'Contiene caracteres no permitidos',
   limites: {
-    minimo: 5,
-    maximo: 500,
-    mensaje_min: 'La descripción debe tener mínimo 5 caracteres',
-    mensaje_max: 'La descripción no puede tener más de 500 caracteres'
+    minimo: 3,
+    maximo: 200,
+    mensaje_min: 'La descripción debe tener mínimo 3 caracteres',
+    mensaje_max: 'La descripción no puede exceder 200 caracteres'
   },
   requerido: {
     value: true,
-    message: 'Contraseña requerida'
+    message: 'La descripción es requerida'
+  }
+}
+
+// ---------------- PAGOS Y FINANZAS ----------------
+
+export const MONTO_REGEX = {
+  patron: /^\d+(\.\d{1,2})?$/,
+  mensaje: 'Formato inválido. Ej. 150.50 (Usa punto para decimales)',
+  requerido: {
+    value: true,
+    message: 'El monto es obligatorio'
+  }
+}
+
+export const REFERENCIA_REGEX = {
+  patron: /^[a-zA-Z0-9-]{4,20}$/,
+  mensaje: 'Solo letras, números y guiones (sin espacios)',
+  limites: {
+    minimo: 4,
+    maximo: 20,
+    mensaje_min: 'Mínimo 4 caracteres',
+    mensaje_max: 'Máximo 20 caracteres'
+  },
+  requerido: {
+    value: true,
+    message: 'La referencia es obligatoria'
   }
 }

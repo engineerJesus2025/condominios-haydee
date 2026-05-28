@@ -1,16 +1,27 @@
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTema } from './../hooks/useTema';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'; 
 
 export default function BotonRegistrar({puedeRegistrar, modalAbrir, icono = "add-outline"}) {
 	const { colores } = useTema();
 	const estilosBotonRegistrar = getEstilosGastos();
+	
+	const tabBarHeight = useBottomTabBarHeight();
+	
+	const bottomDinamico = tabBarHeight + 20; 
 
 	return (
 		<>
 		{puedeRegistrar && (
 	        <TouchableOpacity 
-	          style={[estilosBotonRegistrar.fab, { backgroundColor: colores.backgroundBotones || '#007BFF' }]} 
+	          style={[
+	            estilosBotonRegistrar.fab, 
+	            { 
+	              backgroundColor: colores.backgroundBotones || '#007BFF',
+	              bottom: bottomDinamico
+	            }
+	          ]} 
 	          onPress={modalAbrir}
 	          activeOpacity={0.8}
 	        >
@@ -24,7 +35,6 @@ export default function BotonRegistrar({puedeRegistrar, modalAbrir, icono = "add
 const getEstilosGastos = () => StyleSheet.create({
   fab: {
     position: 'absolute',
-    bottom: 110,
     right: 20,
     width: 60,
     height: 60,
@@ -37,4 +47,4 @@ const getEstilosGastos = () => StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
   }
-})
+});

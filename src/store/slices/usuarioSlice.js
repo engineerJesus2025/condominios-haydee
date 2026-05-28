@@ -1,4 +1,10 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { 
+  createSlice, 
+  createAsyncThunk, 
+  isPending, 
+  isRejected, 
+  isFulfilled 
+} from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import clienteApi from '../../utils/clienteApi';
 
@@ -53,19 +59,32 @@ const usuarioSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginUsuario.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(loginUsuario.fulfilled, (state, action) => {
-        state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload;
       })
-      .addCase(loginUsuario.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+      .addMatcher(
+        isPending(loginUsuario),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      // Apaga el "loading" cuando cualquiera de estos termina con éxito
+      .addMatcher(
+        isFulfilled(loginUsuario),
+        (state) => {
+          state.loading = false;
+        }
+      )
+      // Atrapa los errores SOLO si provienen de estos thunks específicos
+      .addMatcher(
+        isRejected(loginUsuario),
+        (state, action) => {
+          state.loading = false;
+          state.error = action.payload || 'Ocurrió un error inesperado.';
+        }
+      );
   }
 });
 

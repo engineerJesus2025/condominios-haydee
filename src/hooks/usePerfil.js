@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { logout } from '../store/slices/usuarioSlice';
 import clienteApi from '../utils/clienteApi';
+import { usePermisos } from './usePermisos'; 
+import { procesarErrorApi } from '../utils/gestorErroresUI';
 
 export const usePerfil = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.usuario);
-  const [datosPerfil, setDatosPerfil] = useState(user);
+  
+  const { usuario } = usePermisos(); 
+  
+  const [datosPerfil, setDatosPerfil] = useState(usuario);
   const [loading, setLoading] = useState(false);
 
   // Consultar datos frescos del servidor al entrar
@@ -14,13 +18,13 @@ export const usePerfil = () => {
     setLoading(true);
     try {
       const respuesta = await clienteApi.get('', {
-        params: { endpoint: 'perfil' } // api/perfil_api.php
+        params: { endpoint: 'perfil', operacion: 'consultar_perfil' } 
       });
       if (respuesta.data.estatus) {
         setDatosPerfil(respuesta.data.datos);
       }
     } catch (error) {
-      console.error("Error al cargar perfil:", error);
+      procesarErrorApi(error);
     } finally {
       setLoading(false);
     }
@@ -29,6 +33,10 @@ export const usePerfil = () => {
   const handleLogout = () => {
     dispatch(logout());
   };
+
+  useEffect(() => {
+    cargarDatosServidor();
+  }, []);
 
   return {
     usuario: datosPerfil,

@@ -1,16 +1,24 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { memo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'; 
+import { Image } from 'expo-image';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTema } from '../hooks/useTema';
+import { tiempoRelativo } from '../utils/dateUtils';
 
-export default function PublicacionCard({ post }) {
+const IMAGEN_POR_DEFECTO = require('../../assets/publicacion-default.svg');
+
+function PublicacionCard({ post, onPress }) {
   const { colores } = useTema();
 
   const estiloTipo = getEstiloTipo(post.tipo);
+  const sourceImagen = post.imagen ? { uri: post.imagen } : IMAGEN_POR_DEFECTO;
 
   return (
-    <View style={[styles.card, { backgroundColor: colores.card }]}>
-      
+    <TouchableOpacity 
+      onPress={() => onPress(post)}
+      activeOpacity={0.85}
+      style={[styles.card, { backgroundColor: colores.card }]}
+    >
       <View style={styles.headerContainer}>
         <View style={[styles.badge, { backgroundColor: estiloTipo.fondo }]}>
           <Icon name={estiloTipo.icono} size={14} color={estiloTipo.color} style={{ marginRight: 4 }} />
@@ -19,27 +27,32 @@ export default function PublicacionCard({ post }) {
           </Text>
         </View>
         <Text style={[styles.fecha, { color: colores.textPlaceholder }]}>
-          {post.fecha || 'Sin fecha'}
+          {post.fecha ? tiempoRelativo(post.fecha) : 'Sin fecha'}
         </Text>
       </View>
 
       <Text style={[styles.titulo, { color: colores.textTitle }]}>
         {post.titulo}
       </Text>
-      <Text style={[styles.descripcion, { color: colores.text }]}>
+      <Text style={[styles.descripcion, { color: colores.text }]} numberOfLines={4}>
         {post.descripcion}
       </Text>
 
-      {post.imagen && (
-        <Image 
-          source={{ uri: post.imagen }} 
-          style={styles.imagen} 
-          resizeMode="cover" 
-        />
-      )}
-    </View>
+      <Image
+        source={sourceImagen}
+        style={styles.imagen}
+        contentFit="cover"
+        transition={300}
+        cachePolicy="disk"
+      />
+    </TouchableOpacity>
   );
 }
+
+// solo se repinte si el ID cambia
+export default memo(PublicacionCard, (prevProps, nextProps) => {
+  return prevProps.post.id === nextProps.post.id; 
+});
 
 const getEstiloTipo = (tipoRaw) => {
     const tipo = tipoRaw?.toLowerCase() || 'noticia';
@@ -47,17 +60,17 @@ const getEstiloTipo = (tipoRaw) => {
     switch (tipo) {
       case 'evento':
         return { 
-          color: '#e74c3c', 
-          fondo: 'rgba(231, 76, 60, 0.12)', // Rojo clarito
+          color: '#f39c12', 
+          fondo: 'rgba(243, 156, 18, 0.12)', // Naranja clarito
           icono: 'calendar-outline', 
           label: 'Evento' 
         };
       case 'aviso':
         return { 
-          color: '#f39c12', 
-          fondo: 'rgba(243, 156, 18, 0.12)', // Naranja clarito
+          color: '#e74c3c', 
+          fondo: 'rgba(231, 76, 60, 0.12)', // Rojo clarito
           icono: 'warning-outline', 
-          label: 'Aviso Importante' 
+          label: 'Aviso' 
         };
       default: // noticia
         return { 
@@ -79,6 +92,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
+    overflow: 'hidden',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -113,10 +127,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 10,
   },
-  imagen: {
-    width: '100%',
-    height: 180,
-    borderRadius: 10,
-    marginTop: 8,
-  }
+  imagen: { width: '100%', height: 200 },
 });

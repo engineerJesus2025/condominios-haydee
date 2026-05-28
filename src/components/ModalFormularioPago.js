@@ -1,20 +1,24 @@
-import React, { useRef } from 'react';
+import React, { useRef } from 'react'; // <-- Adiós useMemo
 import { View, ScrollView, TouchableOpacity, Text } from 'react-native'; 
 import { useTema } from '../hooks/useTema';
 import { useFormularioPago } from '../hooks/useFormularioPago';
-import { Controller, useWatch } from 'react-hook-form'; 
+import useValidaciones from '../hooks/useValidaciones';
+import { Controller } from 'react-hook-form'; // <-- Adiós useWatch
+
 import ModalGeneral from './ModalGeneral'; 
 import CampoFormulario from './CampoFormulario';
 import ErrorFormulario from './ErrorFormulario';
 import LabelInput from './LabelInput';
 import CustomBoton from './CustomBoton';
 import MostrarVistaPrevia from './MostrarVistaPrevia';
+import { formatearMesAnio } from '../utils/dateUtils';
 
 export default function ModalFormularioPago({ visible, onClose }) {
   const { colores } = useTema();
   const montoRef = useRef(null);
   const referenciaRef = useRef(null);
   
+  // Ahora el hook nos entrega el trabajo totalmente procesado
   const {
     control,
     errors,
@@ -28,19 +32,33 @@ export default function ModalFormularioPago({ visible, onClose }) {
     bancosDisponibles,
     apartamentosDisponibles,
     mesesPendientes,
-    requiereBanco // <-- Extraemos la bandera
+    requiereBanco,
+    esAdmin,
+    tasaDolar,
+    equivalenteDolares,     
+    apartamentoSeleccionado 
   } = useFormularioPago(onClose);
 
-  const apartamentoSeleccionado = useWatch({ control, name: 'apartamento_id' });
-
-  const reglas = {
-    monto: { required: { value: true, message: 'Obligatorio' }, pattern: { value: /^[0-9]+(\.[0-9]{1,2})?$/, message: 'Ej. 150.50' } }
-  };
+  const validaciones = useValidaciones();
 
   const BotonesFooter = (
     <>
-      <CustomBoton titulo="Cancelar" evento={onClose} icono={{ nombre: 'close-circle-outline', color: '#fff' }} estilos={{ backgroundColor: '#95a5a6' }} fuente={16} />
-      <CustomBoton titulo="Enviar Pago" evento={handleSubmit(onSubmit)} icono={{ nombre: 'send-outline', color: '#fff' }} disabled={!isValid || isSubmitting} estilos={{ backgroundColor: '#27ae60', opacity: isValid && !isSubmitting ? 1 : 0.6 }} fuente={16} />
+      <CustomBoton 
+        titulo="Cancelar" 
+        evento={onClose} 
+        icono={{ nombre: 'close-circle-outline', color: '#fff' }} 
+        estilos={{ backgroundColor: '#95a5a6' }} 
+        fuente={16} 
+      />
+      <CustomBoton 
+        titulo="Enviar Pago" 
+        evento={handleSubmit(onSubmit)} 
+        icono={{ nombre: 'send-outline', color: '#fff' }} 
+        disabled={!isValid || isSubmitting} 
+        estilos={{ backgroundColor: '#27ae60', opacity: isValid && !isSubmitting ? 1 : 0.6 }} 
+        fuente={16} 
+        loading={isSubmitting}
+      />
     </>
   );
 
@@ -54,12 +72,56 @@ export default function ModalFormularioPago({ visible, onClose }) {
       esFormulario={true}
     >
 
+      {/* SELECTOR EXCLUSIVO PARA ADMINISTRADORES */}
+      {esAdmin && (
+        <>
+          <LabelInput titulo="Estado del Pago" icono={{ nombre: 'shield-checkmark-outline', color: '#3498db' }} />
+          <Controller
+            control={control}
+            name="estado"
+            render={({ field: { onChange, value } }) => (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
+                {['PENDIENTE', 'PROCESADO', 'RECHAZADO'].map((opcion) => {
+                  const isSelected = value === opcion;
+                  
+                  // para que destaque el color del estado
+                  let colorBorde = isSelected ? (colores.primario || '#3498db') : colores.border;
+                  if (isSelected && opcion === 'PROCESADO') colorBorde = '#27ae60';
+                  if (isSelected && opcion === 'RECHAZADO') colorBorde = '#e74c3c';
+
+                  return (
+                    <TouchableOpacity
+                      key={opcion}
+                      activeOpacity={0.7}
+                      onPress={() => onChange(opcion)}
+                      style={{
+                        paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5,
+                        borderColor: colorBorde,
+                        backgroundColor: isSelected ? colorBorde + '15' : colores.card,
+                      }}
+                    >
+                      <Text style={{ 
+                        color: isSelected ? colorBorde : colores.textPlaceholder, 
+                        fontWeight: isSelected ? 'bold' : '500' 
+                      }}>
+                        {opcion.charAt(0).toUpperCase() + opcion.toLowerCase().slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          />
+          <ErrorFormulario error={errors.estado} />
+        </>
+      )}
+
       {/* SELECTOR DE APARTAMENTO */}
       <LabelInput titulo="Apartamento" icono={{ nombre: 'home-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="apartamento_id"
-        rules={{ required: 'Selecciona tu apartamento' }}
+        rules={validaciones.requeridoSimple('Selecciona tu apartamento')}
         render={({ field: { onChange, value } }) => (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
             {apartamentosDisponibles.length === 0 ? (
@@ -95,7 +157,7 @@ export default function ModalFormularioPago({ visible, onClose }) {
       <Controller
         control={control}
         name="mensualidad_id"
-        rules={{ required: 'Selecciona un mes' }}
+        rules={validaciones.requeridoSimple('Selecciona un mes')}
         render={({ field: { onChange, value } }) => (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15 }}>
             {mesesPendientes.length === 0 ? (
@@ -105,6 +167,7 @@ export default function ModalFormularioPago({ visible, onClose }) {
             ) : (
               mesesPendientes.map((item) => {
                 const isSelected = value === item.id;
+                const [mes,anio] = item.mes.split(' ')
                 return (
                   <TouchableOpacity
                     key={item.id}
@@ -117,7 +180,7 @@ export default function ModalFormularioPago({ visible, onClose }) {
                     }}
                   >
                     <Text style={{ color: isSelected ? colores.primario : colores.textPlaceholder, fontWeight: isSelected ? 'bold' : '500' }}>
-                      {item.mes}
+                      {formatearMesAnio(mes,anio)}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -133,13 +196,38 @@ export default function ModalFormularioPago({ visible, onClose }) {
         iconoLabel={{ nombre: 'cash-outline', color: '#3498db' }}
         control={control}
         name="monto"
-        rules={reglas.monto}
+        rules={validaciones.monto}
         iconoInput={{ nombre: 'cash', color: '#95a5a6' }}
         error={errors.monto}
         placeholder="Ejm: 150.50"
         keyboardType="decimal-pad"
         inputRef={montoRef}
       />
+
+      {/* CONVERSIÓN Y TASA DEL DÍA */}
+      <View style={{ 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        backgroundColor: colores.primario + '10', 
+        padding: 12, 
+        borderRadius: 10, 
+        marginBottom: 15, 
+        borderWidth: 1, 
+        borderColor: colores.primario + '30' 
+      }}>
+        <View>
+          <Text style={{ fontSize: 12, color: colores.textPlaceholder }}>Tasa Oficial (BCV)</Text>
+          <Text style={{ fontSize: 15, fontWeight: 'bold', color: colores.text }}>
+            {tasaDolar} Bs.
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontSize: 12, color: colores.textPlaceholder }}>Equivalente aprox.</Text>
+          <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#27ae60' }}>
+            $ {equivalenteDolares}
+          </Text>
+        </View>
+      </View>
 
       {/* SELECTOR DE TIPO DE PAGO */}
       <LabelInput titulo="Método de Pago" icono={{ nombre: 'options-outline', color: '#3498db' }} />
@@ -171,14 +259,14 @@ export default function ModalFormularioPago({ visible, onClose }) {
         )}
       />
 
-      {/* --- SECCIÓN BANCARIA DINÁMICA --- */}
+      {/* --- SECCIÓN BANCARIA --- */}
       {requiereBanco && (
         <>
           <LabelInput titulo="Banco de Origen" icono={{ nombre: 'business-outline', color: '#3498db' }} />
           <Controller
             control={control}
             name="banco_id"
-            rules={{ required: 'Selecciona un banco' }}
+            rules={validaciones.requeridoSimple('Selecciona un banco')}
             render={({ field: { onChange, value } }) => (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
                 {bancosDisponibles.map((banco) => {
@@ -210,7 +298,7 @@ export default function ModalFormularioPago({ visible, onClose }) {
             iconoLabel={{ nombre: 'document-text-outline', color: '#3498db' }}
             control={control}
             name="referencia"
-            rules={{ required: { value: true, message: 'Obligatorio' }, maxLength: { value: 50 } }}
+            rules={validaciones.referencia}
             iconoInput={{ nombre: 'barcode', color: '#95a5a6' }}
             error={errors.referencia}
             placeholder="Ejm: 004589234"

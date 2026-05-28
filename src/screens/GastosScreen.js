@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
@@ -8,6 +8,9 @@ import ModalFormularioGasto from '../components/ModalFormularioGasto';
 import ListaRefrescable from '../components/ListaRefrescable';
 import BotonRegistrar from '../components/BotonRegistrar';
 import CargandoOverlay from '../components/CargandoOverlay';
+import SkeletonCard from '../components/SkeletonCard';
+import SelectorMesAnio from '../components/SelectorMesAnio';
+import ResumenFinancieroCard from '../components/ResumenFinancieroCard';
 
 import { useTema } from './../hooks/useTema';
 import { useGastos } from '../hooks/useGastos';
@@ -32,54 +35,79 @@ export default function GastosScreen () {
     abrirDetalles,
     cerrarDetalles,
     abrirNuevoGasto,
-    cerrarNuevoGasto
+    cerrarNuevoGasto,
+    mesFiltro, 
+    anioFiltro, 
+    cambiarFiltroFecha,
+    periodosDisponibles,
   } = useGastos();
 
-  useEffect(() => {
-    obtenerGastos();
-  }, []);
-
   const renderHeader = () => (
-    <View style={[estilosGastos.resumenContainer, { backgroundColor: colores.card }]}>
-      <Text style={[estilosGastos.resumenLabel, { color: colores.textPlaceholder }]}>
-        Total Ejecutado
+    <View style={{ paddingBottom: 5 }}>
+      <ResumenFinancieroCard 
+        monto={totalGastadoMes} 
+        titulo="Total Ejecutado este Mes" 
+        moneda="Bs." 
+        tipo="gasto"
+        cargando={loading} 
+      />
+      
+      <Text style={[estilosGastos.title, { marginTop: 15, marginBottom: 10, paddingHorizontal: 0 }]}>
+        Últimos Gastos Registrados
       </Text>
-      <Text style={[estilosGastos.resumenTotal, { color: colores.error || '#e74c3c' }]}>
-        {totalGastadoMes} Bs.
-      </Text>
-      <Text style={[estilosGastos.title, { marginTop: 20, marginBottom: 5 }]}>Últimos Gastos Registrados</Text>
+      
+      <SelectorMesAnio 
+        periodosDisponibles={periodosDisponibles}
+        mesActual={mesFiltro} 
+        anioActual={anioFiltro} 
+        onCambiarMes={(m, a) => cambiarFiltroFecha(m, a)} 
+      />
+
+      {loading && (
+        <View style={{ paddingTop: 10 }}>
+          <SkeletonCard tipo="gasto" />
+          <SkeletonCard tipo="gasto" />
+          <SkeletonCard tipo="gasto" />
+        </View>
+      )}
     </View>
   );
+
+  const ALTURA_HEADER = 180;
+  const ALTURA_ITEM = 165;
+
+  const elGetItemLayout = useCallback((data, index) => ({
+    length: ALTURA_ITEM,
+    offset: (ALTURA_ITEM * index) + ALTURA_HEADER,
+    index,
+  }), []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.background }}>
       <HeaderPrincipal />
 
-      <View style={[estilosGastos.mainContentContainer, { flex: 1, paddingHorizontal: 0 }]}>
+      {/* La vista ahora no tiene paddingHorizontal para que la lista maneje sus márgenes nativos */}
+      <View style={[estilosGastos.mainContentContainer, { flex: 1, paddingHorizontal: 0, paddingBottom: 0 }]}>
         
-        {loading ? (
-           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-             <ActivityIndicator size="large" color={colores.primario || '#007BFF'} />
-             <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando gastos...</Text>
-           </View>
-        ) : error ? (
+        {error ? (
            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
              <Text style={{ color: '#e74c3c' }}>Ocurrió un error: {error}</Text>
-             <TouchableOpacity onPress={obtenerGastos} style={{ marginTop: 10 }}>
-                <Text style={{ color: '#007BFF' }}>Reintentar</Text>
+             <TouchableOpacity onPress={() => obtenerGastos(true)} style={{ marginTop: 10 }}>
+                <Text style={{ color: '#007BFF', fontWeight: 'bold' }}>Reintentar</Text>
              </TouchableOpacity>
            </View>
         ) : (
           <ListaRefrescable
-            data={listaGastos}
+            data={loading ? [] : listaGastos} 
             keyExtractor={(item) => item.id.toString()}
-            cargando={loading}
+            cargando={loading && listaGastos.length > 0} 
             onRefresh={() => obtenerGastos(true)}
-            ListHeaderComponent={renderHeader}
+            ListHeaderComponent={renderHeader()}
             renderItem={({ item }) => (
               <GastoCard gasto={item} onPressDetalles={abrirDetalles} />
             )}
             mensajeVacio="No hay gastos registrados este mes."
+            getItemLayout={elGetItemLayout}
           />
         )}
       </View>
@@ -98,7 +126,7 @@ export default function GastosScreen () {
           { key: 'tipo_gasto', label: 'Categoría' },
           { key: 'proveedor', label: 'Proveedor' },
           { key: 'monto', label: 'Monto' },
-          { key: 'fecha', label: 'Fecha' },
+          { key: 'fecha', label: 'Fecha', formato: 'fecha_legible' },
           { key: 'metodo_pago', label: 'Método de Pago' },
           { key: 'banco', label: 'Banco' },
           { key: 'referencia', label: 'Referencia' },
@@ -124,7 +152,6 @@ const getEstilosGastos = (colores) => StyleSheet.create({
   mainContentContainer: {
     flex: 1,
     backgroundColor: colores.background,
-    padding: 14
   },
   title: {
     fontSize: 24,
@@ -133,18 +160,4 @@ const getEstilosGastos = (colores) => StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 4
   },
-  resumenContainer: { 
-    alignItems: 'center', 
-    backgroundColor: colores.card,
-    padding: 20, 
-    borderRadius: 12, 
-    marginBottom: 10, 
-    elevation: 2, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 1 }, 
-    shadowOpacity: 0.1, 
-    shadowRadius: 2 
-  },
-  resumenLabel: { fontSize: 16, color: colores.textPlaceholder, marginBottom: 5 },
-  resumenTotal: { fontSize: 32, fontWeight: 'bold', color: colores.text },
-})
+});

@@ -6,7 +6,6 @@ import { useFormularioPublicaciones } from './../hooks/useFormularioPublicacione
 import useValidaciones from '../hooks/useValidaciones';
 import { useTema } from './../hooks/useTema';
 
-// Importamos nuestros Wrappers estandarizados
 import ModalGeneral from '../components/ModalGeneral';
 import CampoFormulario from '../components/CampoFormulario';
 import LabelInput from '../components/LabelInput';
@@ -65,7 +64,7 @@ const ModalFormularioPublicaciones = ({
       titulo={esEdicion ? 'Editar Publicación' : 'Nueva Publicación'}
       iconoHeader={{ name: esEdicion ? 'create-outline' : 'add-circle-outline', color: '#E1E1F7' }}
       footer={BotonesFooter}
-      esFormulario={true} // Se encarga del KeyboardAvoidingView automáticamente
+      esFormulario={true} 
     >
       
       {/* --- INPUTS DE TEXTO --- */}
@@ -102,7 +101,12 @@ const ModalFormularioPublicaciones = ({
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15, gap: 8 }}>
             {['Aviso', 'Evento', 'Noticia'].map((opcion) => {
               const isSelected = value === opcion.toLowerCase(); 
-              
+
+              // para que destaque el color del estado
+              let colorBorde = isSelected ? (colores.primario || '#3498db') : colores.border;
+              if (isSelected && opcion === 'Aviso') colorBorde = '#27ae60';
+              if (isSelected && opcion === 'Evento') colorBorde = '#e74c3c';
+
               return (
                 <TouchableOpacity
                   key={opcion}
@@ -113,13 +117,13 @@ const ModalFormularioPublicaciones = ({
                     paddingVertical: 12,
                     borderRadius: 8,
                     borderWidth: 1.5,
-                    borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
-                    backgroundColor: isSelected ? (colores.primario + '15' || '#eaf4fc') : colores.card,
+                    borderColor: colorBorde,
+                    backgroundColor: isSelected ? colorBorde + '15' : colores.card,
                     alignItems: 'center'
                   }}
                 >
                   <Text style={{
-                    color: isSelected ? (colores.primario || '#3498db') : colores.textPlaceholder,
+                    color: isSelected ? colorBorde : colores.textPlaceholder, 
                     fontWeight: isSelected ? 'bold' : '500',
                     fontSize: 14
                   }}>

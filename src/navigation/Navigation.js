@@ -1,11 +1,12 @@
 import React from 'react';
 import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSelector } from 'react-redux';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { usePermisos } from '../hooks/usePermisos';
 import { useTema } from '../hooks/useTema';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
 
@@ -24,7 +25,12 @@ const AppStack = createStackNavigator();
 
 function LoggedInStack() {
   return (
-    <AppStack.Navigator screenOptions={{ headerShown: false }}>
+    <AppStack.Navigator
+      screenOptions={{ 
+        headerShown: false,
+        ...TransitionPresets.SlideFromRightIOS,
+      }}
+    >
       {/* Las pestañas principales */}
       <AppStack.Screen name="MainTabs" component={MainTabs} />
       
@@ -34,8 +40,11 @@ function LoggedInStack() {
         component={PerfilScreen} 
         options={{ 
           headerShown: false,
-          // añadir animaciones de transición
-        }} 
+          ...TransitionPresets.ModalPresentationIOS,
+          // Permite cerrar la pantalla deslizando hacia abajo (swipe-to-dismiss)
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+        }}
       />
     </AppStack.Navigator>
   );
@@ -44,65 +53,72 @@ function LoggedInStack() {
 function MainTabs () {
   const modoOscuro = useSelector(state => state.tema.modoOscuro); 
   const { colores } = useTema();
-  
   const insets = useSafeAreaInsets();
   
   const paddingAbajo = Math.max(insets.bottom, 10);
   const alturaBarra = 60 + paddingAbajo;
 
+  const { 
+    puedeVerGastos, 
+    puedeVerMensualidad, 
+    puedeVerCartelera 
+  } = usePermisos();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false, 
-        
         safeAreaInsets: { bottom: 0 }, 
-        
         tabBarStyle: {
           backgroundColor: colores.card, 
           borderTopWidth: 1,
           borderTopColor: colores.border, 
-          
           height: alturaBarra, 
           paddingBottom: paddingAbajo, 
           paddingTop: 8,
-          
           position: 'absolute', 
           left: 0, 
           right: 0, 
           bottom: 0,
-          elevation: 5, // Sombra para separarla visualmente
+          elevation: 5, 
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: 'bold',
-        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: 'bold' },
         tabBarActiveTintColor: colores.primario || '#3498db', 
         tabBarInactiveTintColor: colores.textPlaceholder || '#95a5a6', 
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           let iconName;
 
-          if (route.name === 'Inicio') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Mensualidad') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          } else if (route.name === 'Pagos') {
-            iconName = focused ? 'cash' : 'cash-outline';
-          } else if (route.name === 'Gastos') {
-            iconName = focused ? 'cart' : 'cart-outline';
-          } else if (route.name === 'Cartelera') {
-            iconName = focused ? 'megaphone' : 'megaphone-outline';
+          switch (route.name) {
+            case 'Inicio': iconName = focused ? 'home' : 'home-outline'; break;
+            case 'Pagos': iconName = focused ? 'cash' : 'cash-outline'; break;
+            case 'Cartelera': iconName = focused ? 'megaphone' : 'megaphone-outline'; break;
+            case 'Gastos': iconName = focused ? 'cart' : 'cart-outline'; break;
+            case 'Mensualidad': iconName = focused ? 'calendar' : 'calendar-outline'; break;
           }
 
           return <Icon name={iconName} size={26} color={color} />;
         },
       })}
     >
+      {/* Inicio: Siempre visible */}
       <Tab.Screen name='Inicio' component={InicioScreen} />
-      <Tab.Screen name='Mensualidad' component={MensualidadesScreen} />
+      
+      {/* Pagos: Accesible para todos, el backend ya filtra si ve todo o solo lo suyo */}
       <Tab.Screen name='Pagos' component={PagosScreen} />
-      <Tab.Screen name='Gastos' component={GastosScreen} />
-      <Tab.Screen name='Cartelera' component={CarteleraVirtualScreen} options={{ tabBarLabel: 'Cartelera' }} />
 
+      {/* Cartelera: Visible si tiene el permiso */}
+      {puedeVerCartelera && (
+        <Tab.Screen name='Cartelera' component={CarteleraVirtualScreen} options={{ tabBarLabel: 'Cartelera' }} />
+      )}
+
+      {/* Módulos netamente administrativos */}
+      {puedeVerGastos && (
+        <Tab.Screen name='Gastos' component={GastosScreen} />
+      )}
+      
+      {puedeVerMensualidad && (
+        <Tab.Screen name='Mensualidad' component={MensualidadesScreen} />
+      )}
     </Tab.Navigator>
   );
 }
@@ -116,12 +132,12 @@ function AuthStack () {
 }
 
 export default function Navigation () {
-  const isAuthenticated = useSelector(state => state.usuario.isAuthenticated);
+  const { isLogueado } = usePermisos();
 
   return (
     <NavigationContainer>
       <StatusBar barStyle='light-content' backgroundColor='#000' />
-      {isAuthenticated ? <LoggedInStack /> : <AuthStack />}
+      {isLogueado ? <LoggedInStack /> : <AuthStack />}
     </NavigationContainer>
   );
 }

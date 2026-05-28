@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
@@ -12,121 +12,115 @@ export default function PerfilScreen() {
   const { colores, modoOscuro } = useTema();
   const { usuario, loading, handleLogout, cargarDatosServidor } = usePerfil();
   const estilos = getEstilos(colores, modoOscuro); 
-
-  useEffect(() => {
-    cargarDatosServidor();
-  }, []);
-
+  
   return (
     <View style={{ flex: 1, backgroundColor: colores.background }}>
       <HeaderPrincipal mostrarBotonAtras={true} />
       
-      <ScrollView contentContainerStyle={estilos.container} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={estilos.container} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={cargarDatosServidor}
+            colors={[colores.primario || '#007BFF']}
+            tintColor={colores.primario || '#007BFF'}
+          />
+        }
+      >
         
-        {loading ? (
-           <View style={{ marginTop: 60, alignItems: 'center' }}>
-             <ActivityIndicator size="large" color={colores.primario} />
-             <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando perfil...</Text>
-           </View>
-        ) : (
-          <>
-            {/* CABECERA DE IDENTIDAD */}
-            <View style={estilos.headerPerfil}>
-              <View style={estilos.avatarContenedor}>
-                <AvatarUsuario usuario={usuario} size={110} />
-                
-                <TouchableOpacity style={[estilos.botonEditarAvatar, { backgroundColor: colores.primario }]} activeOpacity={0.8}>
-                  <Icon name="camera" size={16} color="#fff" />
-                </TouchableOpacity>
-              </View>
+        {/* CABECERA DE IDENTIDAD */}
+        <View style={estilos.headerPerfil}>
+          <View style={estilos.avatarContenedor}>
+            <AvatarUsuario usuario={usuario} size={110} />
+          </View>
+          
+          <Text style={estilos.nombre}>
+            {usuario?.nombre_usuario} {usuario?.apellido}
+          </Text>
+          
+          {/* SOFT BADGE */}
+          <View style={[
+            estilos.badgeRol, 
+            { backgroundColor: modoOscuro ? colores.primario + '35' : colores.primario + '15' }
+          ]}>
+            <Icon 
+              name="shield-checkmark" 
+              size={14} 
+              color={modoOscuro ? '#f8f9fa' : colores.primario} 
+              style={{ marginRight: 6 }} 
+            />
+            <Text style={[
+              estilos.rolTexto, 
+              { color: modoOscuro ? '#f8f9fa' : colores.primario }
+            ]}>
+              {(usuario?.nombre_rol || 'Usuario del Sistema').toUpperCase()}
+            </Text>
+          </View>
+        </View>
+
+        {/* INFORMACIÓN PERSONAL */}
+        <Text style={estilos.seccionTitulo}>Información de Contacto</Text>
+        <View style={estilos.card}>
+          <View style={estilos.infoRow}>
+            <View style={[estilos.iconoCaja, { backgroundColor: modoOscuro ? 'rgba(230, 230, 246, 0.1)' : '#99999920' }]}>
+              <Icon name="mail" size={20} color={colores.textPlaceholder} />
+            </View>
+            <View style={estilos.infoTextos}>
+              <Text style={estilos.infoLabel}>Correo Electrónico</Text>
+              <Text style={estilos.infoValor}>{usuario?.correo || 'No disponible'}</Text>
+            </View>
+          </View>
+          
+          <View style={estilos.separador} />
+
+          <View style={estilos.infoRow}>
+            <View style={[estilos.iconoCaja, { backgroundColor: modoOscuro ? 'rgba(230, 230, 246, 0.1)' : '#99999920' }]}>
+              <Icon name="business" size={20} color={colores.textPlaceholder} />
+            </View>
+            <View style={estilos.infoTextos}>
+              <Text style={estilos.infoLabel}>Residencia</Text>
+              <Text style={estilos.infoValor}>Condominios Haydee</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* CONFIGURACIÓN */}
+        <Text style={estilos.seccionTitulo}>Preferencias</Text>
+        <View style={estilos.card}>
+          <View style={estilos.ajusteRow}>
+            <View style={estilos.ajusteInfo}>
               
-              <Text style={estilos.nombre}>
-                {usuario?.nombre} {usuario?.apellido}
-              </Text>
-              
-              {/* SOFT BADGE */}
-              <View style={[
-                estilos.badgeRol, 
-                { backgroundColor: modoOscuro ? colores.primario + '35' : colores.primario + '15' }
-              ]}>
+              <View style={[estilos.iconoCaja, { backgroundColor: modoOscuro ? '#00e5ff15' : '#ffd70015', marginRight: 15 }]}>
                 <Icon 
-                  name="shield-checkmark" 
-                  size={14} 
-                  color={modoOscuro ? '#f8f9fa' : colores.primario} 
-                  style={{ marginRight: 6 }} 
+                  name={modoOscuro ? "moon" : "sunny"} 
+                  size={20} 
+                  color={modoOscuro ? '#00e5ff' : '#d35400'} 
                 />
-                <Text style={[
-                  estilos.rolTexto, 
-                  { color: modoOscuro ? '#f8f9fa' : colores.primario }
-                ]}>
-                  {(usuario?.rol || 'Usuario del Sistema').toUpperCase()}
-                </Text>
-              </View>
-            </View>
-
-            {/*  INFORMACIÓN PERSONAL */}
-            <Text style={estilos.seccionTitulo}>Información de Contacto</Text>
-            <View style={estilos.card}>
-              <View style={estilos.infoRow}>
-                <View style={[estilos.iconoCaja, { backgroundColor: modoOscuro ? 'rgba(230, 230, 246, 0.1)' : '#99999920' }]}>
-                  <Icon name="mail" size={20} color={colores.textPlaceholder} />
-                </View>
-                <View style={estilos.infoTextos}>
-                  <Text style={estilos.infoLabel}>Correo Electrónico</Text>
-                  <Text style={estilos.infoValor}>{usuario?.correo || 'No disponible'}</Text>
-                </View>
               </View>
               
-              <View style={estilos.separador} />
-
-              <View style={estilos.infoRow}>
-                <View style={[estilos.iconoCaja, { backgroundColor: modoOscuro ? 'rgba(230, 230, 246, 0.1)' : '#99999920' }]}>
-                  <Icon name="business" size={20} color={colores.textPlaceholder} />
-                </View>
-                <View style={estilos.infoTextos}>
-                  <Text style={estilos.infoLabel}>Residencia</Text>
-                  <Text style={estilos.infoValor}>Condominios Haydee</Text>
-                </View>
+              <View style={{ flex: 1, paddingRight: 15 }}>
+                <Text style={estilos.ajusteTexto}>Apariencia</Text>
+                <Text style={estilos.infoLabel}>{modoOscuro ? 'Modo Nocturno' : 'Modo Diurno'}</Text>
               </View>
+
             </View>
+            <BotonCambiarTema />
+          </View>
+        </View>
 
-            {/* CONFIGURACIÓN */}
-            <Text style={estilos.seccionTitulo}>Preferencias</Text>
-            <View style={estilos.card}>
-              <View style={estilos.ajusteRow}>
-                <View style={estilos.ajusteInfo}>
-                  
-                  <View style={[estilos.iconoCaja, { backgroundColor: modoOscuro ? '#00e5ff15' : '#ffd70015', marginRight: 15 }]}>
-                    <Icon 
-                      name={modoOscuro ? "moon" : "sunny"} 
-                      size={20} 
-                      color={modoOscuro ? '#00e5ff' : '#d35400'} 
-                    />
-                  </View>
-                  
-                  <View style={{ flex: 1, paddingRight: 15 }}>
-                    <Text style={estilos.ajusteTexto}>Apariencia</Text>
-                    <Text style={estilos.infoLabel}>{modoOscuro ? 'Modo Nocturno' : 'Modo Diurno'}</Text>
-                  </View>
+        {/* BOTÓN CERRAR SESIÓN */}
+        <TouchableOpacity 
+          style={estilos.botonLogout} 
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Icon name="power-outline" size={22} color="#e74c3c" />
+          <Text style={estilos.logoutTexto}>Cerrar Sesión</Text>
+        </TouchableOpacity>
 
-                </View>
-                <BotonCambiarTema />
-              </View>
-            </View>
-
-            {/* BOTÓN CERRAR SESIÓN */}
-            <TouchableOpacity 
-              style={estilos.botonLogout} 
-              onPress={handleLogout}
-              activeOpacity={0.7}
-            >
-              <Icon name="power-outline" size={22} color="#e74c3c" />
-              <Text style={estilos.logoutTexto}>Cerrar Sesión</Text>
-            </TouchableOpacity>
-
-            <Text style={estilos.version}>Condominios Haydee • v1.2.2</Text>
-          </>
-        )}
+        <Text style={estilos.version}>Condominios Haydee • v1.2.2</Text>
       </ScrollView>
     </View>
   );
@@ -146,19 +140,6 @@ const getEstilos = (colores, modoOscuro) => StyleSheet.create({
     shadowOpacity: modoOscuro ? 0.6 : 0.3,
     shadowRadius: 8,
     position: 'relative', 
-  },
-  botonEditarAvatar: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: colores.background, 
-    elevation: 4,
   },
   nombre: { fontSize: 26, fontWeight: '800', color: colores.textTitle, marginTop: 18, letterSpacing: -0.5 },
   

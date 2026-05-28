@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMensualidades, fetchDetalleMensualidad } from '../store/slices/mensualidadesSlice';
 import { useResumenFinanciero } from './useResumenFinanciero';
+import { procesarErrorApi } from '../utils/gestorErroresUI';
 
 export const useMensualidades = () => {
   const dispatch = useDispatch();
   const { listaMensualidades, loading: loadingLista, error } = useSelector(state => state.mensualidades);
-  const { obtenerDatos: obtenerResumen, loading: loadingResumen, gastado, presupuestoTotal } = useResumenFinanciero();
+  const { obtenerDatos: obtenerResumen, loading: loadingResumen, gastado, presupuestoTotal, recaudado } = useResumenFinanciero();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [mensualidadSeleccionada, setMensualidadSeleccionada] = useState(null);
@@ -39,11 +40,15 @@ export const useMensualidades = () => {
       setMensualidadSeleccionada(dataActualizada);
       setModalVisible(true);
     } catch (err) {
-      console.error("Error al cargar el detalle de apartamentos:", err);
+      procesarErrorApi(error);
     } finally {
       setCargandoDetalle(null);
     }
   };
+
+  useEffect(() => {
+    obtenerMensualidades();
+  }, []);
 
   return {
     listaMensualidades,
@@ -56,6 +61,7 @@ export const useMensualidades = () => {
     modalVisible,
     setModalVisible,
     mensualidadSeleccionada,
-    cargandoDetalle
+    cargandoDetalle,
+    recaudado
   };
 };

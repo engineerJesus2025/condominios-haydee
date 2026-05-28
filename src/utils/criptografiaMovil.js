@@ -2,63 +2,74 @@ import forge from 'node-forge';
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 
-// Variables en memoria (se borran al cerrar la app)
-let llavePublicaRSA = null;
-let claveAESSesion = null;
-let dispositivoIdMemoria = null;
+// REGLAS Y CONSTANTES CRIPTOGRÁFICAS
+const CONFIG = {
+  AES_KEY_SIZE_BYTES: 32, // Requerido para AES-256
+  AES_IV_SIZE_BYTES: 12,  // 12 bytes (96 bits) es el estándar para AES-GCM
+  SECURE_STORE_KEY: 'dispositivo_id_seguro'
+};
+
+let _llavePublicaRSA = null;
+let _claveAESSesion = null;
+let _dispositivoIdCache = null;
 
 export const criptografiaMovil = {
   
-  // Obtener o generar el ID permanente del dispositivo
   getDispositivoId: async () => {
-    if (!dispositivoIdMemoria) {
-      // Buscamos en el almacenamiento seguro del teléfono
-      let idGuardado = await SecureStore.getItemAsync('dispositivo_id_seguro');
+    if (!_dispositivoIdCache) {
+      let idGuardado = await SecureStore.getItemAsync(CONFIG.SECURE_STORE_KEY);
       
       if (!idGuardado) {
-        // Si no existe, es la primera vez que abre la app. Lo creamos.
         idGuardado = Crypto.randomUUID();
-        await SecureStore.setItemAsync('dispositivo_id_seguro', idGuardado);
+        await SecureStore.setItemAsync(CONFIG.SECURE_STORE_KEY, idGuardado);
       }
-      dispositivoIdMemoria = idGuardado;
+      _dispositivoIdCache = idGuardado;
     }
-    return dispositivoIdMemoria;
+    return _dispositivoIdCache;
   },
 
-  getClaveAESSesion: () => claveAESSesion,
+  getClaveAESSesion: () => _claveAESSesion,
 
-  // Guardar la llave pública que viene del servidor
   setLlavePublica: (pem) => {
-    llavePublicaRSA = forge.pki.publicKeyFromPem(pem);
+    if (!pem) throw new Error("Certificado PEM inválido");
+    _llavePublicaRSA = forge.pki.publicKeyFromPem(pem);
   },
 
-  // El Pre-Cómputo (Se ejecuta en el interceptor al detectar el endpoint 'login')
   preComputarAES: () => {
-    if (!llavePublicaRSA) throw new Error("No hay llave pública del servidor");
+    if (!_llavePublicaRSA) throw new Error("Llave pública RSA no establecida");
 
-    const nuevaClaveAES = forge.random.getBytesSync(32);
+    // Generamos 32 bytes (256 bits) para seguridad militar
+    const nuevaClaveAES = forge.random.getBytesSync(CONFIG.AES_KEY_SIZE_BYTES);
     
-    // OBLIGAMOS a Node-Forge a usar SHA-256 para el Padding OAEP
-    const claveAESCifradaConRSA = llavePublicaRSA.encrypt(nuevaClaveAES, 'RSA-OAEP', {
+    // RSA-OAEP con SHA-256
+    const claveAESCifradaConRSA = _llavePublicaRSA.encrypt(nuevaClaveAES, 'RSA-OAEP', {
       md: forge.md.sha256.create(),
       mgf1: {
         md: forge.md.sha256.create()
       }
     });
-    claveAESSesion = nuevaClaveAES;
+    
+    _claveAESSesion = nuevaClaveAES;
     return forge.util.encode64(claveAESCifradaConRSA);
   },
 
-  // Cifrar cualquier JSON (Login, Pagos, etc.)
   cifrarPayload: (objetoJSON) => {
-    if (!claveAESSesion) throw new Error("No hay clave de sesión establecida");
+    if (!_claveAESSesion) throw new Error("No hay clave de sesión establecida");
 
+    // Convertimos el JSON a string
     const jsonString = JSON.stringify(objetoJSON);
-    const iv = forge.random.getBytesSync(12); // GCM usa 12 bytes
     
-    const cipher = forge.cipher.createCipher('AES-GCM', claveAESSesion);
+    // Forzamos la codificación nativa para soportar 'ñ', acentos y emojis
+    const utf8String = forge.util.encodeUtf8(jsonString); 
+    
+    //Vector de inicialización (Único por cada petición)
+    const iv = forge.random.getBytesSync(CONFIG.AES_IV_SIZE_BYTES);
+    
+    const cipher = forge.cipher.createCipher('AES-GCM', _claveAESSesion);
     cipher.start({ iv: iv });
-    cipher.update(forge.util.createBuffer(jsonString, 'utf8'));
+    
+    // Inyectamos la cadena ya codificada
+    cipher.update(forge.util.createBuffer(utf8String));
     cipher.finish();
 
     return {
@@ -68,21 +79,27 @@ export const criptografiaMovil = {
     };
   },
 
-  // Descifrar la respuesta del servidor
   descifrarPayload: (payloadB64, ivB64, tagB64) => {
-    if (!claveAESSesion) throw new Error("No hay clave de sesión establecida");
+    if (!_claveAESSesion) throw new Error("No hay clave de sesión establecida");
 
-    const decipher = forge.cipher.createDecipher('AES-GCM', claveAESSesion);
+    const decipher = forge.cipher.createDecipher('AES-GCM', _claveAESSesion);
+    
     decipher.start({
       iv: forge.util.decode64(ivB64),
       tag: forge.util.decode64(tagB64)
     });
-    decipher.update(forge.util.createBuffer(forge.util.decode64(payloadB64)));
     
-    if (!decipher.finish()) {
-      throw new Error("Fallo la verificación de integridad (GCM Tag no coincide)");
+    decipher.update(forge.util.createBuffer(forge.util.decode64(payloadB64)));
+    const pass = decipher.finish();
+
+    // Verificación de Autenticidad (La "A" de AEAD en GCM)
+    if (!pass) {
+      throw new Error("Fallo de integridad: El mensaje fue interceptado/modificado");
     }
 
-    return JSON.parse(decipher.output.toString('utf8'));
+    // Decodificamos los bytes nativos de vuelta a caracteres Latinos
+    const utf8Decoded = forge.util.decodeUtf8(decipher.output.getBytes());
+    
+    return JSON.parse(utf8Decoded);
   }
 };

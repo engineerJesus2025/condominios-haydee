@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import ModalGeneral from './ModalGeneral';
 import CustomBoton from './CustomBoton';
 import VisorImagenFullScreen from './VisorImagenFullScreen';
+import { formatearFechaLegible, tiempoRelativo } from '../utils/dateUtils';
 
 export default function ModalDetalles({
   visible,
@@ -16,7 +17,8 @@ export default function ModalDetalles({
   mostrarImagen = true,
   esAdmin = false, 
   onAprobar = null,
-  onRechazar = null
+  onRechazar = null,
+  procesando = false
 }) {
   const { colores } = useTema();
   const [imagenExpandida, setImagenExpandida] = useState(false);
@@ -27,19 +29,24 @@ export default function ModalDetalles({
   const BotonesFooter = esAdmin && datos.estado?.toLowerCase() === 'pendiente' ? (
     <>
       <CustomBoton 
-        titulo="Rechazar" 
-        evento={() => onRechazar && onRechazar(datos)} 
-        icono={{ nombre: 'close-circle-outline', color: '#fff' }}
-        estilos={{ backgroundColor: '#e74c3c' }} 
-        fuente={16}
-      />
+          titulo="Rechazar" 
+          evento={() => onRechazar && onRechazar(datos)} 
+          icono={{ nombre: 'close-circle-outline', color: '#fff' }}
+          estilos={{ backgroundColor: '#e74c3c', width: '100%', alignSelf: 'stretch' }} 
+          fuente={15}
+          disabled={procesando}
+          loading={procesando}
+        />
       <CustomBoton 
-        titulo="Aprobar" 
-        evento={() => onAprobar && onAprobar(datos)} 
-        icono={{ nombre: 'checkmark-circle-outline', color: '#fff' }}
-        estilos={{ backgroundColor: '#27ae60' }} 
-        fuente={16}
-      />
+          titulo="Aprobar" 
+          evento={() => onAprobar && onAprobar(datos)} 
+          icono={{ nombre: 'checkmark-circle-outline', color: '#fff' }}
+          // Al agregar width: '100%' y alignSelf: 'stretch' forzamos a que el botón se expanda completo
+          estilos={{ backgroundColor: '#27ae60', width: '100%', alignSelf: 'stretch' }} 
+          fuente={15}
+          disabled={procesando}
+          loading={procesando}
+        />
     </>
   ) : (
     <CustomBoton 
@@ -50,6 +57,41 @@ export default function ModalDetalles({
       fuente={16}
     />
   );
+
+  // const BotonesFooter = esAdmin && datos.estado?.toLowerCase() === 'pendiente' ? (
+  //   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+  //     <View style={{ flex: 1, marginRight: 5 }}>
+  //       <CustomBoton 
+  //         titulo={procesando ? "Procesando..." : "Rechazar"} 
+  //         evento={() => onRechazar && onRechazar(datos)} 
+  //         icono={{ nombre: procesando ? 'hourglass-outline' : 'close-circle-outline', color: '#fff' }}
+  //         estilos={{ backgroundColor: procesando ? '#bdc3c7' : '#e74c3c' }} 
+  //         fuente={15}
+  //         disabled={procesando}
+  //         cargando={procesando}
+  //       />
+  //     </View>
+  //     <View style={{ flex: 1, marginLeft: 5 }}>
+  //       <CustomBoton 
+  //         titulo={procesando ? "Guardando..." : "Aprobar"} 
+  //         evento={() => onAprobar && onAprobar(datos)} 
+  //         icono={{ nombre: procesando ? 'sync-outline' : 'checkmark-circle-outline', color: '#fff' }}
+  //         estilos={{ backgroundColor: procesando ? '#bdc3c7' : '#27ae60' }} 
+  //         fuente={15}
+  //         disabled={procesando}
+  //         cargando={procesando}
+  //       />
+  //     </View>
+  //   </View>
+  // ) : (
+  //   <CustomBoton 
+  //     titulo="Cerrar Detalles" 
+  //     evento={onClose} 
+  //     icono={{ nombre: 'close-circle-outline', color: '#fff' }}
+  //     estilos={{ backgroundColor: '#95a5a6' }} 
+  //     fuente={16}
+  //   />
+  // );
 
   return (
     <>
@@ -69,6 +111,15 @@ export default function ModalDetalles({
             const isEstado = campo.key.toLowerCase() === 'estado';
             const isMonto = campo.key.toLowerCase() === 'monto';
             const isUltimo = index === campos.length - 1;
+
+            let valorMostrar = valor;
+            if (valor && campo.formato) {
+              if (campo.formato === 'fecha_legible') {
+                valorMostrar = formatearFechaLegible(valor);
+              } else if (campo.formato === 'tiempo_relativo') {
+                valorMostrar = tiempoRelativo(valor);
+              }
+            }
             
             return (
               <View key={index} style={[styles.fila, !isUltimo && { borderBottomColor: colores.border, borderBottomWidth: 1 }]}>
@@ -79,22 +130,22 @@ export default function ModalDetalles({
                 {isEstado ? (
                   <View style={[
                     styles.badge, 
-                    { backgroundColor: valor?.toLowerCase() === 'procesado' ? '#27ae6020' : valor?.toLowerCase() === 'rechazado' ? '#e23c3c20' : '#f39c1220'},
+                    { backgroundColor: valorMostrar?.toLowerCase() === 'procesado' ? '#27ae6020' : valorMostrar?.toLowerCase() === 'rechazado' ? '#e23c3c20' : '#f39c1220'},
                   ]}>
                     <Text style={[
                       styles.badgeText, 
-                      { color: valor?.toLowerCase() === 'procesado' ? '#27ae60' : valor?.toLowerCase() === 'rechazado' ? '#e74c3c' : '#f39c12' }
+                      { color: valorMostrar?.toLowerCase() === 'procesado' ? '#27ae60' : valorMostrar?.toLowerCase() === 'rechazado' ? '#e74c3c' : '#f39c12' }
                     ]}>
-                      {valor || 'Desconocido'}
+                      {valorMostrar || 'Desconocido'}
                     </Text>
                   </View>
                 ) : isMonto ? (
                   <Text style={[styles.valor, styles.valorMonto, { color: colores.textTitle }]}>
-                    {valor || '---'}
+                    {valorMostrar || '---'}
                   </Text>
                 ) : (
                   <Text style={[styles.valor, { color: colores.textTitle }]} numberOfLines={2}>
-                    {valor || 'No especificado'}
+                    {valorMostrar || 'No especificado'}
                   </Text>
                 )}
               </View>
