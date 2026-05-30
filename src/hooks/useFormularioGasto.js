@@ -19,6 +19,21 @@ export const useFormularioGasto = (onClose) => {
 
   // Inicializamos los catálogos al abrir el modal (si no están cargados)
   useEffect(() => {
+    const leerTasaDeCacheLocal = async () => {
+      try {
+        const tasaGuardada = await AsyncStorage.getItem('tasa_dolar');
+        if (tasaGuardada) {
+          setTasaDolar(tasaGuardada);
+        } else {
+          setTasaDolar('1.00'); // en caso de error crítico de hardware
+        }
+      } catch (e) {
+        setTasaDolar('1.00');
+      }
+    };
+
+    leerTasaDeCacheLocal();
+    
     if (catalogos.tipos_gasto.length === 0) {
       dispatch(fetchCatalogosGastos());
     }

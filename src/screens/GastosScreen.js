@@ -40,7 +40,10 @@ export default function GastosScreen () {
     anioFiltro, 
     cambiarFiltroFecha,
     periodosDisponibles,
+    inicializando
   } = useGastos();
+
+  const estaCargando = loading || inicializando;
 
   const renderHeader = () => (
     <View style={{ paddingBottom: 5 }}>
@@ -49,7 +52,7 @@ export default function GastosScreen () {
         titulo="Total Ejecutado este Mes" 
         moneda="Bs." 
         tipo="gasto"
-        cargando={loading} 
+        cargando={estaCargando} 
       />
       
       <Text style={[estilosGastos.title, { marginTop: 15, marginBottom: 10, paddingHorizontal: 0 }]}>
@@ -63,7 +66,7 @@ export default function GastosScreen () {
         onCambiarMes={(m, a) => cambiarFiltroFecha(m, a)} 
       />
 
-      {loading && (
+      {estaCargando && (
         <View style={{ paddingTop: 10 }}>
           <SkeletonCard tipo="gasto" />
           <SkeletonCard tipo="gasto" />
@@ -98,10 +101,11 @@ export default function GastosScreen () {
            </View>
         ) : (
           <ListaRefrescable
-            data={loading ? [] : listaGastos} 
+            data={estaCargando ? [] : listaGastos} 
             keyExtractor={(item) => item.id.toString()}
-            cargando={loading && listaGastos.length > 0} 
+            cargando={estaCargando && listaGastos.length > 0} 
             onRefresh={() => obtenerGastos(true)}
+            cargandoInicial={estaCargando && listaGastos.length === 0}
             ListHeaderComponent={renderHeader()}
             renderItem={({ item }) => (
               <GastoCard gasto={item} onPressDetalles={abrirDetalles} />

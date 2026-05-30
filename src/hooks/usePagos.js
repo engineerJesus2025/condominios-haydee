@@ -14,7 +14,6 @@ export const usePagos = () => {
   const { listaPagos, loading, error, listaDeudas, totalDeuda, loadingDeudas } = useSelector(state => state.pagos);
   const { esAdmin, puedeAprobarPagos } = usePermisos();
 
-  // Estados para el filtro de fechas
   const fechaActual = new Date();
   const [mesFiltro, setMesFiltro] = useState(fechaActual.getMonth() + 1);
   const [anioFiltro, setAnioFiltro] = useState(fechaActual.getFullYear());
@@ -26,8 +25,10 @@ export const usePagos = () => {
   const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [procesandoEstado, setProcesandoEstado] = useState(false);
+  
+  // Estado puente para el primer renderizado
+  const [inicializando, setInicializando] = useState(true);
 
-  // Pasamos mes y año al Redux Thunk
   const obtenerPagos = (forzar = false, mes = mesFiltro, anio = anioFiltro) => {
     if (forzar || listaPagos.length === 0) {
       dispatch(fetchPagos({ mes, anio }));
@@ -55,18 +56,19 @@ export const usePagos = () => {
             setMesFiltro(Number(ultimoPeriodo.mes));
             setAnioFiltro(Number(ultimoPeriodo.anio));
             obtenerPagos(true, Number(ultimoPeriodo.mes), Number(ultimoPeriodo.anio));
+            setInicializando(false); // Apagamos el puente
             return; 
           }
         }
       }
     } catch (err) {
-      procesarErrorApi(error);
+      procesarErrorApi(err); 
     }
     
     obtenerPagos();
+    setInicializando(false); 
   }, [mesFiltro, anioFiltro]);
 
-  // Función para actualizar el filtro
   const cambiarFiltroFecha = (nuevoMes, nuevoAnio) => {
     setMesFiltro(nuevoMes);
     setAnioFiltro(nuevoAnio);
@@ -209,6 +211,7 @@ export const usePagos = () => {
     cerrarDetalles,
     handleAprobar,
     handleRechazar,
-    procesandoEstado
+    procesandoEstado,
+    inicializando
   };
 };

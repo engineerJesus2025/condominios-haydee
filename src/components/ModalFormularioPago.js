@@ -3,7 +3,7 @@ import { View, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { useTema } from '../hooks/useTema';
 import { useFormularioPago } from '../hooks/useFormularioPago';
 import useValidaciones from '../hooks/useValidaciones';
-import { Controller } from 'react-hook-form'; // <-- Adiós useWatch
+import { Controller } from 'react-hook-form'; 
 
 import ModalGeneral from './ModalGeneral'; 
 import CampoFormulario from './CampoFormulario';

@@ -7,6 +7,7 @@ export default function ListaRefrescable({
   renderItem, 
   keyExtractor,
   cargando, 
+  cargandoInicial = false,
   onRefresh, 
   ListHeaderComponent,
   mensajeVacio = "No hay información disponible.",
@@ -45,7 +46,8 @@ export default function ListaRefrescable({
         ) : null
       }
       ListEmptyComponent={
-        !cargando ? (
+        /* EL MENSAJE SI NO ESTÁ CARGANDO NADA */
+        (!cargando && !cargandoInicial) ? (
           <Text style={{ color: colores.textPlaceholder, textAlign: 'center', marginTop: 20 }}>
             {mensajeVacio}
           </Text>
@@ -55,8 +57,8 @@ export default function ListaRefrescable({
         <RefreshControl
           refreshing={cargando}
           onRefresh={onRefresh}
-          colors={[colores.primario || '#007BFF']} // Android
-          tintColor={colores.primario || '#007BFF'} // iOS
+          colors={[colores.primario || '#007BFF']}
+          tintColor={colores.primario || '#007BFF'}
         />
       }
       {...restoProps}

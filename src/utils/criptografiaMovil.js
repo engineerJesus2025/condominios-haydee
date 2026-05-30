@@ -101,5 +101,11 @@ export const criptografiaMovil = {
     const utf8Decoded = forge.util.decodeUtf8(decipher.output.getBytes());
     
     return JSON.parse(utf8Decoded);
+  },
+
+  limpiarClaves: () => {
+    _claveAESSesion = null;
+    
+    console.log("Seguridad: Clave AES eliminada de la memoria volátil.");
   }
 };

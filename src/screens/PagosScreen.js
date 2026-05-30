@@ -43,8 +43,11 @@ export default function PagosScreen() {
     cambiarFiltroFecha,
     periodosDisponibles,
     puedeAprobarPagos,
-    procesandoEstado
+    procesandoEstado,
+    inicializando
   } = usePagos();
+
+  const estaCargando = loading || inicializando;
 
   const renderHeader = () => (
     <View style={{ paddingBottom: 5 }}>
@@ -55,7 +58,7 @@ export default function PagosScreen() {
         tipo="deuda"
         onAccion={() => setModalEstadoCuentaVisible(true)}
         textoAccion="Ver Estado"
-        cargando={loading}
+        cargando={estaCargando}
       />
 
       <Text style={[estilosPagos.title, { marginTop: 15, marginBottom: 10, paddingHorizontal: 0 }]}>
@@ -69,7 +72,7 @@ export default function PagosScreen() {
         onCambiarMes={(m, a) => cambiarFiltroFecha(m, a)} 
       />
 
-      {loading && (
+      {estaCargando && (
         <View style={{ paddingTop: 10 }}>
           <SkeletonCard tipo="pago" />
           <SkeletonCard tipo="pago" />
@@ -103,13 +106,12 @@ export default function PagosScreen() {
           </View>
         ) : (
           <ListaRefrescable
-            data={loading ? [] : listaPagos}
+            data={estaCargando ? [] : listaPagos}
             keyExtractor={(item) => item.id.toString()}
-            cargando={loading && listaPagos.length > 0}
+            cargando={estaCargando && listaPagos.length > 0}
             onRefresh={() => obtenerPagos(true)}
-            
             ListHeaderComponent={renderHeader()} 
-            
+            cargandoInicial={estaCargando && listaPagos.length === 0}
             renderItem={({ item }) => (
               <PagoCard pago={item} onPressDetalles={abrirDetalles} />
             )}

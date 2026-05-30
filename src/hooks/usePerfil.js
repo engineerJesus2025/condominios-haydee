@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { logout } from '../store/slices/usuarioSlice';
 import clienteApi from '../utils/clienteApi';
 import { usePermisos } from './usePermisos'; 
 import { procesarErrorApi } from '../utils/gestorErroresUI';
+import { cerrarSesionSegura } from '../store/slices/usuarioSlice';
 
 export const usePerfil = () => {
   const dispatch = useDispatch();
@@ -31,7 +31,7 @@ export const usePerfil = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(cerrarSesionSegura());
   };
 
   useEffect(() => {

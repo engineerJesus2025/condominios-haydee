@@ -43,7 +43,7 @@ export default function ModalDetallePublicacion({ visible, onClose, publicacion 
       >
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
           
-          {/* TÍTULO PRINCIPAL*/}
+          {/* TÍTULO */}
           <Text style={[styles.titulo, { color: colores.textTitle }]}>
             {publicacion.titulo}
           </Text>
@@ -122,7 +122,6 @@ export default function ModalDetallePublicacion({ visible, onClose, publicacion 
   );
 }
 
-// HELPERS Y ESTILOS ASOCIADOS (Revisados para nueva disposición)
 const getEstiloTipo = (tipo) => {
   switch (tipo?.toLowerCase()) {
     case 'evento':

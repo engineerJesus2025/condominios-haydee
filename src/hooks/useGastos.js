@@ -22,6 +22,7 @@ export const useGastos = () => {
   const [modalGastoVisible, setModalGastoVisible] = useState(false);
   const [gastoSeleccionado, setGastoSeleccionado] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [inicializando, setInicializando] = useState(true);
 
   // Ahora recibe mes y año. Si no se pasan, usa los del estado local
   const obtenerGastos = (forzar = false, mes = mesFiltro, anio = anioFiltro) => {
@@ -52,14 +53,16 @@ export const useGastos = () => {
             setMesFiltro(Number(ultimoPeriodo.mes));
             setAnioFiltro(Number(ultimoPeriodo.anio));
             obtenerGastos(true, Number(ultimoPeriodo.mes), Number(ultimoPeriodo.anio));
+            setInicializando(false);
             return; // Salimos para no ejecutar obtenerGastos dos veces
           }
         }
       }
     } catch (err) {
-      procesarErrorApi(error);
+      procesarErrorApi(err);
     }
     
+    setInicializando(false);
     // Si el mes actual sí existe, o si hubo error, cargamos normalmente
     obtenerGastos();
   }, [mesFiltro, anioFiltro]);
@@ -123,8 +126,6 @@ export const useGastos = () => {
   const cerrarNuevoGasto = () => setModalGastoVisible(false);
 
   useEffect(() => {
-    obtenerGastos(); 
-
     // carga de los meses/años disponibles para el selector de la cabecera
     if (typeof cargarPeriodos === 'function') {
       cargarPeriodos();
@@ -149,5 +150,6 @@ export const useGastos = () => {
     abrirNuevoGasto,
     cerrarNuevoGasto,
     periodosDisponibles,
+    inicializando
   };
 };

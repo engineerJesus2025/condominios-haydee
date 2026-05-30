@@ -21,25 +21,22 @@ export default function useHandshake() {
         criptografiaMovil.setLlavePublica(respuesta.data.public_key);
         setLlaveLista(true);
         setEstadoConexion('conectado');
-        console.log("Canal criptográfico preparado.");
+        console.log("Canal criptográfico inicial preparado.");
 
         sincronizarTasaDolar();
       }
     } catch (error) {
-      console.error(`Fallo Handshake (Intento ${intento}):`, error.message);
+      console.error(`Fallo Handshake Inicial (Intento ${intento}):`, error);
 
+      // Si el fallo es en la carga inicial de la app, aplicamos reintentos lineales
       if (intento < MAX_INTENTOS) {
-        // Falló en un intento intermedio: REINTENTAMOS EN SILENCIO
         setTimeout(() => iniciarHandshake(intento + 1), 3000);
       } else {
-        // SE AGOTARON LOS INTENTOS
         setEstadoConexion('fallo');
-        
-        // Canalizamos el error para que muestre la alerta nativa del fallo definitivo
         procesarErrorApi(error);
       }
     }
-  }, []);
+  }, [sincronizarTasaDolar]);
 
   useEffect(() => {
     iniciarHandshake();
