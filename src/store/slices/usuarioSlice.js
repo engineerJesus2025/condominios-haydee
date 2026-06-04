@@ -28,7 +28,6 @@ export const loginUsuario = createAsyncThunk(
       const json = respuesta.data;
       if (json.estatus) {
         const { datos, token_jwt, refresh_token } = json; 
-        
         await AsyncStorage.setItem('userToken', token_jwt);
         // Guardamos el refresh token para usarlo cuando el JWT muera
         if (refresh_token) {

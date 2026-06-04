@@ -27,11 +27,11 @@ export default function ListaRefrescable({
       showsVerticalScrollIndicator={false}
       contentContainerStyle={contentContainerStyle || { paddingBottom: 100, paddingHorizontal: 16, paddingTop: 10 }}
 
-      initialNumToRender={5}
-      maxToRenderPerBatch={4}
-      updateCellsBatchingPeriod={50}
-      windowSize={5}
-      removeClippedSubviews={true}
+      initialNumToRender={2}
+      removeClippedSubviews={false}
+      maxToRenderPerBatch={2}
+      updateCellsBatchingPeriod={150}
+      windowSize={11}
 
       onEndReached={onEndReached}
       onEndReachedThreshold={0.5}

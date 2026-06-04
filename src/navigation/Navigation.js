@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
+// import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSelector } from 'react-redux';
 import { usePermisos } from '../hooks/usePermisos';
@@ -19,31 +20,35 @@ import MensualidadesScreen from '../screens/MensualidadesScreen';
 import CarteleraVirtualScreen from '../screens/CarteleraVirtualScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
+const AppStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
-const AppStack = createStackNavigator();
+
+const TabBarIcon = React.memo(({ routeName, focused, color }) => {
+  let iconName;
+
+  switch (routeName) {
+    case 'Inicio': iconName = focused ? 'home' : 'home-outline'; break;
+    case 'Pagos': iconName = focused ? 'cash' : 'cash-outline'; break;
+    case 'Cartelera': iconName = focused ? 'megaphone' : 'megaphone-outline'; break;
+    case 'Gastos': iconName = focused ? 'cart' : 'cart-outline'; break;
+    case 'Mensualidad': iconName = focused ? 'calendar' : 'calendar-outline'; break;
+  }
+
+  return <Icon name={iconName} size={26} color={color} />;
+});
 
 function LoggedInStack() {
   return (
-    <AppStack.Navigator
-      screenOptions={{ 
-        headerShown: false,
-        ...TransitionPresets.SlideFromRightIOS,
-      }}
-    >
-      {/* Las pestañas principales */}
+    <AppStack.Navigator screenOptions={{ headerShown: false }}>
       <AppStack.Screen name="MainTabs" component={MainTabs} />
       
-      {/* La pantalla de perfil fuera del Tab para que cubra toda la pantalla */}
       <AppStack.Screen 
         name="Perfil" 
         component={PerfilScreen} 
         options={{ 
-          headerShown: false,
-          ...TransitionPresets.ModalPresentationIOS,
-          // Permite cerrar la pantalla deslizando hacia abajo (swipe-to-dismiss)
-          gestureEnabled: true,
-          gestureDirection: 'vertical',
+          presentation: 'modal', // Animación nativa de tarjeta/modal
+          gestureEnabled: true,  // Permite swipe-to-dismiss nativo
         }}
       />
     </AppStack.Navigator>
@@ -51,7 +56,6 @@ function LoggedInStack() {
 }
 
 function MainTabs () {
-  const modoOscuro = useSelector(state => state.tema.modoOscuro); 
   const { colores } = useTema();
   const insets = useSafeAreaInsets();
   
@@ -64,54 +68,40 @@ function MainTabs () {
     puedeVerCartelera 
   } = usePermisos();
 
+  // Almacena la función de opciones en memoria y SOLO la recalcula si cambia el tema (colores) o la altura.
+  const navigatorScreenOptions = useMemo(() => ({ route }) => ({
+    headerShown: false, 
+    safeAreaInsets: { bottom: 0 }, 
+    tabBarStyle: {
+      backgroundColor: colores.card, 
+      borderTopWidth: 1,
+      borderTopColor: colores.border, 
+      height: alturaBarra, 
+      paddingBottom: paddingAbajo, 
+      paddingTop: 8,
+      position: 'absolute', 
+      left: 0, 
+      right: 0, 
+      bottom: 0,
+      elevation: 5, 
+    },
+    tabBarLabelStyle: { fontSize: 11, fontWeight: 'bold' },
+    tabBarActiveTintColor: colores.primario || '#3498db', 
+    tabBarInactiveTintColor: colores.textPlaceholder || '#95a5a6', 
+    tabBarIcon: ({ focused, color }) => (
+      <TabBarIcon routeName={route.name} focused={focused} color={color} />
+    ),
+  }), [colores, alturaBarra]); // Dependencias estrictas
+
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false, 
-        safeAreaInsets: { bottom: 0 }, 
-        tabBarStyle: {
-          backgroundColor: colores.card, 
-          borderTopWidth: 1,
-          borderTopColor: colores.border, 
-          height: alturaBarra, 
-          paddingBottom: paddingAbajo, 
-          paddingTop: 8,
-          position: 'absolute', 
-          left: 0, 
-          right: 0, 
-          bottom: 0,
-          elevation: 5, 
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: 'bold' },
-        tabBarActiveTintColor: colores.primario || '#3498db', 
-        tabBarInactiveTintColor: colores.textPlaceholder || '#95a5a6', 
-        tabBarIcon: ({ focused, color }) => {
-          let iconName;
-
-          switch (route.name) {
-            case 'Inicio': iconName = focused ? 'home' : 'home-outline'; break;
-            case 'Pagos': iconName = focused ? 'cash' : 'cash-outline'; break;
-            case 'Cartelera': iconName = focused ? 'megaphone' : 'megaphone-outline'; break;
-            case 'Gastos': iconName = focused ? 'cart' : 'cart-outline'; break;
-            case 'Mensualidad': iconName = focused ? 'calendar' : 'calendar-outline'; break;
-          }
-
-          return <Icon name={iconName} size={26} color={color} />;
-        },
-      })}
-    >
-      {/* Inicio: Siempre visible */}
+    <Tab.Navigator screenOptions={navigatorScreenOptions}>
       <Tab.Screen name='Inicio' component={InicioScreen} />
-      
-      {/* Pagos: Accesible para todos, el backend ya filtra si ve todo o solo lo suyo */}
       <Tab.Screen name='Pagos' component={PagosScreen} />
 
-      {/* Cartelera: Visible si tiene el permiso */}
       {puedeVerCartelera && (
         <Tab.Screen name='Cartelera' component={CarteleraVirtualScreen} options={{ tabBarLabel: 'Cartelera' }} />
       )}
 
-      {/* Módulos netamente administrativos */}
       {puedeVerGastos && (
         <Tab.Screen name='Gastos' component={GastosScreen} />
       )}

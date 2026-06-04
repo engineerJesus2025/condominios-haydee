@@ -131,7 +131,7 @@ const mensualidadesSlice = createSlice({
       )
       // Atrapa los errores SOLO si provienen de estos thunks específicos
       .addMatcher(
-        isRejected(fetchMensualidades, fetchResumenFinanciero, fetchDetalleMensualidad),
+        isRejected(fetchMensualidades, fetchResumenFinanciero),
         (state, action) => {
           state.loading = false;
           state.error = action.payload || 'Ocurrió un error inesperado.';

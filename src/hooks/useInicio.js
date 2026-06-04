@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchPublicaciones } from '../store/slices/publicacionesSlice';
+import { fetchEstadoCuenta } from '../store/slices/pagosSlice';
 
 import { useResumenFinanciero } from './useResumenFinanciero';
 import { useEventos } from './useEventos';
@@ -11,9 +12,10 @@ export const useInicio = () => {
 
   const { deudaTotal, gastado, presupuestoTotal, loading: loadingFinanzas, error, obtenerDatos: obtenerFinanzas, recaudado } = useResumenFinanciero();
   const { eventos } = useEventos();
-  const { puedeVerGastos, puedeVerMensualidad } = usePermisos();
+  const { puedeVerGastos, puedeVerMensualidad, puedeVerCartelera, esAdmin } = usePermisos();
   
   const { listaPublicaciones, loading: loadingCartelera, hayMas } = useSelector(state => state.publicaciones);
+  const { totalDeuda: deudaPropietario, loading: loadingDeudaPersonal } = useSelector(state => state.pagos);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -23,11 +25,19 @@ export const useInicio = () => {
   const cargarDatosInicio = useCallback(async (forzar = false) => {
     if (forzar) setRefreshing(true);
     
-    dispatch(fetchPublicaciones({ pagina: 1, recargar: true }));
-    obtenerFinanzas(forzar);
+    // Todos pueden ver publicaciones
+    if (puedeVerCartelera){
+      dispatch(fetchPublicaciones({ pagina: 1, recargar: true }));
+    }
+    
+    if (esAdmin || puedeVerMensualidad) {
+      obtenerFinanzas(forzar); // El admin pide las finanzas globales
+    } else {
+      dispatch(fetchEstadoCuenta()); // El propietario pide su deuda personal
+    }
     
     if (forzar) setRefreshing(false);
-  }, [dispatch, obtenerFinanzas]);
+  }, [dispatch, obtenerFinanzas, puedeVerGastos, puedeVerMensualidad]);
 
   useEffect(() => {
     cargarDatosInicio();
@@ -61,10 +71,10 @@ export const useInicio = () => {
   }, [eventos]);
 
   return {
-    deudaTotal, 
+    deudaTotal: (esAdmin || puedeVerMensualidad) ? deudaTotal : deudaPropietario, 
     gastado, 
     presupuestoTotal, 
-    loadingFinanzas, 
+    loadingFinanzas: loadingFinanzas || loadingDeudaPersonal,
     error,
     eventos,
     listaPublicaciones, 
@@ -78,6 +88,7 @@ export const useInicio = () => {
     cerrarModalDetalle,
     puedeVerGastos,
     puedeVerMensualidad,
-    recaudado
+    recaudado,
+    esAdmin
   };
 };

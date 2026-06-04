@@ -41,7 +41,8 @@ export const fetchPublicaciones = createAsyncThunk(
         return rejectWithValue(json.mensaje);
       }
     } catch (error) {
-      return rejectWithValue(error);
+      // Extraemos solo el mensaje para que Redux sea feliz
+      return rejectWithValue(error.message || 'Error de red al cargar publicaciones');
     }
   }
 );
@@ -80,17 +81,7 @@ const publicacionesSlice = createSlice({
     paginaActual: 1,
     hayMas: true
   },
-  reducers: {
-    editarPublicacion: (state, action) => {
-      const index = state.listaPublicaciones.findIndex(p => p.id === action.payload.id);
-      if (index !== -1) {
-        state.listaPublicaciones[index] = action.payload;
-      }
-    },
-    eliminarPublicacion: (state, action) => {
-      state.listaPublicaciones = state.listaPublicaciones.filter(p => p.id !== action.payload);
-    }
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchPublicaciones.fulfilled, (state, action) => {

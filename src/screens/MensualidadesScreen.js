@@ -10,6 +10,7 @@ import ModalDesgloseMensualidad from '../components/ModalDesgloseMensualidad';
 import ListaRefrescable from '../components/ListaRefrescable';
 import CargandoOverlay from '../components/CargandoOverlay';
 import SkeletonCard from '../components/SkeletonCard';
+import VistaError from '../components/VistaError';
 
 import { useTema } from './../hooks/useTema';
 import { useMensualidades } from '../hooks/useMensualidades'; 
@@ -29,7 +30,8 @@ export default function MensualidadesScreen () {
     mensualidadSeleccionada,
     gastado,
     presupuestoTotal,
-    recaudado
+    recaudado,
+    error
   } = useMensualidades();
 
   const renderHeader = () => (
@@ -81,6 +83,11 @@ export default function MensualidadesScreen () {
         
         {loading && listaMensualidades.length === 0 ? (
           renderCargandoSkeletons()
+        ) : error ? (
+            <VistaError 
+            mensaje={error} 
+            onRetry={() => obtenerMensualidades(true)} 
+          />
         ) : (
           <ListaRefrescable
             data={listaMensualidades}

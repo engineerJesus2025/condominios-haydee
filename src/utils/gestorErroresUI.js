@@ -47,6 +47,7 @@ export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null)
   } else if (errorObj.tipo === 'RED') {
     Alert.alert('Problema de conexión', errorObj.mensaje);
   } else {
+    console.log(errorObj)
     // Captura errores de JavaScript puro o fallos de descifrado locales lanzados con throw
     Alert.alert(
       'Fallo de Seguridad Local', 

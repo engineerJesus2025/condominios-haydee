@@ -22,7 +22,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
   const {
     control, errors, comprobanteUri, isSubmitting, canSubmit,
     handleSubmit, handleImagePick, removeImage, onSubmit, handleCancel,
-    catalogos, requiereBanco
+    catalogos, requiereBanco, onError
   } = useFormularioGasto(onClose);
 
   const validaciones = useValidaciones();
@@ -30,10 +30,11 @@ export default function ModalFormularioGasto({ visible, onClose }) {
   const BotonesFooter = (
     <>
       <CustomBoton titulo="Cancelar" evento={handleCancel} icono={{ nombre: 'close-circle-outline', color: '#fff' }} estilos={{ backgroundColor: '#95a5a6', flex: 1 }} fuente={16} />
-      <CustomBoton titulo="Registrar" evento={handleSubmit(onSubmit)} 
+      <CustomBoton titulo="Registrar" 
+        evento={handleSubmit(onSubmit, onError)}
         icono={{ nombre: 'save-outline', color: '#fff' }} 
-        disabled={!canSubmit || isSubmitting} 
-        estilos={{ backgroundColor: '#27ae60', opacity: canSubmit && !isSubmitting ? 1 : 0.6 }} 
+        disabled={isSubmitting} 
+        estilos={{ backgroundColor: '#27ae60', opacity: !isSubmitting ? 1 : 0.6 }} 
         fuente={16} 
         loading={isSubmitting}
       />
@@ -53,6 +54,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
       <Controller
         control={control}
         name="clasificacion"
+        rules={validaciones.requeridoSimple('Selecciona un tipo de gasto')}
         render={({ field: { onChange, value } }) => (
           <View style={{ flexDirection: 'row', marginBottom: 15, gap: 10 }}>
             {['FIJO', 'VARIABLE'].map((opcion) => {
@@ -120,6 +122,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
       <Controller
         control={control}
         name="proveedor_id"
+        rules={validaciones.requeridoSimple('Selecciona un proveedor')}
         render={({ field: { onChange, value } }) => (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
             {catalogos.proveedores.map((prov) => {
@@ -178,6 +181,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
       <Controller
         control={control}
         name="metodo_pago"
+        rules={validaciones.requeridoSimple('Selecciona un metodo de pago')}
         render={({ field: { onChange, value } }) => (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
             {['Efectivo', 'Pago Movil', 'Transferencia', 'Divisa'].map((opcion) => {
@@ -250,6 +254,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
           />
 
           <LabelInput titulo="Comprobante Bancario" icono={{ nombre: 'image-outline', color: '#3498db' }} />
+          <ErrorFormulario error={errors.imagen} />
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
             <CustomBoton titulo={comprobanteUri ? 'Cambiar Foto' : 'Subir Captura'} evento={handleImagePick} icono={{ nombre: 'camera-outline', color: '#fff' }} estilos={{ flex: 1 }} />
             {comprobanteUri && (

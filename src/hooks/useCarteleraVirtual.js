@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchPublicaciones } from '../store/slices/publicacionesSlice';
 
@@ -81,14 +81,15 @@ export const useCarteleraVirtual = (colores) => {
   const abrirModalNuevaPublicacion = () => setModalVisible(true);
   const cerrarModalNuevaPublicacion = () => setModalVisible(false);
 
-  const abrirModalDetalle = (publicacion) => {
+  const abrirModalDetalle = useCallback((publicacion) => {
     setPublicacionSeleccionada(publicacion);
     setModalDetalleVisible(true);
-  };
-  const cerrarModalDetalle = () => {
+  }, []);
+
+  const cerrarModalDetalle = useCallback(() => {
     setPublicacionSeleccionada(null);
     setModalDetalleVisible(false);
-  };
+  }, []);
 
   const abrirModalEdicion = (publicacion) => {
     setPublicacionSeleccionada(publicacion);

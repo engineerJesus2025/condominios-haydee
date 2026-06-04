@@ -2,15 +2,15 @@
   "expo": {
     "name": "Condominios Hayde",
     "slug": "evaluacion-electiva-3",
-    "version": "2.0.0",
+    "version": "2.0.3",
     "orientation": "portrait",
     "icon": "./assets/condominiosHaydeeLogoSinFondo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/condominiosHaydeeLogopng.png",
+      "image": "./assets/condominiosHaydeeLogoSinFondo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F4F6F9"
+      "backgroundColor": "#1E1E1E"
     },
     "ios": {
       "supportsTablet": true
@@ -18,11 +18,11 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/condominiosHaydeeLogoSinFondo.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1E1E1E"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.yhesus.evaluacionelectiva3",
-      "versionCode": 2,
+      "versionCode": 5,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",

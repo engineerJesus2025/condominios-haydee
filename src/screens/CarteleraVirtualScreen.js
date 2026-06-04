@@ -10,6 +10,7 @@ import ListaRefrescable from '../components/ListaRefrescable';
 import BotonRegistrar from '../components/BotonRegistrar';
 import SkeletonCard from '../components/SkeletonCard';
 import ModalDetallePublicacion from '../components/ModalDetallePublicacion';
+import VistaError from '../components/VistaError';
 
 import { useTema } from '../hooks/useTema';
 import { useCarteleraVirtual } from '../hooks/useCarteleraVirtual';
@@ -107,11 +108,11 @@ export default function CarteleraVirtualScreen () {
   const ALTURA_HEADER_CALENDARIO = 450;
   const ALTURA_ITEM_POST = 340;
 
-  const elGetItemLayout = useCallback((data, index) => ({
-    length: ALTURA_ITEM_POST,
-    offset: (ALTURA_ITEM_POST * index) + ALTURA_HEADER_CALENDARIO,
-    index,
-  }), []);
+  // const elGetItemLayout = useCallback((data, index) => ({
+  //   length: ALTURA_ITEM_POST,
+  //   offset: (ALTURA_ITEM_POST * index) + ALTURA_HEADER_CALENDARIO,
+  //   index,
+  // }), []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colores.background }}>
@@ -124,12 +125,10 @@ export default function CarteleraVirtualScreen () {
              <Text style={{ marginTop: 10, color: colores.textPlaceholder }}>Cargando cartelera...</Text>
            </View>
         ) : error ? (
-           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-             <Text style={{ color: '#e74c3c' }}>Ocurrió un error: {error}</Text>
-             <TouchableOpacity onPress={obtenerPublicaciones} style={{ marginTop: 10 }}>
-                <Text style={{ color: '#007BFF' }}>Reintentar</Text>
-             </TouchableOpacity>
-           </View>
+           <VistaError 
+            mensaje={error} 
+            onRetry={obtenerPublicaciones} 
+          />
         ) : (
           <ListaRefrescable
             data={listaPublicacionesMostrar}
@@ -138,10 +137,9 @@ export default function CarteleraVirtualScreen () {
             onRefresh={() => obtenerPublicaciones(true)}
             onEndReached={cargarMasPublicaciones}
             cargandoMas={cargandoMas}
-            ListHeaderComponent={headerComponent}
+            ListHeaderComponent={() => headerComponent}
             renderItem={renderPublicacion}
             mensajeVacio="No hay publicaciones para esta fecha."
-            getItemLayout={elGetItemLayout}
           />
         )}
       </View>

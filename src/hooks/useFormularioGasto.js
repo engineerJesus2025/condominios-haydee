@@ -46,7 +46,8 @@ export const useFormularioGasto = (onClose) => {
     reset,
     setValue,
     watch,
-    setError
+    setError,
+    clearErrors
   } = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -58,11 +59,11 @@ export const useFormularioGasto = (onClose) => {
       metodo_pago: 'Efectivo',
       banco_id: '',
       referencia: '',
-      comprobante: null
+      imagen: null
     }
   });
 
-  const comprobanteUri = watch('comprobante');
+  const comprobanteUri = watch('imagen');
   const metodoPago = watch('metodo_pago');
   const requiereBanco = (metodoPago === 'Transferencia' || metodoPago === 'Pago Movil');
 
@@ -71,6 +72,12 @@ export const useFormularioGasto = (onClose) => {
       if (!permissionStatus?.granted) await requestPermission();
     })();
   }, [permissionStatus]);
+
+  useEffect(() => {
+    if (!requiereBanco) {
+      clearErrors('imagen');
+    }
+  }, [requiereBanco, clearErrors]);
 
   const handleImagePick = async () => {
     try {
@@ -82,7 +89,7 @@ export const useFormularioGasto = (onClose) => {
 
       // Disparamos la galería optimizada
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // o ['images']
+        mediaTypes: ['images'],
         allowsEditing: true, 
         aspect: [4, 5],      
         quality: 0.4,        
@@ -90,16 +97,31 @@ export const useFormularioGasto = (onClose) => {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setValue('comprobante', result.assets[0].uri, { shouldValidate: true });
+        setValue('imagen', result.assets[0].uri, { shouldValidate: true });
+        clearErrors('imagen');
       }
     } catch (error) {
       procesarErrorApi(error);
     }
   };
 
-  const removeImage = () => setValue('comprobante', null);
+  useEffect(() => {
+    if (!requiereBanco) {
+      clearErrors('imagen');
+    }
+  }, [requiereBanco, clearErrors]);
+
+  const removeImage = () => setValue('imagen', null);
 
   const onSubmit = async (data) => {
+    clearErrors();
+
+    /* if (requiereBanco && !data.imagen) {
+      setError('imagen', { type: 'manual', message: 'Debes adjuntar la captura del recibo.' });
+      onError({ imagen: { message: 'Debes adjuntar la captura del recibo.' } });
+      return; 
+    } */
+
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -127,8 +149,8 @@ export const useFormularioGasto = (onClose) => {
         formData.append('banco_id[0]', data.banco_id);
         formData.append('referencia[0]', data.referencia);
         
-        if (data.comprobante) {
-          let localUri = data.comprobante;
+        if (data.imagen) {
+          let localUri = data.imagen;
           let filename = localUri.split('/').pop() || 'comprobante.jpg';
           let match = /\.(\w+)$/.exec(filename);
           let type = match ? `image/${match[1]}` : `image`;
@@ -138,18 +160,18 @@ export const useFormularioGasto = (onClose) => {
       }
 
       // -- DATOS PARA OPTIMISTIC UI PAPA --
-      const tipoGastoObj = catalogos.tipos_gasto.find(t => t.id_tipo_gasto === data.tipo_gasto_id);
-      const proveedorObj = catalogos.proveedores.find(p => p.id_proveedor === data.proveedor_id);
+      const tipoGastoObj = catalogos.tipos_gasto.find(t => String(t.id_tipo_gasto) === String(data.tipo_gasto_id));
+      const proveedorObj = catalogos.proveedores.find(p => String(p.id_proveedor) === String(data.proveedor_id));
 
       const datosVisuales = {
         fecha: fechaHoy,
-        monto: `${parseFloat(data.monto).toFixed(2)} Bs.`,
+        monto: parseFloat(data.monto).toFixed(2), 
         montoCrudo: data.monto,
-        tipo: data.clasificacion,
-        tipo_gasto: tipoGastoObj ? tipoGastoObj.nombre_tipo_gasto : 'General',
-        proveedor: proveedorObj ? proveedorObj.nombre_proveedor : 'No especificado',
+        tipo: data.clasificacion || 'Variable',
+        tipo_gasto: tipoGastoObj ? (tipoGastoObj.nombre_tipo_gasto || tipoGastoObj.nombre || 'General') : 'General',
+        proveedor: proveedorObj ? (proveedorObj.nombre_proveedor || proveedorObj.nombre || 'No especificado') : 'No especificado',
         descripcion: data.descripcion_gasto,
-        comprobante: data.comprobante
+        imagen: data.imagen
       };
 
       await dispatch(crearGasto({ datosVisuales, formData })).unwrap();
@@ -158,23 +180,30 @@ export const useFormularioGasto = (onClose) => {
       setTimeout(() => reset(), 400);
 
     } catch (error) {
+      console.log(error)
       procesarErrorApi(error, (status, mensaje, erroresFormulario) => {
-        // Si es un error 400 y trae detalles por campo
+        // Atrapamos el error 400 enviado por las nuevas reglas de gastos_api.php
         if (status === 400 && erroresFormulario) {
-          Object.keys(erroresFormulario).forEach(campo => {
-            setError(campo, {
+          Object.keys(erroresFormulario).forEach(campoServer => {
+            
+            let campoFrontend = campoServer;
+            if (campoServer.startsWith('detalle_0_')) {
+              campoFrontend = campoServer.replace('detalle_0_', ''); 
+            }
+
+            if (campoFrontend === 'metodo_pago') campoFrontend = 'metodo_pago';
+
+            setError(campoFrontend, {
               type: 'server',
-              message: erroresFormulario[campo][0]
+              message: erroresFormulario[campoServer][0]
             });
           });
           
-          //Feedback general
           Alert.alert('Datos Inválidos', mensaje || 'Revise los campos marcados en rojo.');
-          
           return true;
         }
         
-        return false; // Si es un 401, 403, 500, etc.
+        return false; 
       });
     } finally {
       setIsSubmitting(false);
@@ -188,13 +217,37 @@ export const useFormularioGasto = (onClose) => {
 
   const descripcionActual = watch('descripcion_gasto');
   const montoActual = watch('monto');
-  // Validamos extra que si requiere banco, la foto sea obligatoria (opcional según tu regla de negocio)
+  // Validamos extra que si requiere banco, la foto sea obligatoria
   const canSubmit = isValid && !isSubmitting && descripcionActual?.trim() && montoActual?.trim() 
                     && (!requiereBanco || (data => data.banco_id && data.referencia));
+
+  const onError = (errors) => {
+    const primerCampoConError = Object.keys(errors)[0];
+    const mensajeError = errors[primerCampoConError]?.message || 'Por favor, completa este campo correctamente.';
+    
+    const nombresCampos = {
+      clasificacion: 'Clasificacion',
+      tipo_gasto_id: 'Tipo de gasto',
+      proveedor_id: 'Proveedor',
+      descripcion_gasto: 'Descripcion del gasto',
+      monto: 'Monto',
+      metodo_pago: 'Metodo de pago',
+      banco_id: 'Banco',
+      referencia: 'Referencia',
+      imagen: 'Comprobante'
+    };
+    
+    const nombreLegible = nombresCampos[primerCampoConError] || primerCampoConError;
+
+    Alert.alert(
+      "Información incompleta",
+      `Error en ${nombreLegible}: ${mensajeError}`
+    );
+  };
 
   return {
     control, errors, comprobanteUri, isSubmitting, canSubmit,
     handleSubmit, handleImagePick, removeImage, onSubmit, handleCancel,
-    catalogos, requiereBanco
+    catalogos, requiereBanco, onError
   };
 };

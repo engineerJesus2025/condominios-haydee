@@ -9,6 +9,7 @@ import ProgresoPresupuesto from '../components/ProgresoPresupuesto';
 import ListaRefrescable from '../components/ListaRefrescable';
 import ModalDetallePublicacion from '../components/ModalDetallePublicacion';
 import SkeletonCard from '../components/SkeletonCard';
+import VistaError from '../components/VistaError';
 
 import { useTema } from '../hooks/useTema';
 import { useInicio } from '../hooks/useInicio';
@@ -37,7 +38,8 @@ export default function InicioScreen({ navigation }) {
     cerrarModalDetalle,
     puedeVerGastos,
     puedeVerMensualidad,
-    recaudado
+    recaudado,
+    esAdmin
   } = useInicio();
 
   const DIMENSIONES_VISTA = useMemo(() => ({
@@ -56,7 +58,7 @@ export default function InicioScreen({ navigation }) {
       
       <ResumenFinancieroCard 
         monto={deudaTotal} 
-        titulo="Tu Deuda Pendiente" 
+        titulo={esAdmin?"Deuda de Apartamentos":"Tu Deuda Pendiente"}
         moneda="Bs." 
         tipo="deuda"
         onAccion={() => navigation.navigate('Pagos')}
@@ -107,14 +109,19 @@ export default function InicioScreen({ navigation }) {
       <HeaderPrincipal titulo="Condominio Haydee" />
       
       <View style={[estilosInicio.mainContentContainer, { paddingHorizontal: 0 }]}>
-        
+        {error ? (
+          <VistaError 
+            mensaje={error} 
+            onRetry={() => cargarDatosInicio(true)} 
+          />
+        ) : (
         <ListaRefrescable
           data={loadingCartelera ? [] : listaPublicaciones}
           keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
           cargando={(loadingCartelera || loadingFinanzas) && listaPublicaciones.length > 0}
           onRefresh={() => cargarDatosInicio(true)} 
           
-          ListHeaderComponent={renderFinanzasDashboard()} // <-- ¡PARÉNTESIS VITALES AQUÍ!
+          ListHeaderComponent={renderFinanzasDashboard()}
           
           renderItem={({ item }) => (
             <View style={{ paddingHorizontal: 14 }}>
@@ -127,6 +134,7 @@ export default function InicioScreen({ navigation }) {
           mensajeVacio="No hay actividad reciente en el condominio."
           getItemLayout={getItemLayoutInicio}
         />
+        )}
       </View>
       
       <ModalDetallePublicacion

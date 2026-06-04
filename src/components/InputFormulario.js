@@ -1,52 +1,87 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { TextInput } from 'react-native-gesture-handler'
 import Icon from 'react-native-vector-icons/Ionicons'
 import { Controller } from 'react-hook-form'
 import { useTema } from './../hooks/useTema'
+import { useState, useEffect } from 'react' 
+import useToggle from '../hooks/useToggle'
 
 export default function InputFormulario ({ control, name, rules, icono, estilos, error, placeholder = '', noDark = false, inputRef, ...props }) {
   const { colores } = useTema()
-  const estilosInputFormulario = getEstilosInputFormulario(colores,noDark)
-
+  const estilosInputFormulario = getEstilosInputFormulario(colores, noDark)
   const maxLengthValue = rules?.maxLength?.value;
+
+  const esCampoPassword = props.esPassword || props.secureTextEntry;
+  
+  const [ocultarPassword, toggleOcultarPassword] = useToggle(!!esCampoPassword);
 
   return (
     <Controller
       control={control}
       rules={rules}
-      render={({ field: { onChange, onBlur, value } }) => (
-        <>
-          <View style={estilosInputFormulario.inputContainer}>
-            <Icon name={icono.nombre} size={20} color={error ? 'red' : icono.color} style={estilosInputFormulario.inputIcon} />
-            <TextInput
-              {...props}
-              placeholder={placeholder}
-              placeholderTextColor='#999'
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              multiline={props.multiline || false}
-              ref={inputRef}
-              maxLength={maxLengthValue}
-              style={[
-                estilosInputFormulario.input,
-                error && estilosInputFormulario.inputError,
-                { ...estilos }
-              ]}
-            />
-          </View>
-          
-          {/* Solo dibuja el contador si el input tiene límite de caracteres */}
-          {maxLengthValue && (
-            <View style={[estilosInputFormulario.charCounterContainer, !error && { marginBottom: 15 }]}>
-              <Icon name='ellipsis-horizontal' size={14} color='#95a5a6' />
-              <Text style={estilosInputFormulario.charCounter}>
-                {value?.length || 0}/{maxLengthValue}
-              </Text>
+      render={({ field: { onChange, onBlur, value } }) => {
+        const [valorLocal, setValorLocal] = useState(value || '');
+
+        useEffect(() => {
+          setValorLocal(value || '');
+        }, [value]);
+
+        return (
+          <>
+            <View style={estilosInputFormulario.inputContainer}>
+              <Icon name={icono.nombre} size={20} color={error ? 'red' : icono.color} style={estilosInputFormulario.inputIcon} />
+              
+              <TextInput
+                {...props}
+                secureTextEntry={esCampoPassword ? ocultarPassword : false} 
+                placeholder={placeholder}
+                placeholderTextColor='#999'
+                onBlur={onBlur}
+                value={valorLocal}
+                onChangeText={(textoIngresado) => {
+                  let textoFinal = textoIngresado;
+                  if (rules && rules.filtro) {
+                    textoFinal = textoIngresado.replace(rules.filtro, ''); 
+                  }
+                  setValorLocal(textoFinal);
+                  onChange(textoFinal);
+                }}
+                multiline={props.multiline || false}
+                ref={inputRef}
+                maxLength={maxLengthValue}
+                style={[
+                  estilosInputFormulario.input,
+                  error && estilosInputFormulario.inputError,
+                  esCampoPassword && { paddingRight: 50 }, 
+                  { ...estilos }
+                ]}
+              />
+
+              {esCampoPassword && (
+                <Pressable
+                  onPress={toggleOcultarPassword} 
+                  style={estilosInputFormulario.eyeButton}
+                >
+                  <Icon 
+                    name={ocultarPassword ? 'eye-off-outline' : 'eye-outline'} 
+                    size={22} 
+                    color={error ? '#e74c3c' : '#95a5a6'} 
+                  />
+                </Pressable>
+              )}
             </View>
-          )}
-        </>
-      )}
+            
+            {maxLengthValue && (
+              <View style={[estilosInputFormulario.charCounterContainer, !error && { marginBottom: 15 }]}>
+                <Icon name='ellipsis-horizontal' size={14} color='#95a5a6' />
+                <Text style={estilosInputFormulario.charCounter}>
+                  {valorLocal?.length || 0}/{maxLengthValue}
+                </Text>
+              </View>
+            )}
+          </>
+        );
+      }}
       name={name}
     />
   )
@@ -63,6 +98,12 @@ const getEstilosInputFormulario = (colores, noDark = false) => StyleSheet.create
     position: 'absolute',
     left: 15,
     zIndex: 1
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 15,
+    zIndex: 1,
+    padding: 6
   },
   input: {
     borderWidth: 1,
@@ -95,4 +136,4 @@ const getEstilosInputFormulario = (colores, noDark = false) => StyleSheet.create
     color: '#95a5a6',
     marginLeft: 4
   }
-})
+});

@@ -86,23 +86,7 @@ const gastosSlice = createSlice({
     error: null,
     totalGastadoMes: "0.00" 
   },
-  reducers: {
-    registrarGasto: (state, action) => {
-      const nuevoGasto = {
-        id: Date.now().toString(),
-        fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-        monto: `${action.payload.monto} Bs.`,
-        tipo: action.payload.tipo, // Fijo o Variable
-        tipo_gasto: action.payload.categoria, 
-        proveedor: action.payload.proveedor,
-        descripcion: action.payload.descripcion,
-        comprobante: action.payload.comprobante // URI de la foto de la factura
-      };
-      
-      state.listaGastos.unshift(nuevoGasto);
-      // Aquí sumaríamos el nuevo monto al totalGastadoMes lógicamente
-    }
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchGastos.fulfilled, (state, action) => {
@@ -139,17 +123,24 @@ const gastosSlice = createSlice({
       )
       // Apaga el "loading" cuando cualquiera de estos termina con éxito
       .addMatcher(
-        isFulfilled(fetchGastos, crearGasto, fetchCatalogosGastos),
+        isFulfilled(fetchGastos, fetchCatalogosGastos),
         (state) => {
           state.loading = false;
         }
       )
       // Atrapa los errores SOLO si provienen de estos thunks específicos
       .addMatcher(
-        isRejected(fetchGastos, crearGasto, fetchCatalogosGastos),
+        isRejected(fetchGastos, fetchCatalogosGastos),
         (state, action) => {
           state.loading = false;
-          state.error = action.payload || 'Ocurrió un error inesperado.';
+          
+          if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {
+            state.error = action.payload.mensaje; 
+          } else if (typeof action.payload === 'string') {
+            state.error = action.payload;
+          } else {
+            state.error = 'Ocurrió un error de validación en el servidor.';
+          }
         }
       );
   }

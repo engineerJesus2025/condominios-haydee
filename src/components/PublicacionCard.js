@@ -49,10 +49,7 @@ function PublicacionCard({ post, onPress }) {
   );
 }
 
-// solo se repinte si el ID cambia
-export default memo(PublicacionCard, (prevProps, nextProps) => {
-  return prevProps.post.id === nextProps.post.id; 
-});
+export default memo(PublicacionCard);
 
 const getEstiloTipo = (tipoRaw) => {
     const tipo = tipoRaw?.toLowerCase() || 'noticia';

@@ -36,6 +36,10 @@ const procesarColaHandshake = (error) => {
 // INTERCEPTOR DE PETICIÓN (SALIDA)
 clienteApi.interceptors.request.use(
   async (config) => {
+    if (config.skipCrypto) {
+      return config;
+    }
+
     const token = await AsyncStorage.getItem('userToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -140,6 +144,9 @@ clienteApi.interceptors.request.use(
 // INTERCEPTOR DE RESPUESTA (ENTRADA)
 clienteApi.interceptors.response.use(
   (response) => {
+    if (response.config.skipCrypto) {
+      return response;
+    }
     if (response.data && response.data.cifrado === true) {
       try {
         const jsonLimpio = criptografiaMovil.descifrarPayload(
@@ -251,8 +258,18 @@ clienteApi.interceptors.response.use(
         }
       }
 
-      // ==================== SILENT HANDSHAKE (FALLO CRIPTOGRÁFICO) ====================
+      // ==================== FALLO CRIPTOGRÁFICO ====================
       if (status === 403) {
+        const esFaltaDePermisos = dataServidor?.mensaje && 
+          (dataServidor.mensaje.toLowerCase().includes('permiso') || 
+           dataServidor.mensaje.toLowerCase().includes('denegado'));
+
+        if (esFaltaDePermisos) {
+          // Devolvemos el error formateado pacíficamente para que useInicio lo maneje
+          return Promise.reject(errorFormateado);
+        }
+
+        // Si no hay un mensaje claro del servidor, asumimos que de verdad falló el empaquetado/descifrado
         if (estaRefrescandoHandshake) {
           return new Promise((resolve, reject) => {
             colaRefrescadaHandshake.push({ resolve, reject });
@@ -264,9 +281,8 @@ clienteApi.interceptors.response.use(
         estaRefrescandoHandshake = true;
 
         try {
-          console.log("Código 403. Re-sincronizando canal AES de manera silenciosa");
+          console.log("Código 403 Auténtico (Cripto). Re-sincronizando canal AES de manera silenciosa");
           
-          // Petición Axios cruda (salta interceptores) para traer la llave RSA pública del server
           const respuestaHandshake = await axios.get(`${URL_BASE}/api/index.php`, {
             params: { endpoint: 'handshake' },
             timeout: 5000

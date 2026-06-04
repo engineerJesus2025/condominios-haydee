@@ -8,8 +8,9 @@ export default function useRecuperarContrasenia(onClose) {
   const [paso, setPaso] = useState(1);
   const [loading, setLoading] = useState(false);
   const [correoIngresado, setcorreoIngresado] = useState('');
+  const [tokenAutorizacion, setTokenAutorizacion] = useState('');
 
-  const { control, handleSubmit, formState: { isValid, errors }, reset, watch } = useForm({
+  const { control, handleSubmit, formState: { isValid, errors }, reset } = useForm({
     mode: 'onChange',
     defaultValues: {
       correo: '',
@@ -18,15 +19,15 @@ export default function useRecuperarContrasenia(onClose) {
     }
   });
 
-  const correoActual = watch('correo');
-
-  // Acción del Paso 1
+  // PASO 1: Solicitar código OTP al correo
   const solicitarCodigo = async (data) => {
     setLoading(true);
     try {
-      const respuesta = await clienteApi.post('', { correo: data.correo, operacion: 'solicitar_otp'}, {
-        params: { endpoint: 'recuperar' }
-      });
+      const respuesta = await clienteApi.post('', 
+      { correo: data.correo, operacion: 'solicitar_otp'}, {
+      params: { endpoint: 'recuperar' },
+      skipCrypto: true 
+    });
       
       if (respuesta.data.estatus) {
         setPaso(2); 
@@ -39,17 +40,43 @@ export default function useRecuperarContrasenia(onClose) {
     }
   };
 
-  // Acción del Paso 2
-  const restablecerContrasenia = async (data) => {
+  // PASO 2: Validar el código OTP y obtener el Token de Autorización
+  const validarCodigo = async (data) => {
     setLoading(true);
     try {
       const respuesta = await clienteApi.post('', { 
         correo: correoIngresado, 
         codigo: data.codigo,
-        contra: data.contra, 
-        operacion: 'restablecer_con_otp'
+        operacion: 'validar_otp'
       }, {
-        params: { endpoint: 'recuperar'}
+        params: { endpoint: 'recuperar'},
+        skipCrypto: true
+      });
+      
+      if (respuesta.data.estatus) {
+        // Guardamos el token
+        setTokenAutorizacion(respuesta.data.token_autorizacion);
+        setPaso(3);
+      }
+    } catch (error) {
+      procesarErrorApi(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // PASO 3: Restablecer la contraseña usando el Token de Autorización
+  const restablecerContrasenia = async (data) => {
+    setLoading(true);
+    try {
+      const respuesta = await clienteApi.post('', { 
+        correo: correoIngresado, 
+        token_autorizacion: tokenAutorizacion,
+        contra: data.contra, 
+        operacion: 'restablecer_con_token'
+      }, {
+        params: { endpoint: 'recuperar'},
+        skipCrypto: true
       });
       
       if (respuesta.data.estatus) {
@@ -67,6 +94,7 @@ export default function useRecuperarContrasenia(onClose) {
   const handleCerrar = () => {
     reset();
     setPaso(1);
+    setTokenAutorizacion('');
     onClose();
   };
 
@@ -76,10 +104,10 @@ export default function useRecuperarContrasenia(onClose) {
     isValid,
     loading,
     paso,
-    correoActual,
     handleCerrar,
     correoIngresado,
     onSubmitPaso1: handleSubmit(solicitarCodigo),
-    onSubmitPaso2: handleSubmit(restablecerContrasenia)
+    onSubmitPaso2: handleSubmit(validarCodigo),
+    onSubmitPaso3: handleSubmit(restablecerContrasenia)
   };
 }

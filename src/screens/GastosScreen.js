@@ -11,6 +11,7 @@ import CargandoOverlay from '../components/CargandoOverlay';
 import SkeletonCard from '../components/SkeletonCard';
 import SelectorMesAnio from '../components/SelectorMesAnio';
 import ResumenFinancieroCard from '../components/ResumenFinancieroCard';
+import VistaError from '../components/VistaError';
 
 import { useTema } from './../hooks/useTema';
 import { useGastos } from '../hooks/useGastos';
@@ -93,12 +94,10 @@ export default function GastosScreen () {
       <View style={[estilosGastos.mainContentContainer, { flex: 1, paddingHorizontal: 0, paddingBottom: 0 }]}>
         
         {error ? (
-           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-             <Text style={{ color: '#e74c3c' }}>Ocurrió un error: {error}</Text>
-             <TouchableOpacity onPress={() => obtenerGastos(true)} style={{ marginTop: 10 }}>
-                <Text style={{ color: '#007BFF', fontWeight: 'bold' }}>Reintentar</Text>
-             </TouchableOpacity>
-           </View>
+           <VistaError 
+            mensaje={error} 
+            onRetry={() => obtenerGastos(true)} 
+          />
         ) : (
           <ListaRefrescable
             data={estaCargando ? [] : listaGastos} 
@@ -129,11 +128,8 @@ export default function GastosScreen () {
         campos={[ 
           { key: 'tipo_gasto', label: 'Categoría' },
           { key: 'proveedor', label: 'Proveedor' },
-          { key: 'monto', label: 'Monto' },
-          { key: 'fecha', label: 'Fecha', formato: 'fecha_legible' },
-          { key: 'metodo_pago', label: 'Método de Pago' },
-          { key: 'banco', label: 'Banco' },
-          { key: 'referencia', label: 'Referencia' },
+          { key: 'monto', label: 'Monto Total' },
+          { key: 'fecha', label: 'Fecha de registro', formato: 'fecha_legible' },
           { key: 'descripcion', label: 'Descripción' }
         ]}
         mostrarImagen={true}

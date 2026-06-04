@@ -1,5 +1,5 @@
-import React, { useRef } from 'react'; // <-- Adiós useMemo
-import { View, ScrollView, TouchableOpacity, Text } from 'react-native'; 
+import React, { useRef } from 'react';
+import { View, ScrollView, TouchableOpacity, Text, ActivityIndicator } from 'react-native'; 
 import { useTema } from '../hooks/useTema';
 import { useFormularioPago } from '../hooks/useFormularioPago';
 import useValidaciones from '../hooks/useValidaciones';
@@ -36,7 +36,9 @@ export default function ModalFormularioPago({ visible, onClose }) {
     esAdmin,
     tasaDolar,
     equivalenteDolares,     
-    apartamentoSeleccionado 
+    apartamentoSeleccionado,
+    cargandoMensualidades,
+    onError
   } = useFormularioPago(onClose);
 
   const validaciones = useValidaciones();
@@ -52,10 +54,10 @@ export default function ModalFormularioPago({ visible, onClose }) {
       />
       <CustomBoton 
         titulo="Enviar Pago" 
-        evento={handleSubmit(onSubmit)} 
+        evento={handleSubmit(onSubmit, onError)}
         icono={{ nombre: 'send-outline', color: '#fff' }} 
-        disabled={!isValid || isSubmitting} 
-        estilos={{ backgroundColor: '#27ae60', opacity: isValid && !isSubmitting ? 1 : 0.6 }} 
+        disabled={isSubmitting} 
+        estilos={{ backgroundColor: '#27ae60', opacity: !isSubmitting ? 1 : 0.6 }} 
         fuente={16} 
         loading={isSubmitting}
       />
@@ -79,13 +81,14 @@ export default function ModalFormularioPago({ visible, onClose }) {
           <Controller
             control={control}
             name="estado"
+            rules={validaciones.requeridoSimple('Selecciona un estado')}
             render={({ field: { onChange, value } }) => (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
                 {['PENDIENTE', 'PROCESADO', 'RECHAZADO'].map((opcion) => {
                   const isSelected = value === opcion;
                   
                   // para que destaque el color del estado
-                  let colorBorde = isSelected ? (colores.primario || '#3498db') : colores.border;
+                  let colorBorde = isSelected ? (colores.primario || '#ffc107') : colores.border;
                   if (isSelected && opcion === 'PROCESADO') colorBorde = '#27ae60';
                   if (isSelected && opcion === 'RECHAZADO') colorBorde = '#e74c3c';
 
@@ -160,9 +163,17 @@ export default function ModalFormularioPago({ visible, onClose }) {
         rules={validaciones.requeridoSimple('Selecciona un mes')}
         render={({ field: { onChange, value } }) => (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15 }}>
-            {mesesPendientes.length === 0 ? (
+            {cargandoMensualidades ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 5 }}>
+                <ActivityIndicator size="small" color={colores.primario || '#3498db'} style={{ marginRight: 8 }} />
+                <Text style={{ color: colores.textPlaceholder, fontStyle: 'italic' }}>
+                  Buscando deudas...
+                </Text>
+              </View>
+            ) :
+            mesesPendientes.length === 0 ? (
               <Text style={{ color: colores.textPlaceholder, fontStyle: 'italic', paddingLeft: 5 }}>
-                {apartamentoSeleccionado ? "🎉 No hay deudas pendientes" : "Selecciona un apartamento primero"}
+                {apartamentoSeleccionado ? "No hay deudas pendientes" : "Selecciona un apartamento primero"}
               </Text>
             ) : (
               mesesPendientes.map((item) => {
@@ -191,19 +202,6 @@ export default function ModalFormularioPago({ visible, onClose }) {
       />
       <ErrorFormulario error={errors.mensualidad_id} />
 
-      <CampoFormulario
-        tituloLabel="Monto (Bs)"
-        iconoLabel={{ nombre: 'cash-outline', color: '#3498db' }}
-        control={control}
-        name="monto"
-        rules={validaciones.monto}
-        iconoInput={{ nombre: 'cash', color: '#95a5a6' }}
-        error={errors.monto}
-        placeholder="Ejm: 150.50"
-        keyboardType="decimal-pad"
-        inputRef={montoRef}
-      />
-
       {/* CONVERSIÓN Y TASA DEL DÍA */}
       <View style={{ 
         flexDirection: 'row', 
@@ -229,11 +227,25 @@ export default function ModalFormularioPago({ visible, onClose }) {
         </View>
       </View>
 
+      <CampoFormulario
+        tituloLabel="Monto (Bs)"
+        iconoLabel={{ nombre: 'cash-outline', color: '#3498db' }}
+        control={control}
+        name="monto"
+        rules={validaciones.monto}
+        iconoInput={{ nombre: 'cash', color: '#95a5a6' }}
+        error={errors.monto}
+        placeholder="Ejm: 150.50"
+        keyboardType="decimal-pad"
+        inputRef={montoRef}
+      />
+
       {/* SELECTOR DE TIPO DE PAGO */}
       <LabelInput titulo="Método de Pago" icono={{ nombre: 'options-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="tipo_pago"
+        rules={validaciones.requeridoSimple('Seleccione un metodo de pago')}
         render={({ field: { onChange, value } }) => (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
             {['Transferencia', 'Pago Movil', 'Efectivo', 'Divisa'].map((opcion) => {
@@ -307,6 +319,7 @@ export default function ModalFormularioPago({ visible, onClose }) {
           />
 
           <LabelInput titulo="Comprobante" icono={{ nombre: 'image-outline', color: '#3498db' }} />
+          <ErrorFormulario error={errors.imagen} />
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
             <CustomBoton titulo={comprobanteUri ? 'Cambiar Foto' : 'Subir Foto'} evento={handleImagePick} icono={{ nombre: 'camera-outline', color: '#fff' }} estilos={{ flex: 1 }} />
             {comprobanteUri && (

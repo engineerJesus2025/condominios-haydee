@@ -19,10 +19,11 @@ export const useFormularioPago = (onClose) => {
   const [bancosDisponibles, setBancosDisponibles] = useState([]);
   const [apartamentosDisponibles, setApartamentosDisponibles] = useState([]);
   const [mesesPendientes, setMesesPendientes] = useState([]);
+  const [cargandoMensualidades, setCargandoMensualidades] = useState(false);
 
   const { esAdmin, usuario } = usePermisos();
 
-  const { control, handleSubmit, formState: { errors, isValid }, reset, setValue, watch, setError } = useForm({
+  const { control, handleSubmit, formState: { errors, isValid }, reset, setValue, watch, setError, clearErrors } = useForm({
     mode: 'onChange',
     defaultValues: {
       apartamento_id: '',
@@ -31,12 +32,12 @@ export const useFormularioPago = (onClose) => {
       banco_id: '',
       tipo_pago: 'Transferencia',
       mensualidad_id: '',
-      comprobante: null,
+      imagen: null,
       estado: 'PENDIENTE'
     }
   });
 
-  const comprobanteUri = watch('comprobante');
+  const comprobanteUri = watch('imagen');
   const apartamentoSeleccionado = watch('apartamento_id'); 
   const tipoPagoSeleccionado = watch('tipo_pago');
   const montoIngresado = watch('monto'); 
@@ -107,6 +108,7 @@ export const useFormularioPago = (onClose) => {
     }
 
     const cargarDeudas = async () => {
+      setCargandoMensualidades(true); 
       try {
         const resDeudas = await clienteApi.get('', {
           params: { 
@@ -123,9 +125,14 @@ export const useFormularioPago = (onClose) => {
             monto: d.pendiente
           }));
           setMesesPendientes(deudasFormateadas);
+        } else {
+           setMesesPendientes([]);
         }
       } catch (error) {
         procesarErrorApi(error);
+        setMesesPendientes([]);
+      } finally {
+        setCargandoMensualidades(false);
       }
     };
 
@@ -133,10 +140,16 @@ export const useFormularioPago = (onClose) => {
     setValue('mensualidad_id', null); 
   }, [apartamentoSeleccionado]);
 
+  useEffect(() => {
+    if (!requiereBanco) {
+      clearErrors('imagen');
+    }
+  }, [requiereBanco, clearErrors]);
+
   const handleImagePick = async () => {
     // Verificamos permisos si es necesario
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true, // Permite al usuario recortar los bordes negros del recibo
       aspect: [4, 5],      // Proporción estándar para recibos
       quality: 0.4, // Reduce la calidad al 40% (es un recibo, no hace falta el hd aqui -_-)
@@ -144,43 +157,47 @@ export const useFormularioPago = (onClose) => {
     });
 
     if (!result.canceled) {
-      setValue('comprobante', result.assets[0].uri, { shouldValidate: true });
+      setValue('imagen', result.assets[0].uri, { shouldValidate: true });
+      clearErrors('imagen');
     }
   };
   
   const onSubmit = async (data) => {
+    // if (requiereBanco && !data.imagen) {
+    //   setError('imagen', { type: 'manual', message: 'Debes adjuntar la captura del recibo.' });
+      
+    //   onError({ imagen: { message: 'Debes adjuntar la captura del recibo.' } });
+    //   return; 
+    // }
+    clearErrors(); 
+
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    // Pausamos para que tenga tiempo de pintar el Spinner
-    await new Promise(resolve => setTimeout(resolve, 50)); // Esto se llama THREAD YIELDING mi estimado
+    await new Promise(resolve => setTimeout(resolve, 50)); 
 
     try {
       const formData = new FormData();
       formData.append('operacion', 'registrar_pago');
       formData.append('es_propietario', esAdmin ? '0' : '1');
       
-      // Datos de Cabecera
       formData.append('apartamento_id', data.apartamento_id);
       formData.append('mensualidad_id', data.mensualidad_id);
       formData.append('observacion', 'Pago registrado desde la App');
-
       formData.append('estado', data.estado); 
       formData.append('tasa_dolar', tasaDolar);
 
-      // Datos de Detalles (Renglón 0)
       const hoy = new Date().toISOString().split('T')[0];
       formData.append('fecha_pago[0]', hoy);
       formData.append('monto[0]', data.monto);
       formData.append('tipo_pago[0]', data.tipo_pago);
 
-      // Enviamos datos bancarios solo si aplica
       if (requiereBanco) {
         formData.append('referencia[0]', data.referencia);
         formData.append('banco_id[0]', data.banco_id);
 
-        if (data.comprobante) {
-          const localUri = data.comprobante;
+        if (data.imagen) {
+          const localUri = data.imagen;
           const filename = localUri.split('/').pop() || 'comprobante.jpg';
           const match = /\.(\w+)$/.exec(filename);
           const type = match ? `image/${match[1]}` : `image`;
@@ -188,13 +205,23 @@ export const useFormularioPago = (onClose) => {
         }
       }
 
+      const aptoObj = apartamentosDisponibles.find(a => String(a.id_apartamento) === String(data.apartamento_id));
+      const mesObj = mesesPendientes.find(m => String(m.id) === String(data.mensualidad_id));
+      
+      const nombreApartamento = aptoObj ? (aptoObj.nro_apartamento) : 'No asignado';
+      const mesMensualidad = mesObj ? mesObj.mes.split(" ").join("/") : '';
+
       const datosVisuales = {
         monto: `${parseFloat(data.monto).toFixed(2)} Bs.`,
-        estado: 'PENDIENTE',
+        montoCrudo: data.monto,
+        estado: data.estado,
         fecha: hoy,
-        mensualidad: 'Mensualidad actual',
-        apartamento: 'Tu apto.',
-        comprobante: data.comprobante
+        mensualidad: mesMensualidad,
+        apartamento: nombreApartamento,
+        tipo_pago: data.tipo_pago,
+        banco: 'N/A', 
+        referencia: 'N/A',
+        imagen: data.imagen
       };
 
       await dispatch(registrarPagoServidor({ datosVisuales, formData })).unwrap();
@@ -202,23 +229,29 @@ export const useFormularioPago = (onClose) => {
       onClose();
       reset();
     } catch (error) {
+      console.log(errors)
       procesarErrorApi(error, (status, mensaje, erroresFormulario) => {
-        // Si es un error 400 y trae detalles por campo
         if (status === 400 && erroresFormulario) {
-          Object.keys(erroresFormulario).forEach(campo => {
-            setError(campo, {
+          
+          Object.keys(erroresFormulario).forEach(campoServer => {
+            // INTERCEPTOR Y MAPEO DE NOMBRES
+            let campoFrontend = campoServer;
+            if (campoServer.startsWith('detalle_0_')) {
+              campoFrontend = campoServer.replace('detalle_0_', ''); 
+            }
+            
+            // Ahora React Hook Form pintará de rojo los inputs reales ('monto', 'referencia')
+            setError(campoFrontend, {
               type: 'server',
-              message: erroresFormulario[campo][0]
+              message: erroresFormulario[campoServer][0]
             });
           });
           
-          //Feedback general
           Alert.alert('Datos Inválidos', mensaje || 'Revise los campos marcados en rojo.');
-          
           return true;
         }
         
-        return false; // Si es un 401, 403, 500, etc.
+        return false; 
       });
     } finally {
       setIsSubmitting(false);
@@ -226,6 +259,30 @@ export const useFormularioPago = (onClose) => {
   };
 
   const canSubmit = isValid && !isSubmitting && (!requiereBanco || (watch('banco_id') && watch('referencia')));
+
+  const onError = (errors) => {
+    // console.log(errors)
+    const primerCampoConError = Object.keys(errors)[0];
+    const mensajeError = errors[primerCampoConError]?.message || 'Por favor, completa este campo correctamente.';
+    
+    const nombresCampos = {
+      apartamento_id: 'Apartamento',
+      monto: 'Monto',
+      referencia: 'Referencia',
+      banco_id: 'Banco',
+      tipo_pago: 'Tipo de pago',
+      mensualidad_id: 'Mensualidad',
+      estado: 'Estado del pago',
+      imagen: 'Comprobante'
+    };
+    
+    const nombreLegible = nombresCampos[primerCampoConError] || primerCampoConError;
+
+    Alert.alert(
+      "Información incompleta",
+      `Error en ${nombreLegible}: ${mensajeError}`
+    );
+  };
 
   return { 
     control, 
@@ -236,7 +293,7 @@ export const useFormularioPago = (onClose) => {
     handleSubmit,
     handleImagePick,
     onSubmit,
-    removeImage: () => setValue('comprobante',
+    removeImage: () => setValue('imagen',
     null),
     bancosDisponibles,
     apartamentosDisponibles,
@@ -245,6 +302,8 @@ export const useFormularioPago = (onClose) => {
     esAdmin,
     tasaDolar, 
     equivalenteDolares,
-    apartamentoSeleccionado
+    apartamentoSeleccionado,
+    cargandoMensualidades,
+    onError
   };
 };

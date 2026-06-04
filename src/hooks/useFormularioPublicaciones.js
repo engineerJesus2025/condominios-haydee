@@ -20,7 +20,8 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     reset,
     setValue,
     watch,
-    trigger
+    trigger,
+    clearErrors
   } = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -71,7 +72,7 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3], // Formato horizontal para noticias en la cartelera
         quality: 0.4, 
@@ -80,11 +81,16 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setValue('imagen', result.assets[0].uri, { shouldValidate: true });
+        clearErrors('imagen');
       }
     } catch (error) {
       procesarErrorApi(error);
     }
   };
+
+  useEffect(() => {
+      clearErrors('imagen');
+  }, [clearErrors]);
 
   const removeImage = () => {
     setValue('imagen', null, { shouldValidate: true })
@@ -129,7 +135,7 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
         titulo: data.titulo,
         descripcion: data.descripcion,
         tipo: data.tipo,
-        autor: 'Tú',
+        autor: usuario?.nombre_completo || usuario?.nombre || 'Administrador', 
         imagen: data.imagen
       };
 
@@ -183,6 +189,24 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     }, 400)
   }
 
+  const onError = (errors) => {
+    const primerCampoConError = Object.keys(errors)[0];
+    const mensajeError = errors[primerCampoConError]?.message || 'Por favor, completa este campo correctamente.';
+    
+    const nombresCampos = {
+      titulo: 'Título',
+      descripcion: 'Descripción',
+      tipo: 'Tipo de Publicación'
+    };
+    
+    const nombreLegible = nombresCampos[primerCampoConError] || primerCampoConError;
+
+    Alert.alert(
+      "Información incompleta",
+      `Error en ${nombreLegible}: ${mensajeError}`
+    );
+  };
+
   const canSubmit = isValid && !isSubmitting && titulo.trim() && descripcion.trim() && tipo;
 
   return {
@@ -201,6 +225,7 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     removeImage,
     onSubmit,
     handleCancel,
-    resetForm
+    resetForm,
+    onError
   }
 }

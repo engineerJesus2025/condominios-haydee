@@ -5,6 +5,7 @@ import { fetchPagos, actualizarEstadoPagoServidor, fetchEstadoCuenta } from '../
 import { usePermisos } from './usePermisos';
 import clienteApi from '../utils/clienteApi'; 
 import { procesarErrorApi } from '../utils/gestorErroresUI';
+import { formatearMesAnio } from '../utils/dateUtils';
 
 const URL_BASE = process.env.EXPO_PUBLIC_URL_BASE; 
 
@@ -25,7 +26,7 @@ export const usePagos = () => {
   const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [procesandoEstado, setProcesandoEstado] = useState(false);
-  
+
   // Estado puente para el primer renderizado
   const [inicializando, setInicializando] = useState(true);
 
@@ -78,7 +79,7 @@ export const usePagos = () => {
   const abrirDetalles = async (pagoCabecera) => {
     if (cargandoDetalle) return;
     setCargandoDetalle(true);
-    
+
     try {
       const respuesta = await clienteApi.get('', {
         params: {
@@ -90,25 +91,39 @@ export const usePagos = () => {
 
       if (respuesta.data.estatus) {
         const dataBackend = respuesta.data.datos;
-        const detalleBancario = dataBackend.detalles && dataBackend.detalles.length > 0 
-          ? dataBackend.detalles[0] 
-          : {};
+        
+        const detallesProcesados = (dataBackend.detalles || []).map(det => {
+          let urlImagen = null;
+          if (det.imagen && det.imagen !== 'default.png') {
+            urlImagen = `${URL_BASE}/recursos/img/pagos/${det.imagen}`;
+          }
+          return {
+            id_detalle: det.id_detalle_pago,
+            fecha: det.fecha,
+            monto: `${parseFloat(det.monto).toFixed(2)} Bs.`,
+            tipo_pago: det.tipo_pago,
+            banco: det.nombre_banco || 'No aplica',
+            referencia: det.referencia || 'No aplica',
+            imagen: urlImagen
+          };
+        });
 
-        let urlImagen = null;
-        if (detalleBancario.imagen && detalleBancario.imagen !== 'default.png') {
-          urlImagen = `${URL_BASE}/recursos/img/pagos/${detalleBancario.imagen}`;
-        }
-
+        const mensualidadCruda = dataBackend.mensualidad || pagoCabecera.mensualidad;
+        const [mes, anio] = mensualidadCruda.includes('/') ? mensualidadCruda.split('/') : ['', ''];
+        const apartamento = `Nº ${dataBackend.nro_apartamento}`;
+        
         setPagoSeleccionado({
-          ...pagoCabecera, 
-          banco: detalleBancario.nombre_banco || pagoCabecera.banco || 'No aplica',
-          referencia: detalleBancario.referencia || pagoCabecera.referencia || 'No aplica',
-          imagen: urlImagen
+          ...pagoCabecera,
+          apartamento,
+          mensualidad: (mes && anio) ? formatearMesAnio(mes, anio) : mensualidadCruda,
+          observacion: dataBackend.observacion || 'Sin observaciones',
+          monto_mensualidad: `${parseFloat(dataBackend.monto_mensualidad || 0).toFixed(2)} Bs.`,
+          monto_abonado: `${parseFloat(dataBackend.monto_abonado || 0).toFixed(2)} Bs.`,
+          detalles: detallesProcesados 
         });
         
         setModalVisible(true);
       } else {
-        // Si el estatus de negocio es false pero vino con un 200 HTTP, estructuramos el error
         procesarErrorApi({ tipo: 'SERVIDOR', status: 400, mensaje: respuesta.data.mensaje });
       }
     } catch (err) {
@@ -212,6 +227,7 @@ export const usePagos = () => {
     handleAprobar,
     handleRechazar,
     procesandoEstado,
-    inicializando
+    inicializando,
+    cambiarFiltroFecha
   };
 };

@@ -28,7 +28,8 @@ const ModalFormularioPublicaciones = ({
     handleImagePick,
     removeImage,
     onSubmit,
-    handleCancel
+    handleCancel,
+    onError
   } = useFormularioPublicaciones(onClose, publicacionEditar);
 
   const validaciones = useValidaciones();
@@ -47,12 +48,12 @@ const ModalFormularioPublicaciones = ({
       />
       <CustomBoton
         titulo={esEdicion ? 'Actualizar' : 'Publicar'}
-        evento={handleSubmit(onSubmit)}
+        evento={handleSubmit(onSubmit, onError)} 
         icono={{ nombre: esEdicion ? 'save-outline' : 'send-outline', color: '#fff' }}
-        disabled={!canSubmit}
-        loading={isSubmitting}
-        estilos={{ backgroundColor: '#27ae60', opacity: (!canSubmit || isSubmitting) ? 0.6 : 1 }}
+        disabled={isSubmitting}
+        estilos={{ backgroundColor: '#27ae60', opacity: isSubmitting ? 0.6 : 1 }}
         fuente={16}
+        loading={isSubmitting}
       />
     </>
   );
@@ -139,6 +140,7 @@ const ModalFormularioPublicaciones = ({
 
       {/* --- SELECTOR DE IMAGEN --- */}
       <LabelInput titulo="Imagen" icono={{ nombre: 'image-outline', color: '#3498db' }} />
+      <ErrorFormulario error={errors.imagen} />
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
         <CustomBoton
           titulo={imageUri ? 'Cambiar Imagen' : 'Seleccionar Imagen'}

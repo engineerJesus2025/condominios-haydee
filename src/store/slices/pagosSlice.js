@@ -11,9 +11,6 @@ export const fetchPagos = createAsyncThunk(
   'pagos/fetchPagos',
   async ({ mes, anio} = {}, { getState, rejectWithValue }) => {
     try {
-      
-      const { user } = getState().usuario;
-      const esAdmin = user?.rol.toLowerCase() === 'administrador' || user?.rol.toLowerCase() === 'presidente';
 
       const respuesta = await clienteApi.get('', {
         params: {
@@ -37,7 +34,7 @@ export const fetchPagos = createAsyncThunk(
           tipo_pago: item.tipo_pago_predominante,
           banco: 'Ver detalles',
           referencia: 'Ver detalles',
-          comprobante: null 
+          imagen: null 
         }));
       } else {
         return rejectWithValue(json.mensaje);
@@ -127,25 +124,7 @@ const pagosSlice = createSlice({
     loading: false,
     error: null
   },
-  reducers: {
-    registrarPago: (state, action) => {
-      
-      const nuevoPago = {
-        id: Date.now().toString(), 
-        fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-        monto: `${action.payload.monto} Bs.`,
-        mensualidad: action.payload.mensualidad,
-        estado: 'Pendiente', 
-        apartamento: 'Nro: 1-1', // En la vida real, esto vendría del usuario logueado
-        referencia: action.payload.referencia,
-        banco: action.payload.banco,
-        comprobante: action.payload.comprobante
-      };
-      
-      
-      state.listaPagos.unshift(nuevoPago);
-    }
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchPagos.fulfilled, (state, action) => {
@@ -155,16 +134,6 @@ const pagosSlice = createSlice({
       .addCase(registrarPagoServidor.fulfilled, (state, action) => {
         // Agregamos el nuevo pago al inicio de la lista
         state.listaPagos.unshift(action.payload);
-        // Extraemos el monto numérico limpio (asumiendo que en action.payload mandas un 'montoCrudo' desde el UI)
-        const montoAbonado = parseFloat(action.payload.montoCrudo || action.payload.monto.replace(/[^\d.-]/g, ''));
-        
-        // Reducimos la deuda total inmediatamente en memoria
-        if (!isNaN(montoAbonado)) {
-          state.totalDeuda = Math.max(0, state.totalDeuda - montoAbonado);
-        }
-
-        // REVISAR: Si el pago cubre una deuda específica de la listaDeudas, 
-        // podría buscarla con un .find() y restarle el monto, o eliminarla si llega a 0.
       })
       .addCase(fetchEstadoCuenta.fulfilled, (state, action) => {
         state.loadingDeudas = false;
@@ -188,14 +157,14 @@ const pagosSlice = createSlice({
       )
       // Apaga el "loading" cuando cualquiera de estos termina con éxito
       .addMatcher(
-        isFulfilled(fetchPagos, fetchEstadoCuenta, actualizarEstadoPagoServidor, registrarPagoServidor),
+        isFulfilled(fetchPagos, fetchEstadoCuenta, actualizarEstadoPagoServidor),
         (state) => {
           state.loading = false;
         }
       )
       // Atrapa los errores SOLO si provienen de estos thunks específicos
       .addMatcher(
-        isRejected(fetchPagos, fetchEstadoCuenta, actualizarEstadoPagoServidor, registrarPagoServidor),
+        isRejected(fetchPagos, fetchEstadoCuenta, actualizarEstadoPagoServidor),
         (state, action) => {
           state.loading = false;
           if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {

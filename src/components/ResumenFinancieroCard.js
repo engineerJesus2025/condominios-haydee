@@ -135,9 +135,9 @@ const getEstilos = (colores) => StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
   tituloContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 },
   
-  iconoContainer: { padding: 8, borderRadius: 10, marginRight: 12 },
-  titulo: { fontSize: 15, fontWeight: '700', color: colores.textPlaceholder || '#666', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 1 },
-  badgePositivo: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20 },
+  iconoContainer: { padding: 8, borderRadius: 10, marginRight: 10 },
+  titulo: { fontSize: 18, fontWeight: '700', color: colores.textPlaceholder || '#666', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 1 },
+  badgePositivo: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 20 },
   textoBadge: { fontSize: 12, fontWeight: 'bold' },
   body: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   montoContainer: { flexDirection: 'row', alignItems: 'baseline', flex: 1 },

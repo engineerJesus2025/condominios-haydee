@@ -4,7 +4,6 @@ export const usePermisos = () => {
   const { user, isAuthenticated } = useSelector(state => state.usuario);
   const permisosDelUsuario = user?.permisos || [];
 
-
   const tienePermiso = (moduloRequerido, accionRequerida) => {
     if (!permisosDelUsuario.length) return false;
     return permisosDelUsuario.some(

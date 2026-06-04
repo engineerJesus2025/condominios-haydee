@@ -89,25 +89,33 @@ export const useGastos = () => {
 
       if (respuesta.data.estatus) {
         const dataBackend = respuesta.data.datos;
-        const detalles = dataBackend.detalles || [];
-        const primerDetalle = detalles.length > 0 ? detalles[0] : {};
+        
+        // === PROCESAR TODOS LOS DETALLES DEL GASTO ===
+        const detallesProcesados = (dataBackend.detalles || []).map(det => {
+          let urlImagen = null;
+          // Validamos que venga imagen y no sea la por defecto
+          if (det.imagen && det.imagen !== 'default.png') {
+            urlImagen = `${URL_BASE}/recursos/img/gastos/${det.imagen}`;
+          }
+          return {
+            id_detalle: det.id_detalle_gasto || det.id_detalle,
+            fecha: det.fecha,
+            monto: `${parseFloat(det.monto).toFixed(2)} Bs.`,
+            metodo_pago: det.metodo_pago,
+            banco: det.nombre_banco || 'No aplica',
+            referencia: det.referencia || 'No aplica',
+            imagen: urlImagen
+          };
+        });
 
-        let urlImagen = null;
-        if (primerDetalle.imagen && primerDetalle.imagen !== 'default.png') {
-          urlImagen = `${URL_BASE}/recursos/img/gastos/${primerDetalle.imagen}`;
-        }
-
+        // Guardamos todo el arreglo dentro del estado
         setGastoSeleccionado({
           ...gastoCabecera,
-          metodo_pago: primerDetalle.metodo_pago || 'No especificado',
-          banco: primerDetalle.nombre_banco || 'No aplica',
-          referencia: primerDetalle.referencia || 'No aplica',
-          imagen: urlImagen
+          detalles: detallesProcesados // Inyectamos el desglose completo
         });
         
         setModalDetalleVisible(true);
       } else {
-        // Si el estatus de negocio es false pero vino con un 200 HTTP, estructuramos el error
         procesarErrorApi({ tipo: 'SERVIDOR', status: 400, mensaje: respuesta.data.mensaje });
       }
     } catch (err) {

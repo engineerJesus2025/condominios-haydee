@@ -62,7 +62,7 @@ export default function FormularioLogin ({ botonBloqueadoPorSeguridad, estadoCon
         rules={validaciones.correo}
         icono={{ nombre: 'mail', color: '#000' }}
         error={errors.correo}
-        placeholder='Ejm: franj@gmail.com'
+        placeholder='Ejm: usuario@gmail.com'
         keyboardType='email-address'
         autoCapitalize='none'
         noDark={true}
@@ -86,6 +86,7 @@ export default function FormularioLogin ({ botonBloqueadoPorSeguridad, estadoCon
         inputRef={contraRef}
         returnKeyType="send"
         onSubmitEditing={handleSubmit}
+        esPassword={true} 
       />
       <ErrorFormulario error={errors.contra} />
 

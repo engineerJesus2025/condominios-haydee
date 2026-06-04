@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import PagoCard from '../components/PagoCard';
@@ -12,6 +13,8 @@ import BotonRegistrar from '../components/BotonRegistrar';
 import CargandoOverlay from '../components/CargandoOverlay';
 import SkeletonCard from '../components/SkeletonCard';
 import SelectorMesAnio from '../components/SelectorMesAnio';
+import VistaError from '../components/VistaError';
+import BannerPagosPendientes from '../components/BannerPagosPendientes';
 
 import { useTema } from './../hooks/useTema';
 import { usePagos } from '../hooks/usePagos';
@@ -49,17 +52,24 @@ export default function PagosScreen() {
 
   const estaCargando = loading || inicializando;
 
-  const renderHeader = () => (
+  const renderHeader = () => {
+  const tienePagosPendientes = listaPagos.some(p => p.estado.toUpperCase() === 'PENDIENTE');
+
+  return (
     <View style={{ paddingBottom: 5 }}>
       <ResumenFinancieroCard 
         monto={totalDeuda} 
-        titulo="Tu Deuda Pendiente" 
+        titulo={esAdmin ? "Deuda de los Apartamentos" : "Tu Deuda Pendiente"}
         moneda="Bs." 
         tipo="deuda"
         onAccion={() => setModalEstadoCuentaVisible(true)}
         textoAccion="Ver Estado"
         cargando={estaCargando}
       />
+      
+      {!esAdmin && tienePagosPendientes && (
+        <BannerPagosPendientes visible={!esAdmin && tienePagosPendientes} />
+      )}
 
       <Text style={[estilosPagos.title, { marginTop: 15, marginBottom: 10, paddingHorizontal: 0 }]}>
         Historial de Pagos
@@ -81,6 +91,7 @@ export default function PagosScreen() {
       )}
     </View>
   );
+};
 
   const ALTURA_HEADER = 200; 
   const ALTURA_ITEM = 150; 
@@ -98,12 +109,10 @@ export default function PagosScreen() {
       <View style={[estilosPagos.mainContentContainer, { flex: 1, paddingHorizontal: 0, paddingVertical: 0, padding: 0 }]}>
         
         {error ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: '#e74c3c' }}>Ocurrió un error: {error}</Text>
-            <TouchableOpacity onPress={() => obtenerPagos(true)} style={{ marginTop: 10 }}>
-               <Text style={{ color: '#007BFF', fontWeight: 'bold' }}>Reintentar</Text>
-            </TouchableOpacity>
-          </View>
+          <VistaError 
+            mensaje={error} 
+            onRetry={() => obtenerPagos(true)} 
+          />
         ) : (
           <ListaRefrescable
             data={estaCargando ? [] : listaPagos}
@@ -133,12 +142,11 @@ export default function PagosScreen() {
         datos={pagoSeleccionado}
         campos={[
           { key: 'estado', label: 'Estado' },
-          { key: 'fecha', label: 'Fecha del pago', formato: 'fecha_legible' },
-          { key: 'banco', label: 'Banco Origen' },         
-          { key: 'referencia', label: 'Nro. Referencia' }, 
-          { key: 'monto', label: 'Monto' },
+          { key: 'fecha', label: 'Fecha de registro', formato: 'fecha_legible' },
+          { key: 'monto', label: 'Monto Total' }, // El monto global del recibo
           { key: 'mensualidad', label: 'Mensualidad' },
-          { key: 'apartamento', label: 'Apartamento' }
+          { key: 'apartamento', label: 'Apartamento' },
+          { key: 'observacion', label: 'Observación' }
         ]}
         mostrarImagen={true}
         esAdmin={esAdmin}
