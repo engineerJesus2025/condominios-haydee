@@ -105,6 +105,7 @@ const usuarioSlice = createSlice({
     isAuthenticated: false,
     loading: false,
     error: null,
+    pushRegistrado: false,
   },
   reducers: {
     restaurarSesion: (state, action) => {
@@ -115,6 +116,9 @@ const usuarioSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       AsyncStorage.multiRemove(['userToken', 'userData', 'refreshToken']);
+    },
+    marcarPushRegistrado: (state) => {
+      state.pushRegistrado = true;
     }
   },
   extraReducers: (builder) => {
@@ -155,5 +159,5 @@ const usuarioSlice = createSlice({
   }
 });
 
-export const { logout, restaurarSesion } = usuarioSlice.actions;
+export const { logout, restaurarSesion, marcarPushRegistrado } = usuarioSlice.actions;
 export default usuarioSlice.reducer;

@@ -11,6 +11,7 @@ import ErrorFormulario from './ErrorFormulario';
 import LabelInput from './LabelInput';
 import CustomBoton from './CustomBoton';
 import MostrarVistaPrevia from './MostrarVistaPrevia';
+import SelectorDesplegable from './SelectorDesplegable';
 import { formatearMesAnio } from '../utils/dateUtils';
 
 export default function ModalFormularioPago({ visible, onClose }) {
@@ -120,85 +121,83 @@ export default function ModalFormularioPago({ visible, onClose }) {
       )}
 
       {/* SELECTOR DE APARTAMENTO */}
-      <LabelInput titulo="Apartamento" icono={{ nombre: 'home-outline', color: '#3498db' }} />
+      <LabelInput titulo="Apartamento" icono={{ nombre: 'business-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="apartamento_id"
-        rules={validaciones.requeridoSimple('Selecciona tu apartamento')}
-        render={({ field: { onChange, value } }) => (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
-            {apartamentosDisponibles.length === 0 ? (
-              <Text style={{ color: colores.textPlaceholder, fontStyle: 'italic', paddingLeft: 5 }}>Cargando apartamentos...</Text>
-            ) : (
-              apartamentosDisponibles.map((apto) => {
-                const isSelected = value === apto.id_apartamento;
-                return (
-                  <TouchableOpacity
-                    key={apto.id_apartamento}
-                    activeOpacity={0.7}
-                    onPress={() => onChange(apto.id_apartamento)}
-                    style={{
-                      paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5,
-                      borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
-                      backgroundColor: isSelected ? (colores.primario + '15' || '#eaf4fc') : colores.card,
-                    }}
-                  >
-                    <Text style={{ color: isSelected ? colores.primario : colores.textPlaceholder, fontWeight: isSelected ? 'bold' : '500' }}>
-                      Apto. {apto.nro_apartamento}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
-        )}
+        rules={{ required: 'Debes seleccionar un apartamento' }}
+        render={({ field: { onChange, value } }) => {
+          
+          // Mapeamos los datos de tu API al formato que entiende el Selector
+          const opcionesApartamentos = apartamentosDisponibles.map(apt => ({
+            label: `Apartamento Nº ${apt.nro_apartamento}`,
+            value: apt.id_apartamento
+          }));
+
+          return (
+            <SelectorDesplegable
+              opciones={opcionesApartamentos}
+              valorSeleccionado={value}
+              onSelect={(val) => {
+                    onChange(val); 
+                  }}
+              placeholder="Seleccione el apartamento..."
+              icono="home-outline"
+            />
+          );
+        }}
       />
       <ErrorFormulario error={errors.apartamento_id} />
 
       {/* SELECTOR DE MES A PAGAR */}
-      <LabelInput titulo="Mes a Pagar" icono={{ nombre: 'calendar-outline', color: '#3498db' }} />
+      <LabelInput titulo="Mensualidad a pagar" icono={{ nombre: 'calendar-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="mensualidad_id"
-        rules={validaciones.requeridoSimple('Selecciona un mes')}
-        render={({ field: { onChange, value } }) => (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15 }}>
-            {cargandoMensualidades ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 5 }}>
-                <ActivityIndicator size="small" color={colores.primario || '#3498db'} style={{ marginRight: 8 }} />
-                <Text style={{ color: colores.textPlaceholder, fontStyle: 'italic' }}>
-                  Buscando deudas...
-                </Text>
-              </View>
-            ) :
-            mesesPendientes.length === 0 ? (
-              <Text style={{ color: colores.textPlaceholder, fontStyle: 'italic', paddingLeft: 5 }}>
-                {apartamentoSeleccionado ? "No hay deudas pendientes" : "Selecciona un apartamento primero"}
-              </Text>
-            ) : (
-              mesesPendientes.map((item) => {
-                const isSelected = value === item.id;
-                const [mes,anio] = item.mes.split(' ')
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    activeOpacity={0.7}
-                    onPress={() => { onChange(item.id); control._defaultValues.monto = item.monto; }} // Opcional: auto-llenar el monto
-                    style={{
-                      paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, marginRight: 8, marginBottom: 8,
-                      borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
-                      backgroundColor: isSelected ? (colores.primario + '15' || '#eaf4fc') : colores.card,
-                    }}
-                  >
-                    <Text style={{ color: isSelected ? colores.primario : colores.textPlaceholder, fontWeight: isSelected ? 'bold' : '500' }}>
-                      {formatearMesAnio(mes,anio)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
-        )}
+        rules={{ required: 'Seleccione el mes a pagar' }}
+        render={({ field: { onChange, value } }) => {
+          
+          const opcionesMensualidades = mesesPendientes.map(item => {
+            // 1. Extraemos el ID real (en este caso viene como 'id')
+            const idResuelto = item.id_mensualidad || item.id;
+            
+            let etiquetaResuelta = 'Mes no definido';
+
+            if (item.mes) {
+              const mesString = String(item.mes);
+
+              // Si el string contiene un espacio (ej: "1 2026"), aplicamos tu split original
+              if (mesString.includes(' ')) {
+                const [mesNumero, anioNumero] = mesString.split(' ');
+                etiquetaResuelta = formatearMesAnio(mesNumero, anioNumero);
+              } 
+              // Por si acaso en otra consulta viniera ya formateado por Redux (ej: "Enero 2026")
+              else if (isNaN(mesString)) {
+                etiquetaResuelta = item.mes;
+              }
+            } 
+            // Si el Slice de Redux guardó el campo consolidado en 'mensualidad'
+            else if (item.mensualidad) {
+              etiquetaResuelta = item.mensualidad;
+            }
+
+            return {
+              label: etiquetaResuelta,
+              value: idResuelto
+            };
+          });
+
+          return (
+            <SelectorDesplegable
+              opciones={opcionesMensualidades}
+              valorSeleccionado={value}
+              onSelect={onChange}
+              placeholder={cargandoMensualidades ? "Cargando deudas..." : "Seleccione el mes..."}
+              icono="calendar"
+              deshabilitado={cargandoMensualidades || opcionesMensualidades.length === 0}
+            />
+          );
+        }}
       />
       <ErrorFormulario error={errors.mensualidad_id} />
 
@@ -247,8 +246,8 @@ export default function ModalFormularioPago({ visible, onClose }) {
         name="tipo_pago"
         rules={validaciones.requeridoSimple('Seleccione un metodo de pago')}
         render={({ field: { onChange, value } }) => (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
-            {['Transferencia', 'Pago Movil', 'Efectivo', 'Divisa'].map((opcion) => {
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
+            {['Efectivo', 'Pago Movil', 'Transferencia'].map((opcion) => {
               const isSelected = value === opcion;
               return (
                 <TouchableOpacity
@@ -256,7 +255,7 @@ export default function ModalFormularioPago({ visible, onClose }) {
                   activeOpacity={0.7}
                   onPress={() => onChange(opcion)}
                   style={{
-                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5,
+                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, marginRight: 8,
                     borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
                     backgroundColor: isSelected ? (colores.primario + '15' || '#eaf4fc') : colores.card,
                   }}
@@ -267,7 +266,7 @@ export default function ModalFormularioPago({ visible, onClose }) {
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
         )}
       />
 

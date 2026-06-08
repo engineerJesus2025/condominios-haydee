@@ -141,11 +141,13 @@ export default function PagosScreen() {
         titulo="Detalles del Pago"
         datos={pagoSeleccionado}
         campos={[
+          // Lectura rápida en Z
           { key: 'estado', label: 'Estado' },
-          { key: 'fecha', label: 'Fecha de registro', formato: 'fecha_legible' },
-          { key: 'monto', label: 'Monto Total' }, // El monto global del recibo
+          { key: 'monto', label: 'Monto Total' }, 
           { key: 'mensualidad', label: 'Mensualidad' },
           { key: 'apartamento', label: 'Apartamento' },
+          // Lectura en bloque
+          { key: 'fecha', label: 'Fecha de registro', formato: 'fecha_legible' },
           { key: 'observacion', label: 'Observación' }
         ]}
         mostrarImagen={true}

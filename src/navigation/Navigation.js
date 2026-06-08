@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-// import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSelector } from 'react-redux';
 import { usePermisos } from '../hooks/usePermisos';
 import { useTema } from '../hooks/useTema';
+import { EscuchadorNotificaciones } from '../hooks/useInteraccionPush';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; 
@@ -19,6 +19,9 @@ import GastosScreen from '../screens/GastosScreen';
 import MensualidadesScreen from '../screens/MensualidadesScreen';
 import CarteleraVirtualScreen from '../screens/CarteleraVirtualScreen';
 import PerfilScreen from '../screens/PerfilScreen';
+
+import DetalleCarteleraScreen from '../screens/DetalleCarteleraScreen';
+import DetallePagoScreen from '../screens/DetallePagoScreen';
 
 const Stack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
@@ -40,18 +43,28 @@ const TabBarIcon = React.memo(({ routeName, focused, color }) => {
 
 function LoggedInStack() {
   return (
-    <AppStack.Navigator screenOptions={{ headerShown: false }}>
-      <AppStack.Screen name="MainTabs" component={MainTabs} />
+    <>
+      {/* Componente silencioso que escucha los toques en notificaciones en toda la app autenticada */}
+      <EscuchadorNotificaciones />
       
-      <AppStack.Screen 
-        name="Perfil" 
-        component={PerfilScreen} 
-        options={{ 
-          presentation: 'modal', // Animación nativa de tarjeta/modal
-          gestureEnabled: true,  // Permite swipe-to-dismiss nativo
-        }}
-      />
-    </AppStack.Navigator>
+      <AppStack.Navigator screenOptions={{ headerShown: false }}>
+        {/* Las pestañas principales */}
+        <AppStack.Screen name="MainTabs" component={MainTabs} />
+        
+        {/* Rutas de detalle a las que apuntará el Push (Navegación Stack) */}
+        <AppStack.Screen name="DetalleCartelera" component={DetalleCarteleraScreen} />
+        <AppStack.Screen name="DetallePago" component={DetallePagoScreen} />
+        
+        <AppStack.Screen 
+          name="Perfil" 
+          component={PerfilScreen} 
+          options={{ 
+            presentation: 'modal', 
+            gestureEnabled: true,  
+          }}
+        />
+      </AppStack.Navigator>
+    </>
   );
 }
 

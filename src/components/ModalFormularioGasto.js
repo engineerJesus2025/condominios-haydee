@@ -11,6 +11,7 @@ import CustomBoton from './CustomBoton';
 import MostrarVistaPrevia from './MostrarVistaPrevia';
 import LabelInput from './LabelInput';
 import ErrorFormulario from './ErrorFormulario';
+import SelectorDesplegable from './SelectorDesplegable';
 
 export default function ModalFormularioGasto({ visible, onClose }) {
   const { colores } = useTema();
@@ -84,68 +85,57 @@ export default function ModalFormularioGasto({ visible, onClose }) {
       />
       <ErrorFormulario error={errors.clasificacion} />
 
-      <LabelInput titulo="Categoría" icono={{ nombre: 'grid-outline', color: '#3498db' }} />
+      {/* --- SELECTOR DE TIPO DE GASTO --- */}
+      <LabelInput titulo="Tipo de Gasto" icono={{ nombre: 'pricetag-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="tipo_gasto_id"
-        rules={validaciones.requeridoSimple('Selecciona una categoría')}
-        render={({ field: { onChange, value } }) => (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
-            {catalogos.tipos_gasto.map((tipo) => {
-              const isSelected = value === tipo.id_tipo_gasto;
-              return (
-                <TouchableOpacity
-                  key={tipo.id_tipo_gasto}
-                  activeOpacity={0.7}
-                  onPress={() => onChange(tipo.id_tipo_gasto)}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, marginRight: 8,
-                    borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
-                    backgroundColor: isSelected ? (colores.primario + '15' || '#eaf4fc') : colores.card,
-                  }}
-                >
-                  <Text style={{
-                    color: isSelected ? (colores.primario || '#3498db') : colores.textPlaceholder,
-                    fontWeight: isSelected ? 'bold' : '500',
-                  }}>
-                    {tipo.nombre_tipo_gasto}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        )}
+        rules={{ required: 'Seleccione un tipo' }}
+        render={({ field: { onChange, value } }) => {
+          
+          const opcionesTipoGasto = (catalogos.tipos_gasto || []).map(tipo => ({
+            label: tipo.nombre_tipo_gasto, 
+            value: tipo.id_tipo_gasto
+          }));
+
+          return (
+            <SelectorDesplegable
+              opciones={opcionesTipoGasto}
+              valorSeleccionado={value}
+              onSelect={onChange}
+              placeholder="Seleccione la categoría..."
+              icono="pricetag-outline"
+            />
+          );
+        }}
       />
       <ErrorFormulario error={errors.tipo_gasto_id} />
 
-      <LabelInput titulo="Proveedor" icono={{ nombre: 'business-outline', color: '#3498db' }} />
+
+      {/* --- SELECTOR DE PROVEEDOR --- */}
+      <LabelInput titulo="Proveedor / Beneficiario" icono={{ nombre: 'business-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="proveedor_id"
-        rules={validaciones.requeridoSimple('Selecciona un proveedor')}
-        render={({ field: { onChange, value } }) => (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
-            {catalogos.proveedores.map((prov) => {
-              const isSelected = value === prov.id_proveedor;
-              return (
-                <TouchableOpacity
-                  key={prov.id_proveedor}
-                  activeOpacity={0.7}
-                  onPress={() => onChange(prov.id_proveedor)}
-                  style={{
-                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, marginRight: 8,
-                    borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
-                    backgroundColor: isSelected ? (colores.primario + '15' || '#eaf4fc') : colores.card,
-                  }}
-                >
-                  <Text style={{ color: isSelected ? colores.primario : colores.textPlaceholder, fontWeight: isSelected ? 'bold' : '500' }}>
-                    {prov.nombre_proveedor}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        )}
+        rules={{ required: 'Seleccione un proveedor' }}
+        render={({ field: { onChange, value } }) => {
+          
+          const opcionesProveedores = (catalogos.proveedores || []).map(prov => ({
+            // Concatenamos nombre y RIF/Cédula para mayor claridad del administrador
+            label: `${prov.nombre_proveedor} (${prov.rif || 'Sin RIF'})`, 
+            value: prov.id_proveedor
+          }));
+
+          return (
+            <SelectorDesplegable
+              opciones={opcionesProveedores}
+              valorSeleccionado={value}
+              onSelect={onChange}
+              placeholder="Seleccione el proveedor..."
+              icono="person-outline"
+            />
+          );
+        }}
       />
       <ErrorFormulario error={errors.proveedor_id} />
 
@@ -183,8 +173,8 @@ export default function ModalFormularioGasto({ visible, onClose }) {
         name="metodo_pago"
         rules={validaciones.requeridoSimple('Selecciona un metodo de pago')}
         render={({ field: { onChange, value } }) => (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 10 }}>
-            {['Efectivo', 'Pago Movil', 'Transferencia', 'Divisa'].map((opcion) => {
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
+            {['Efectivo', 'Pago Movil', 'Transferencia'].map((opcion) => {
               const isSelected = value === opcion;
               return (
                 <TouchableOpacity
@@ -192,7 +182,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
                   activeOpacity={0.7}
                   onPress={() => onChange(opcion)}
                   style={{
-                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5,
+                    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, marginRight: 8,
                     borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
                     backgroundColor: isSelected ? (colores.primario + '15' || '#eaf4fc') : colores.card,
                   }}
@@ -203,7 +193,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
         )}
       />
 

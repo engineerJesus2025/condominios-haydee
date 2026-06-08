@@ -5,8 +5,14 @@ const mesesCompletos = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', '
 export const parseFechaMySQL = (fechaStr) => {
   if (!fechaStr) return new Date(NaN);
   
-  const [fecha] = fechaStr.split(' '); 
-  const [anio, mes, dia] = fecha.split('-').map(Number);
+  const partes = fechaStr.split(' '); 
+  const [anio, mes, dia] = partes[0].split('-').map(Number);
+  
+  // Extraer y procesar la hora si existe en el string
+  if (partes.length > 1) {
+    const [hora, min, seg] = partes[1].split(':').map(Number);
+    return new Date(anio, mes - 1, dia, hora || 0, min || 0, seg || 0);
+  }
   
   return new Date(anio, mes - 1, dia);
 };
@@ -52,11 +58,9 @@ export const formatearMesAnio = (mes, anio) => {
 
 export const tiempoRelativo = (fechaEntrada) => {
     const fecha = parseFechaMySQL(fechaEntrada);
-    // Si la fecha es inválida o viene vacía
     if (isNaN(fecha)) return '';
 
     const ahora = new Date();
-    // Diferencia en milisegundos convertida a segundos
     const segundos = Math.round((ahora - fecha) / 1000);
     const minutos = Math.round(segundos / 60);
     const horas = Math.round(minutos / 60);
@@ -70,4 +74,36 @@ export const tiempoRelativo = (fechaEntrada) => {
     if (dias < 30) return `Hace ${dias} día${dias !== 1 ? 's' : ''}`;
     if (meses < 12) return `Hace ${meses} mes${meses !== 1 ? 'es' : ''}`;
     return `Hace ${años} año${años !== 1 ? 's' : ''}`;
+};
+
+export const formatoAyerHoy = (fechaEntrada) => {
+    const fecha = parseFechaMySQL(fechaEntrada);
+    if (isNaN(fecha)) return '';
+
+    const ahora = new Date();
+    // Normalizar a medianoche para comparar solo saltos de días
+    const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+    const fechaAcceso = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+
+    const diffDias = Math.floor((hoy - fechaAcceso) / (1000 * 60 * 60 * 24));
+    
+    // Formatear hora (ej: 3:30 pm)
+    const horas = fecha.getHours();
+    const minutos = fecha.getMinutes().toString().padStart(2, '0');
+    const ampm = horas >= 12 ? 'pm' : 'am';
+    const horas12 = horas % 12 || 12;
+    const horaStr = `${horas12}:${minutos} ${ampm}`;
+
+    if (diffDias === 0) return `Hoy a las ${horaStr}`;
+    if (diffDias === 1) return `Ayer a las ${horaStr}`;
+    
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    if (diffDias > 1 && diffDias <= 7) {
+        return `El ${diasSemana[fecha.getDay()]} a las ${horaStr}`;
+    }
+    
+    // Si es más antiguo, muestra la fecha normal
+    const diaNum = fecha.getDate().toString().padStart(2, '0');
+    const mesNum = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    return `${diaNum}/${mesNum}/${fecha.getFullYear()} a las ${horaStr}`;
 };

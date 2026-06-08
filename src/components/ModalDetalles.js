@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import ModalGeneral from './ModalGeneral';
 import CustomBoton from './CustomBoton';
 import VisorImagenFullScreen from './VisorImagenFullScreen';
-import { formatearFechaLegible, tiempoRelativo } from '../utils/dateUtils';
+import { formatearFechaLegible, tiempoRelativo, formatoAyerHoy } from '../utils/dateUtils';
 
 export default function ModalDetalles({
   visible, onClose, datos = {}, titulo = 'Detalles', campos = [],
@@ -47,22 +47,41 @@ export default function ModalDetalles({
         <View style={[styles.reciboContainer, { backgroundColor: colores.card, borderColor: colores.border }]}>
           {campos.map((campo, index) => {
             const valor = datos[campo.key];
-            const isEstado = campo.key.toLowerCase() === 'estado';
-            const isMonto = campo.key.toLowerCase() === 'monto' || campo.key.toLowerCase() === 'monto_abonado';
-            const isUltimo = index === campos.length - 1;
-
+            const isEstado = campo.key === 'estado';
+            const isMonto = campo.key === 'monto';
+            
             let valorMostrar = valor;
-            if (valor && campo.formato) {
-              if (campo.formato === 'fecha_legible') valorMostrar = formatearFechaLegible(valor);
-              else if (campo.formato === 'tiempo_relativo') valorMostrar = tiempoRelativo(valor);
+            
+            // Asumiendo que ya cambiaste tu función a formatoAyerHoy para los detalles
+            if (valor && campo.formato === 'fecha_legible') {
+              valorMostrar = formatoAyerHoy(valor); 
             }
             
+            // 1. UI ADAPTATIVA: Detectamos si el campo necesita espacio vertical
+            const requiereApilar = campo.key === 'fecha' || campo.key === 'observacion';
+            
             return (
-              <View key={index} style={[styles.fila, !isUltimo && { borderBottomColor: colores.border, borderBottomWidth: 1 }]}>
-                <Text style={[styles.label, { color: colores.textPlaceholder }]}>{campo.label}</Text>
-                
+              <View 
+                key={index} 
+                style={[
+                  styles.fila, 
+                  index !== campos.length - 1 && { borderBottomColor: colores.border, borderBottomWidth: 1 },
+                  // 2. Si requiere apilar, cambiamos la dirección de la caja a columna
+                  requiereApilar && { flexDirection: 'column', alignItems: 'flex-start' } 
+                ]}
+              >
+                <Text 
+                  style={[
+                    styles.label, 
+                    { color: colores.textPlaceholder },
+                    requiereApilar && { marginBottom: 6 } // Separación extra si está apilado
+                  ]}
+                >
+                  {campo.label}
+                </Text>
+
                 {isEstado ? (
-                  <View style={[ styles.badge, { backgroundColor: valorMostrar?.toLowerCase() === 'procesado' ? '#27ae6020' : valorMostrar?.toLowerCase() === 'rechazado' ? '#e23c3c20' : '#f39c1220'} ]}>
+                  <View style={[ styles.badge, { backgroundColor: valorMostrar?.toLowerCase() === 'procesado' ? '#27ae6020' : valorMostrar?.toLowerCase() === 'rechazado' ? '#e74c3c20' : '#f39c1220'} ]}>
                     <Text style={[ styles.badgeText, { color: valorMostrar?.toLowerCase() === 'procesado' ? '#27ae60' : valorMostrar?.toLowerCase() === 'rechazado' ? '#e74c3c' : '#f39c12' } ]}>
                       {valorMostrar || 'Desconocido'}
                     </Text>
@@ -70,7 +89,17 @@ export default function ModalDetalles({
                 ) : isMonto ? (
                   <Text style={[styles.valor, styles.valorMonto, { color: colores.textTitle }]}>{valorMostrar || '---'}</Text>
                 ) : (
-                  <Text style={[styles.valor, { color: colores.textTitle }]} numberOfLines={2}>{valorMostrar || 'No especificado'}</Text>
+                  <Text 
+                    style={[
+                      styles.valor, 
+                      { color: colores.textTitle },
+                      // 3. Si está apilado, alineamos a la izquierda y liberamos el límite de líneas
+                      requiereApilar && { textAlign: 'left', width: '100%', flex: undefined } 
+                    ]} 
+                    numberOfLines={requiereApilar ? undefined : 2}
+                  >
+                    {valorMostrar || 'No especificado'}
+                  </Text>
                 )}
               </View>
             );

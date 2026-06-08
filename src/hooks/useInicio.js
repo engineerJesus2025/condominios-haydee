@@ -7,6 +7,9 @@ import { useResumenFinanciero } from './useResumenFinanciero';
 import { useEventos } from './useEventos';
 import { usePermisos } from './usePermisos';
 
+import { registrarSuscripcionPush } from '../servicios/notificacionesPush';
+import { marcarPushRegistrado } from '../store/slices/usuarioSlice';
+
 export const useInicio = () => {
   const dispatch = useDispatch();
 
@@ -16,6 +19,8 @@ export const useInicio = () => {
   
   const { listaPublicaciones, loading: loadingCartelera, hayMas } = useSelector(state => state.publicaciones);
   const { totalDeuda: deudaPropietario, loading: loadingDeudaPersonal } = useSelector(state => state.pagos);
+
+  const { user, pushRegistrado } = useSelector(state => state.usuario);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,6 +47,22 @@ export const useInicio = () => {
   useEffect(() => {
     cargarDatosInicio();
   }, []);
+
+  useEffect(() => {
+    if (user && user.id_usuario && !pushRegistrado) {
+      const registrar = async () => {
+        try {
+          await registrarSuscripcionPush(); 
+          dispatch(marcarPushRegistrado());
+        } catch (error) {
+          // AHORA SÍ VEREMOS EL MOTIVO REAL
+          console.warn("Fallo al registrar Push en useInicio. Motivo detallado:", error);
+        }
+      };
+      
+      registrar();
+    }
+  }, [user, pushRegistrado, dispatch]);
 
   const abrirModalDetalle = useCallback((publicacion) => {
     setPublicacionSeleccionada(publicacion);

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTema } from '../hooks/useTema';
-import { tiempoRelativo } from '../utils/dateUtils';
+import { formatoAyerHoy } from '../utils/dateUtils';
 
 const IMAGEN_POR_DEFECTO = require('../../assets/publicacion-default.svg');
 
@@ -27,7 +27,7 @@ function PublicacionCard({ post, onPress }) {
           </Text>
         </View>
         <Text style={[styles.fecha, { color: colores.textPlaceholder }]}>
-          {post.fecha ? tiempoRelativo(post.fecha) : 'Sin fecha'}
+          {post.fecha ? formatoAyerHoy(post.fecha) : 'Sin fecha'}
         </Text>
       </View>
 
