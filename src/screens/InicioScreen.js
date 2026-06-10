@@ -149,7 +149,7 @@ export default function InicioScreen({ navigation }) {
 const getEstilosInicio = (colores) => StyleSheet.create({
   mainContentContainer: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 100,
   },
   title: {
     fontSize: 24,
