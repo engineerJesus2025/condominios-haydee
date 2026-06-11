@@ -59,10 +59,10 @@ export const criptografiaMovil = {
     // Convertimos el JSON a string
     const jsonString = JSON.stringify(objetoJSON);
     
-    // Forzamos la codificación nativa para soportar 'ñ', acentos y emojis
+    // codificación nativa
     const utf8String = forge.util.encodeUtf8(jsonString); 
     
-    //Vector de inicialización (Único por cada petición)
+    //Vector de inicialización Único por cada petición
     const iv = forge.random.getBytesSync(CONFIG.AES_IV_SIZE_BYTES);
     
     const cipher = forge.cipher.createCipher('AES-GCM', _claveAESSesion);
@@ -92,7 +92,6 @@ export const criptografiaMovil = {
     decipher.update(forge.util.createBuffer(forge.util.decode64(payloadB64)));
     const pass = decipher.finish();
 
-    // Verificación de Autenticidad (La "A" de AEAD en GCM)
     if (!pass) {
       throw new Error("Fallo de integridad: El mensaje fue interceptado/modificado");
     }
