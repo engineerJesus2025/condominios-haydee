@@ -167,12 +167,12 @@ clienteApi.interceptors.response.use(
     if (!originalRequest) return Promise.reject(error);
 
     let errorFormateado = { tipo: 'DESCONOCIDO', mensaje: error.message, status: null };
-
     if (error.response) {
       let dataServidor = error.response.data;
       const status = error.response.status;
       const endpointActual = originalRequest.params?.endpoint;
 
+      // Descifrado del payload de error si viene encriptado
       if (dataServidor && dataServidor.cifrado === true) {
         try {
           dataServidor = criptografiaMovil.descifrarPayload(dataServidor.payload, dataServidor.iv, dataServidor.tag);
@@ -188,12 +188,18 @@ clienteApi.interceptors.response.use(
         erroresFormulario: dataServidor?.errores || null 
       };
 
-      // Si el error viene de un endpoint de recuperación/autenticación base, no ciclar
-      if (endpointActual === 'login' || endpointActual === 'handshake' || endpointActual === 'refrescar') {
+      // Evitar bucles infinitos en endpoints base
+      if (['login', 'handshake', 'refrescar'].includes(endpointActual)) {
         return Promise.reject(errorFormateado);
       }
 
-      // ==================== REFRESH TOKEN (JWT EXPIRADO) ====================
+      // ==================== 429: RATE LIMITING ====================
+      if (status === 429) {
+        errorFormateado.mensaje = dataServidor?.mensaje || "Has realizado demasiadas peticiones. Por favor, espera un momento.";
+        return Promise.reject(errorFormateado);
+      }
+
+      // ==================== 401: REFRESH TOKEN (JWT EXPIRADO) ====================
       if (status === 401) {
         if (estaRefrescandoToken) {
           return new Promise((resolve, reject) => {
@@ -213,10 +219,9 @@ clienteApi.interceptors.response.use(
           const userData = rawUserData ? JSON.parse(rawUserData) : null;
 
           if (!userData?.id_usuario || !refreshToken) {
-            throw new Error("Credenciales de refresco inexistentes en almacenamiento local.");
+            throw new Error("Credenciales de refresco inexistentes.");
           }
 
-          // Se ejecuta vía clienteApi. Al llamar a 'refrescar', se cifra automáticamente con el AES activo
           const resRefresh = await clienteApi.post('', {
             operacion: 'refrescar_token',
             id_usuario: userData.id_usuario,
@@ -225,17 +230,13 @@ clienteApi.interceptors.response.use(
             params: { endpoint: 'refrescar' }
           });
 
-          let datosRenovacion = resRefresh.data;
-
-          // Ahora evaluamos sobre el objeto seguro
-          if (datosRenovacion?.estatus && datosRenovacion?.nuevo_token_jwt) {
-            const nuevoJwt = datosRenovacion.nuevo_token_jwt;
+          if (resRefresh.data?.estatus && resRefresh.data?.nuevo_token_jwt) {
+            const nuevoJwt = resRefresh.data.nuevo_token_jwt;
             await AsyncStorage.setItem('userToken', nuevoJwt);
             
             estaRefrescandoToken = false;
             procesarColaToken(null, nuevoJwt);
 
-            // Reinyectar credencial fresca y ejecutar de nuevo la petición original
             originalRequest.headers.Authorization = `Bearer ${nuevoJwt}`;
             return clienteApi(originalRequest);
           } else {
@@ -243,46 +244,45 @@ clienteApi.interceptors.response.use(
           }
 
         } catch (falloRefresh) {
-          console.error("Móvil JWT: Fallo definitivo en la renovación del token.", falloRefresh.message);
           estaRefrescandoToken = false;
           procesarColaToken(falloRefresh);
-
-          if (reduxStore) {
-            reduxStore.dispatch({ type: 'usuario/logout' });
-          }
+          if (reduxStore) reduxStore.dispatch({ type: 'usuario/logout' });
+          
           errorFormateado.mensaje = "Su sesión ha expirado. Por favor, vuelva a identificarse.";
-
           Alert.alert("Sesión Expirada", errorFormateado.mensaje);
-
           return Promise.reject(errorFormateado);
         }
       }
 
-      // ==================== FALLO CRIPTOGRÁFICO ====================
+      // ==================== 403: PROHIBIDO (Permisos o Criptografía) ====================
       if (status === 403) {
-        const esFaltaDePermisos = dataServidor?.mensaje && 
-          (dataServidor.mensaje.toLowerCase().includes('permiso') || 
-           dataServidor.mensaje.toLowerCase().includes('denegado'));
+        const mensajeError = (dataServidor?.mensaje || '').toLowerCase();
+        
+        // Identificamos explícitamente fallos criptográficos usando palabras clave comunes en tu GestorTrafico
+        const esErrorCripto = mensajeError.includes('cifrado') || 
+                              mensajeError.includes('descifrado') || 
+                              mensajeError.includes('integridad') || 
+                              mensajeError.includes('llave') ||
+                              mensajeError.includes('handshake');
 
-        if (esFaltaDePermisos) {
-          // Devolvemos el error formateado pacíficamente para que useInicio lo maneje
+        // Si NO es un error de criptografía, es un bloqueo real (WAF, Permisos, IP). 
+        // Rechazamos para que el frontend lo maneje y muestre el Toast/Alerta.
+        if (!esErrorCripto) {
           return Promise.reject(errorFormateado);
         }
 
-        // Si no hay un mensaje claro del servidor, asumimos que de verdad falló el empaquetado/descifrado
+        // Si es un error criptográfico comprobado, intentamos sincronizar
         if (estaRefrescandoHandshake) {
           return new Promise((resolve, reject) => {
             colaRefrescadaHandshake.push({ resolve, reject });
-          }).then(() => {
-            return clienteApi(originalRequest);
-          }).catch((err) => Promise.reject(err));
+          }).then(() => clienteApi(originalRequest))
+            .catch((err) => Promise.reject(err));
         }
 
         estaRefrescandoHandshake = true;
 
         try {
-          console.log("Código 403 Auténtico (Cripto). Re-sincronizando canal AES de manera silenciosa");
-          
+          console.log("Código 403: Fallo Criptográfico. Re-sincronizando canal AES...");
           const respuestaHandshake = await axios.get(`${URL_BASE}/api/index.php`, {
             params: { endpoint: 'handshake' },
             timeout: 5000
@@ -292,23 +292,17 @@ clienteApi.interceptors.response.use(
             criptografiaMovil.setLlavePublica(respuestaHandshake.data.public_key);
             estaRefrescandoHandshake = false;
             procesarColaHandshake(null);
-
             return clienteApi(originalRequest);
           } else {
-            throw new Error("El handshake automático no retornó una llave válida.");
+            throw new Error("El handshake falló.");
           }
         } catch (falloHandshake) {
-          console.error("Móvil Cripto: Fallo crítico en la autoreparación del canal.", falloHandshake.message);
           estaRefrescandoHandshake = false;
           procesarColaHandshake(falloHandshake);
-
-          if (reduxStore) {
-            reduxStore.dispatch({ type: 'usuario/logout' });
-          }
-          errorFormateado.mensaje = "Error de integridad en el canal seguro. Es necesario reingresar.";
-
-          Alert.alert("Seguridad Comprometida", errorFormateado.mensaje);
+          if (reduxStore) reduxStore.dispatch({ type: 'usuario/logout' });
           
+          errorFormateado.mensaje = "Error de integridad en el canal seguro. Es necesario reingresar.";
+          Alert.alert("Seguridad Comprometida", errorFormateado.mensaje);
           return Promise.reject(errorFormateado);
         }
       }
