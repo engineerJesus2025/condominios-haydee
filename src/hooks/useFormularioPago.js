@@ -30,7 +30,7 @@ export const useFormularioPago = (onClose) => {
       monto: '',
       referencia: '',
       banco_id: '',
-      tipo_pago: 'Transferencia',
+      tipo_pago: 'TRANSFERENCIA',
       mensualidad_id: '',
       imagen: null,
       estado: 'PENDIENTE'
@@ -42,7 +42,7 @@ export const useFormularioPago = (onClose) => {
   const tipoPagoSeleccionado = watch('tipo_pago');
   const montoIngresado = watch('monto'); 
 
-  const requiereBanco = (tipoPagoSeleccionado === 'Transferencia' || tipoPagoSeleccionado === 'Pago Movil');
+  const requiereBanco = ['TRANSFERENCIA', 'PAGO MOVIL'].includes(tipoPagoSeleccionado);
 
   // CONVERSIÓN DE DIVISAS
   const equivalenteDolares = useMemo(() => {

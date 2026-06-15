@@ -174,7 +174,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
         rules={validaciones.requeridoSimple('Selecciona un metodo de pago')}
         render={({ field: { onChange, value } }) => (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
-            {['Efectivo', 'Pago Movil', 'Transferencia'].map((opcion) => {
+            {['EFECTIVO', 'PAGO MOVIL', 'TRANSFERENCIA'].map((opcion) => {
               const isSelected = value === opcion;
               return (
                 <TouchableOpacity
@@ -188,7 +188,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
                   }}
                 >
                   <Text style={{ color: isSelected ? colores.primario : colores.textPlaceholder, fontWeight: isSelected ? 'bold' : '500' }}>
-                    {opcion}
+                    {opcion.charAt(0).toUpperCase() + opcion.toLowerCase().slice(1)}
                   </Text>
                 </TouchableOpacity>
               );

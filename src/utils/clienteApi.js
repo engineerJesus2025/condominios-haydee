@@ -59,10 +59,8 @@ clienteApi.interceptors.request.use(
 
     // RESPALDO DE DATOS ORIGINALES (ANTI DOBLE CIFRADO)
     if (config._datosPlanos === undefined) {
-      // Primera pasada: Guardamos el contenido original intacto
       config._datosPlanos = config.method.toLowerCase() === 'get' ? { ...config.params } : config.data;
     } else {
-      // Es un REINTENTO (Viene de un 401 o 403): Restauramos el texto plano
       if (config.method.toLowerCase() === 'get') {
         config.params = { ...config._datosPlanos };
       } else {
@@ -162,152 +160,181 @@ clienteApi.interceptors.response.use(
     }
     return response;
   },
+
   async (error) => {
     const originalRequest = error.config;
-    if (!originalRequest) return Promise.reject(error);
 
-    let errorFormateado = { tipo: 'DESCONOCIDO', mensaje: error.message, status: null };
-    if (error.response) {
-      let dataServidor = error.response.data;
-      const status = error.response.status;
-      const endpointActual = originalRequest.params?.endpoint;
-
-      // Descifrado del payload de error si viene encriptado
-      if (dataServidor && dataServidor.cifrado === true) {
-        try {
-          dataServidor = criptografiaMovil.descifrarPayload(dataServidor.payload, dataServidor.iv, dataServidor.tag);
-        } catch (e) {
-          console.error("No se pudo descifrar el payload de error del servidor");
-        }
-      }
-
-      errorFormateado = { 
-        tipo: 'SERVIDOR', 
-        status: status, 
-        mensaje: dataServidor?.mensaje || 'Error interno del servidor.',
-        erroresFormulario: dataServidor?.errores || null 
-      };
-
-      // Evitar bucles infinitos en endpoints base
-      if (['login', 'handshake', 'refrescar'].includes(endpointActual)) {
-        return Promise.reject(errorFormateado);
-      }
-
-      // ==================== 429: RATE LIMITING ====================
-      if (status === 429) {
-        errorFormateado.mensaje = dataServidor?.mensaje || "Has realizado demasiadas peticiones. Por favor, espera un momento.";
-        return Promise.reject(errorFormateado);
-      }
-
-      // ==================== 401: REFRESH TOKEN (JWT EXPIRADO) ====================
-      if (status === 401) {
-        if (estaRefrescandoToken) {
-          return new Promise((resolve, reject) => {
-            colaRefrescadaToken.push({ resolve, reject });
-          }).then((nuevoToken) => {
-            originalRequest.headers.Authorization = `Bearer ${nuevoToken}`;
-            return clienteApi(originalRequest);
-          }).catch((err) => Promise.reject(err));
-        }
-
-        estaRefrescandoToken = true;
-
-        try {
-          console.log("Móvil JWT: Token expirado (401). Intentando renovación transparente...");
-          const rawUserData = await AsyncStorage.getItem('userData');
-          const refreshToken = await AsyncStorage.getItem('refreshToken');
-          const userData = rawUserData ? JSON.parse(rawUserData) : null;
-
-          if (!userData?.id_usuario || !refreshToken) {
-            throw new Error("Credenciales de refresco inexistentes.");
-          }
-
-          const resRefresh = await clienteApi.post('', {
-            operacion: 'refrescar_token',
-            id_usuario: userData.id_usuario,
-            token: refreshToken
-          }, {
-            params: { endpoint: 'refrescar' }
-          });
-
-          if (resRefresh.data?.estatus && resRefresh.data?.nuevo_token_jwt) {
-            const nuevoJwt = resRefresh.data.nuevo_token_jwt;
-            await AsyncStorage.setItem('userToken', nuevoJwt);
-            
-            estaRefrescandoToken = false;
-            procesarColaToken(null, nuevoJwt);
-
-            originalRequest.headers.Authorization = `Bearer ${nuevoJwt}`;
-            return clienteApi(originalRequest);
-          } else {
-            throw new Error("Respuesta de renovación inválida.");
-          }
-
-        } catch (falloRefresh) {
-          estaRefrescandoToken = false;
-          procesarColaToken(falloRefresh);
-          if (reduxStore) reduxStore.dispatch({ type: 'usuario/logout' });
-          
-          errorFormateado.mensaje = "Su sesión ha expirado. Por favor, vuelva a identificarse.";
-          Alert.alert("Sesión Expirada", errorFormateado.mensaje);
-          return Promise.reject(errorFormateado);
-        }
-      }
-
-      // ==================== 403: PROHIBIDO (Permisos o Criptografía) ====================
-      if (status === 403) {
-        const mensajeError = (dataServidor?.mensaje || '').toLowerCase();
-        
-        // Identificamos explícitamente fallos criptográficos usando palabras clave comunes en tu GestorTrafico
-        const esErrorCripto = mensajeError.includes('cifrado') || 
-                              mensajeError.includes('descifrado') || 
-                              mensajeError.includes('integridad') || 
-                              mensajeError.includes('llave') ||
-                              mensajeError.includes('handshake');
-
-        // Si NO es un error de criptografía, es un bloqueo real (WAF, Permisos, IP). 
-        // Rechazamos para que el frontend lo maneje y muestre el Toast/Alerta.
-        if (!esErrorCripto) {
-          return Promise.reject(errorFormateado);
-        }
-
-        // Si es un error criptográfico comprobado, intentamos sincronizar
-        if (estaRefrescandoHandshake) {
-          return new Promise((resolve, reject) => {
-            colaRefrescadaHandshake.push({ resolve, reject });
-          }).then(() => clienteApi(originalRequest))
-            .catch((err) => Promise.reject(err));
-        }
-
-        estaRefrescandoHandshake = true;
-
-        try {
-          console.log("Código 403: Fallo Criptográfico. Re-sincronizando canal AES...");
-          const respuestaHandshake = await axios.get(`${URL_BASE}/api/index.php`, {
-            params: { endpoint: 'handshake' },
-            timeout: 5000
-          });
-
-          if (respuestaHandshake.data?.estatus) {
-            criptografiaMovil.setLlavePublica(respuestaHandshake.data.public_key);
-            estaRefrescandoHandshake = false;
-            procesarColaHandshake(null);
-            return clienteApi(originalRequest);
-          } else {
-            throw new Error("El handshake falló.");
-          }
-        } catch (falloHandshake) {
-          estaRefrescandoHandshake = false;
-          procesarColaHandshake(falloHandshake);
-          if (reduxStore) reduxStore.dispatch({ type: 'usuario/logout' });
-          
-          errorFormateado.mensaje = "Error de integridad en el canal seguro. Es necesario reingresar.";
-          Alert.alert("Seguridad Comprometida", errorFormateado.mensaje);
-          return Promise.reject(errorFormateado);
-        }
+    // === DESCIFRADO DE ERRORES ===
+    // En Axios, un error HTTP salta el callback de éxito, por lo que el payload sigue cifrado.
+    // Lo desciframos aquí para que el gestor de errores (o esta misma función) pueda leer 'codigo_interno'.
+    if (error.response?.data?.cifrado === true) {
+      try {
+        const jsonErrorLimpio = criptografiaMovil.descifrarPayload(
+          error.response.data.payload,
+          error.response.data.iv,
+          error.response.data.tag
+        );
+        error.response.data = jsonErrorLimpio; // Lo inyectamos desencriptado
+      } catch (e) {
+        console.error("No se pudo descifrar el error del Gateway:", e);
       }
     }
-    return Promise.reject(errorFormateado);
+
+    // =================================================================
+    // DETALLE 2: DETECCIÓN Y FLUJO DE REFRESH TOKEN (HTTP 401)
+    // =================================================================
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Marcamos para no ciclar
+      
+      const codigoInterno = error.response?.data?.codigo_interno;
+
+      // 1. RECHAZO ESTRICTO DE IDENTIDAD (Ataque o manipulación detectada)
+      if (codigoInterno === 'JWT_INVALIDO') {
+        Alert.alert(
+          "Anomalía Detectada",
+          "El identificador de sesión es inválido o ha sido alterado. Por tu seguridad, debes iniciar sesión nuevamente.",
+          [
+            { 
+              text: "Aceptar", 
+              onPress: () => {
+                if (reduxStore) reduxStore.dispatch({ type: 'usuario/logout' });
+              } 
+            }
+          ],
+          { cancelable: false }
+        );
+        return Promise.reject(error);
+      }
+
+      // 2. EXPIRACIÓN NATURAL (Proceder con Refresh Token en segundo plano)
+      if (estaRefrescandoToken) {
+        return new Promise((resolve, reject) => {
+          colaRefrescadaToken.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          return clienteApi(originalRequest);
+        }).catch(err => Promise.reject(err));
+      }
+
+      estaRefrescandoToken = true;
+
+      try {
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        const userDataStr = await AsyncStorage.getItem('userData');
+        const userData = userDataStr ? JSON.parse(userDataStr) : null;
+
+        if (!refreshToken || !userData?.id_usuario) {
+          throw new Error("Credenciales de renovación locales inexistentes.");
+        }
+
+        console.log("JWT Expirado. Renovando sesión con Refresh Token...");
+        
+        // Llamada axios directa, sin interceptores para no causar bucles
+        const respuestaRefresh = await axios.post(`${URL_BASE}/api/index.php?endpoint=refrescar`, {
+          id_usuario: userData.id_usuario,
+          token: refreshToken
+        });
+
+        // Aseguramos leer correctamente la respuesta considerando si viene o no cifrada
+        const dataRefresh = respuestaRefresh.data.cifrado 
+            ? criptografiaMovil.descifrarPayload(respuestaRefresh.data.payload, respuestaRefresh.data.iv, respuestaRefresh.data.tag)
+            : respuestaRefresh.data;
+
+        if (dataRefresh?.estatus) {
+          const nuevoJwt = dataRefresh.token_jwt;
+          
+          await AsyncStorage.setItem('userToken', nuevoJwt);
+
+          estaRefrescandoToken = false;
+          procesarColaToken(null, nuevoJwt);
+
+          originalRequest.headers['Authorization'] = `Bearer ${nuevoJwt}`;
+          return clienteApi(originalRequest);
+        } else {
+          throw new Error("El servidor rechazó el token de larga duración.");
+        }
+
+      } catch (falloRefresh) {
+        estaRefrescandoToken = false;
+        procesarColaToken(falloRefresh, null);
+
+        // =================================================================
+        // DETALLE 1: EXPERIENCIA DE USUARIO CALMADA EN EL LOGOUT
+        // =================================================================
+        Alert.alert(
+          "Sesión Expirada",
+          "Tu sesión ha caducado por inactividad prolongada o por seguridad. Por favor, vuelve a ingresar.",
+          [
+            { 
+              text: "Entendido", 
+              onPress: () => {
+                if (reduxStore) reduxStore.dispatch({ type: 'usuario/logout' });
+              } 
+            }
+          ],
+          { cancelable: false }
+        );
+
+        return Promise.reject(falloRefresh);
+      }
+    }
+
+    // CONTROL EXISTENTE: FALLO CRIPTOGRÁFICO (HTTP 403)
+    if (error.response?.status === 403 && !originalRequest._retryHandshake) {
+      originalRequest._retryHandshake = true;
+
+      if (estaRefrescandoHandshake) {
+        return new Promise((resolve, reject) => {
+          colaRefrescadaHandshake.push({ resolve, reject });
+        }).then(() => clienteApi(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
+      estaRefrescandoHandshake = true;
+
+      try {
+        console.log("Código 403: Fallo Criptográfico. Re-sincronizando canal AES...");
+        const respuestaHandshake = await axios.get(`${URL_BASE}/api/index.php`, {
+          params: { endpoint: 'handshake' },
+          timeout: 5000
+        });
+
+        // Verificamos si la respuesta del handshake es plana o cifrada
+        const dataHandshake = respuestaHandshake.data.cifrado 
+            ? criptografiaMovil.descifrarPayload(respuestaHandshake.data.payload, respuestaHandshake.data.iv, respuestaHandshake.data.tag)
+            : respuestaHandshake.data;
+
+        if (dataHandshake?.estatus) {
+          criptografiaMovil.setLlavePublica(dataHandshake.public_key);
+          estaRefrescandoHandshake = false;
+          procesarColaHandshake(null);
+          return clienteApi(originalRequest);
+        } else {
+          throw new Error("El handshake falló.");
+        }
+      } catch (falloHandshake) {
+        estaRefrescandoHandshake = false;
+        procesarColaHandshake(falloHandshake);
+
+        Alert.alert(
+          "Seguridad Comprometida",
+          "Error de integridad en el canal seguro. Es necesario reingresar al sistema por protección de datos.",
+          [
+            { 
+              text: "Reingresar", 
+              onPress: () => {
+                if (reduxStore) reduxStore.dispatch({ type: 'usuario/logout' });
+              } 
+            }
+          ],
+          { cancelable: false }
+        );
+
+        return Promise.reject(falloHandshake);
+      }
+    }
+
+    return Promise.reject(error);
   }
 );
 

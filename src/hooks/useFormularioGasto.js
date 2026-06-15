@@ -56,7 +56,7 @@ export const useFormularioGasto = (onClose) => {
       proveedor_id: '',
       descripcion_gasto: '',
       monto: '',
-      metodo_pago: 'Efectivo',
+      metodo_pago: 'EFECTIVO',
       banco_id: '',
       referencia: '',
       imagen: null
@@ -65,7 +65,7 @@ export const useFormularioGasto = (onClose) => {
 
   const comprobanteUri = watch('imagen');
   const metodoPago = watch('metodo_pago');
-  const requiereBanco = (metodoPago === 'Transferencia' || metodoPago === 'Pago Movil');
+  const requiereBanco = ['TRANSFERENCIA', 'PAGO MOVIL'].includes(metodoPago);
 
   useEffect(() => {
     (async () => {
