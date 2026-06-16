@@ -7,8 +7,10 @@ import BotonCambiarTema from '../components/BotonCambiarTema';
 import AvatarUsuario from '../components/AvatarUsuario'; 
 import { useTema } from '../hooks/useTema';
 import { usePerfil } from '../hooks/usePerfil';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function PerfilScreen() {
+  const insets = useSafeAreaInsets();
   const { colores, modoOscuro } = useTema();
   const { usuario, loading, handleLogout, cargarDatosServidor } = usePerfil();
   const estilos = getEstilos(colores, modoOscuro); 
@@ -110,7 +112,7 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* BOTÓN CERRAR SESIÓN */}
+        {/* BOTON CERRAR SESIÓN */}
         <TouchableOpacity 
           style={estilos.botonLogout} 
           onPress={handleLogout}
@@ -122,6 +124,7 @@ export default function PerfilScreen() {
 
         <Text style={estilos.version}>Condominios Haydee • v1.2.2</Text>
       </ScrollView>
+      <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
     </View>
   );
 }

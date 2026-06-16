@@ -39,7 +39,7 @@ export const useMensualidades = () => {
       
       setMensualidadSeleccionada(dataActualizada);
       setModalVisible(true);
-    } catch (err) {
+    } catch (error) {
       procesarErrorApi(error);
     } finally {
       setCargandoDetalle(null);

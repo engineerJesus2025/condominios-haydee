@@ -59,7 +59,13 @@ export const useGastos = () => {
         }
       }
     } catch (err) {
-      procesarErrorApi(err);
+      const esErrorDeRed = 
+        err.message === 'Network Error' || 
+        err.code === 'ERR_NETWORK' ||
+        (!err.response && err.request);
+      if (!esErrorDeRed) {
+        procesarErrorApi(err); 
+      }
     }
     
     setInicializando(false);

@@ -29,7 +29,15 @@ export const fetchGastos = createAsyncThunk(
         return rejectWithValue(json.mensaje);
       }
     } catch (error) {
-      return rejectWithValue(error.message);
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
     }
   }
 );
@@ -46,7 +54,15 @@ export const fetchCatalogosGastos = createAsyncThunk(
       }
       return rejectWithValue(respuesta.data.mensaje);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
     }
   }
 );
@@ -72,7 +88,15 @@ export const crearGasto = createAsyncThunk(
         return rejectWithValue(errorMsg);
       }
     } catch (error) {
-      return rejectWithValue(error);
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
     }
   }
 );
@@ -135,11 +159,20 @@ const gastosSlice = createSlice({
           state.loading = false;
           
           if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {
-            state.error = action.payload.mensaje; 
+            
+            if (action.payload.tipo === 'RED' || action.payload.mensaje === 'Network Error') {
+              state.error = 'No hay conexión a internet o el servidor no responde. Verifica tu señal.';
+            } else {
+              state.error = action.payload.mensaje;
+            }
+            
           } else if (typeof action.payload === 'string') {
-            state.error = action.payload;
+            // Por si acaso llega como texto plano (en english por el axios)
+            state.error = action.payload === 'Network Error' 
+              ? 'No hay conexión a internet o el servidor no responde. Verifica tu señal.' 
+              : action.payload;
           } else {
-            state.error = 'Ocurrió un error de validación en el servidor.';
+            state.error = 'Ocurrió un error de conexión o validación.';
           }
         }
       );

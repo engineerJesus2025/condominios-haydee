@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -18,6 +19,7 @@ export default function DetalleCarteleraScreen() {
   const { colores } = useTema();
   const route = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   
   const { id_registro } = route.params || {};
   const { publicacion, cargando, error, reintentar } = useDetalleCartelera(id_registro);
@@ -25,21 +27,29 @@ export default function DetalleCarteleraScreen() {
 
   if (cargando) {
     return (
+      <>
+      <View style={{ height: insets.top, backgroundColor: '#000' }} />
       <View style={[styles.centerContainer, { backgroundColor: colores.background }]}>
         <ActivityIndicator size="large" color={colores.primario} />
         <Text style={{ color: colores.textPlaceholder, marginTop: 10 }}>Cargando aviso...</Text>
       </View>
+      <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
+      </>
     );
   }
 
   if (error || !publicacion) {
     return (
+      <>
+      <View style={{ height: insets.top, backgroundColor: '#000' }} />
       <View style={[styles.centerContainer, { backgroundColor: colores.background }]}>
         <VistaError mensaje={error || "Aviso no encontrado"} onRetry={reintentar} />
         <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.goBack()}>
           <Text style={{ color: colores.primario, fontWeight: 'bold' }}>Volver</Text>
         </TouchableOpacity>
       </View>
+      <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
+      </>
     );
   }
 
@@ -47,7 +57,9 @@ export default function DetalleCarteleraScreen() {
   const sourceImagen = publicacion.imagen ? { uri: publicacion.imagen } : IMAGEN_POR_DEFECTO;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colores.background }}>
+    <>
+    <View style={{ height: insets.top, backgroundColor: '#000' }} />
+    <View style={{ flex: 1, backgroundColor: colores.background}}>
       <View style={[styles.header, { borderBottomColor: colores.border, backgroundColor: colores.card }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnAtras}>
           <Icon name="arrow-back" size={24} color={colores.textTitle} />
@@ -108,7 +120,9 @@ export default function DetalleCarteleraScreen() {
       {publicacion.imagen ? (
         <VisorImagenFullScreen visible={imagenExpandida} onClose={() => setImagenExpandida(false)} imageUri={publicacion.imagen} />
       ) : null}
-    </SafeAreaView>
+    </View>
+    <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
+    </>
   );
 }
 

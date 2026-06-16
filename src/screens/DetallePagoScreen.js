@@ -9,11 +9,14 @@ import { useDetallePago } from '../hooks/useDetallePago';
 import VisorImagenFullScreen from '../components/VisorImagenFullScreen';
 import VistaError from '../components/VistaError';
 import { formatearFechaLegible } from '../utils/dateUtils';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function DetallePagoScreen() {
   const { colores } = useTema();
   const route = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+
   const { id_registro } = route.params || {};
 
   const { pago: datos, cargando, error, reintentar } = useDetallePago(id_registro);
@@ -22,20 +25,28 @@ export default function DetallePagoScreen() {
 
   if (cargando) {
     return (
+      <>
+      <View style={{ height: insets.top, backgroundColor: '#000' }} />
       <View style={[styles.centerContainer, { backgroundColor: colores.background }]}>
         <ActivityIndicator size="large" color={colores.primario} />
       </View>
+      <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
+      </>
     );
   }
 
   if (error || !datos) {
     return (
+      <>
+      <View style={{ height: insets.top, backgroundColor: '#000' }} />
       <View style={[styles.centerContainer, { backgroundColor: colores.background }]}>
         <VistaError mensaje={error || "Pago no encontrado"} onRetry={reintentar} />
         <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.goBack()}>
           <Text style={{ color: colores.primario, fontWeight: 'bold' }}>Volver</Text>
         </TouchableOpacity>
       </View>
+      <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
+      </>
     );
   }
 
@@ -51,7 +62,9 @@ export default function DetallePagoScreen() {
   const abrirVisor = (uri) => { setImagenActiva(uri); setImagenExpandida(true); };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colores.background }}>
+    <>
+    <View style={{ height: insets.top, backgroundColor: '#000' }} />
+    <View style={{ flex: 1, backgroundColor: colores.background}}>
       <View style={[styles.header, { borderBottomColor: colores.border, backgroundColor: colores.card }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.btnAtras}>
           <Icon name="arrow-back" size={24} color={colores.textTitle} />
@@ -125,7 +138,9 @@ export default function DetallePagoScreen() {
       </ScrollView>
 
       <VisorImagenFullScreen visible={imagenExpandida} onClose={() => setImagenExpandida(false)} imageUri={imagenActiva} />
-    </SafeAreaView>
+    </View>
+    <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
+    </>
   );
 }
 

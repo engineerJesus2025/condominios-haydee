@@ -24,7 +24,14 @@ export const usePerfil = () => {
         setDatosPerfil(respuesta.data.datos);
       }
     } catch (error) {
-      procesarErrorApi(error);
+      const esErrorDeRed = 
+        error.message === 'Network Error' || 
+        error.code === 'ERR_NETWORK' ||
+        (!error.response && error.request);
+
+      if (!esErrorDeRed) {
+        procesarErrorApi(error);
+      }
     } finally {
       setLoading(false);
     }

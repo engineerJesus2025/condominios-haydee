@@ -27,8 +27,13 @@ export const useCarteleraVirtual = (colores) => {
   const cargarMasPublicaciones = async () => {
     if (!cargando && !cargandoMas && hayMas && !fechaSeleccionada) {
       setCargandoMas(true);
-      await dispatch(fetchPublicaciones({ pagina: paginaActual + 1 }));
-      setCargandoMas(false);
+      try {
+        await dispatch(fetchPublicaciones({ pagina: paginaActual + 1 })).unwrap();
+      } catch (error) {
+        procesarErrorApi(error);
+      } finally {
+        setCargandoMas(false);
+      }
     }
   };
 

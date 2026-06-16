@@ -9,7 +9,7 @@ export default function VistaError({
   onRetry 
 }) {
   const { colores } = useTema();
-
+console.log(mensaje)
   return (
     <View style={[styles.container, { backgroundColor: colores.background }]}>
       <Icon 

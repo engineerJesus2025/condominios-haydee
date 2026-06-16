@@ -4,17 +4,16 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import clienteApi from '../utils/clienteApi';
 
-// DICCIONARIO DE CANALES 
 export const CANALES_PUSH = Object.freeze({
-  URGENTE: 'haydee-urgente',
+  IMPORTANTE: 'haydee-importante', // <-- Refactorizado
   SILENCIOSO: 'haydee-silencioso',
   DEFAULT: 'haydee-default'
 });
 
 const CONFIGURACION_CANALES = Object.freeze([
   {
-    id: CANALES_PUSH.URGENTE,
-    name: 'Alertas y Cartelera',
+    id: CANALES_PUSH.IMPORTANTE,
+    name: 'Avisos Importantes', // Nombre que verá el usuario en los ajustes de su teléfono
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#FF231F7C',
@@ -23,7 +22,7 @@ const CONFIGURACION_CANALES = Object.freeze([
     id: CANALES_PUSH.SILENCIOSO,
     name: 'Finanzas y Pagos',
     importance: Notifications.AndroidImportance.LOW,
-    vibrationPattern: [0, 0, 0, 0], // Sin vibración
+    vibrationPattern: [0, 0, 0, 0], 
     lightColor: '#00000000',
   },
   {
@@ -77,7 +76,7 @@ const sincronizarTokenConBackend = async (expoToken) => {
       params: { endpoint: 'suscripcion_push' } 
   });
   
-  // Defensa contra colapsos del servidor (HTML en lugar de JSON)
+  // colapsos del servidor (HTML en vez de JSON)
   if (typeof respuesta.data === 'string') {
     throw new Error('El servidor PHP devolvió HTML. Verifica el error_log.');
   }

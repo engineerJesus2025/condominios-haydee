@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StatusBar } from 'react-native';
+import { StatusBar, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -73,7 +73,7 @@ function MainTabs () {
   const insets = useSafeAreaInsets();
   
   const paddingAbajo = Math.max(insets.bottom, 10);
-  const alturaBarra = 60 + paddingAbajo;
+  const alturaBarra = 20 + paddingAbajo;
 
   const { 
     puedeVerGastos, 
@@ -90,8 +90,8 @@ function MainTabs () {
       borderTopWidth: 1,
       borderTopColor: colores.border, 
       height: alturaBarra, 
-      paddingBottom: paddingAbajo, 
-      paddingTop: 8,
+      paddingBottom: 0, 
+      paddingTop: 5,
       position: 'absolute', 
       left: 0, 
       right: 0, 
@@ -107,6 +107,7 @@ function MainTabs () {
   }), [colores, alturaBarra]); // Dependencias estrictas
 
   return (
+    <>
     <Tab.Navigator screenOptions={navigatorScreenOptions}>
       <Tab.Screen name='Inicio' component={InicioScreen} />
       <Tab.Screen name='Pagos' component={PagosScreen} />
@@ -123,6 +124,8 @@ function MainTabs () {
         <Tab.Screen name='Mensualidad' component={MensualidadesScreen} />
       )}
     </Tab.Navigator>
+    <View style={{ height: Math.max(insets.bottom, 10), backgroundColor: '#000' }} />
+    </>
   );
 }
 

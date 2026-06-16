@@ -41,8 +41,15 @@ export const fetchPublicaciones = createAsyncThunk(
         return rejectWithValue(json.mensaje);
       }
     } catch (error) {
-      // Extraemos solo el mensaje para que Redux sea feliz
-      return rejectWithValue(error.message || 'Error de red al cargar publicaciones');
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
     }
   }
 );
@@ -67,7 +74,15 @@ export const crearPublicacion = createAsyncThunk(
         return rejectWithValue(json.mensaje);
       }
     } catch (error) {
-      return rejectWithValue(error);
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
     }
   }
 );
@@ -124,7 +139,23 @@ const publicacionesSlice = createSlice({
         isRejected(fetchPublicaciones, crearPublicacion),
         (state, action) => {
           state.loading = false;
-          state.error = action.payload || 'Ocurrió un error inesperado.';
+          
+          if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {
+            
+            if (action.payload.tipo === 'RED' || action.payload.mensaje === 'Network Error') {
+              state.error = 'No hay conexión a internet o el servidor no responde. Verifica tu señal.';
+            } else {
+              state.error = action.payload.mensaje;
+            }
+            
+          } else if (typeof action.payload === 'string') {
+            // Por si acaso llega como texto plano (en english por el axios)
+            state.error = action.payload === 'Network Error' 
+              ? 'No hay conexión a internet o el servidor no responde. Verifica tu señal.' 
+              : action.payload;
+          } else {
+            state.error = 'Ocurrió un error de conexión o validación.';
+          }
         }
       );
   }

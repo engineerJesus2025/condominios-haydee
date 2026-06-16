@@ -55,8 +55,7 @@ export const useInicio = () => {
           await registrarSuscripcionPush(); 
           dispatch(marcarPushRegistrado());
         } catch (error) {
-          // AHORA SÍ VEREMOS EL MOTIVO REAL
-          console.warn("Fallo al registrar Push en useInicio. Motivo detallado:", error);
+          console.warn("Fallo al registrar Push en useInicio:", error);
         }
       };
       
@@ -74,7 +73,7 @@ export const useInicio = () => {
     setModalDetalleVisible(false);
   }, []);
 
-  // PAra optimizar el scroll
+  // Para optimizar el scroll
   // Lo meti aqui porque las dimensiones dependen de un estado administrado por el hook
   // Sino estuviera en la screen
   const obtenerItemLayout = useCallback((dimensiones) => {

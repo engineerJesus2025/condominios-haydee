@@ -2,6 +2,15 @@ import forge from 'node-forge';
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 
+// Para errores estructurados
+export class CryptoError extends Error {
+  constructor(codigo, mensaje) {
+    super(mensaje);
+    this.name = "CryptoError";
+    this.codigo = codigo; 
+  }
+}
+
 // REGLAS Y CONSTANTES CRIPTOGRÁFICAS
 const CONFIG = {
   AES_KEY_SIZE_BYTES: 32, // Requerido para AES-256
@@ -31,12 +40,12 @@ export const criptografiaMovil = {
   getClaveAESSesion: () => _claveAESSesion,
 
   setLlavePublica: (pem) => {
-    if (!pem) throw new Error("Certificado PEM inválido");
+    if (!pem) throw new CryptoError('PEM_INVALIDO', "Certificado PEM inválido");
     _llavePublicaRSA = forge.pki.publicKeyFromPem(pem);
   },
 
   preComputarAES: () => {
-    if (!_llavePublicaRSA) throw new Error("Llave pública RSA no establecida");
+    if (!_llavePublicaRSA) throw new CryptoError('RSA_FALTANTE', "Llave pública RSA no establecida");
 
     // Generamos 32 bytes (256 bits) para seguridad militar
     const nuevaClaveAES = forge.random.getBytesSync(CONFIG.AES_KEY_SIZE_BYTES);
@@ -54,7 +63,7 @@ export const criptografiaMovil = {
   },
 
   cifrarPayload: (objetoJSON) => {
-    if (!_claveAESSesion) throw new Error("No hay clave de sesión establecida");
+    if (!_claveAESSesion) throw new CryptoError('AES_FALTANTE', "No hay clave de sesión establecida");
 
     // Convertimos el JSON a string
     const jsonString = JSON.stringify(objetoJSON);
@@ -80,7 +89,7 @@ export const criptografiaMovil = {
   },
 
   descifrarPayload: (payloadB64, ivB64, tagB64) => {
-    if (!_claveAESSesion) throw new Error("No hay clave de sesión establecida");
+    if (!_claveAESSesion) throw new CryptoError('AES_FALTANTE', "No hay clave de sesión establecida");
 
     const decipher = forge.cipher.createDecipher('AES-GCM', _claveAESSesion);
     
@@ -93,10 +102,9 @@ export const criptografiaMovil = {
     const pass = decipher.finish();
 
     if (!pass) {
-      throw new Error("Fallo de integridad: El mensaje fue interceptado/modificado");
+      throw new CryptoError('TAG_INVALIDO', "Fallo de integridad: El mensaje fue interceptado/modificado");
     }
 
-    // Decodificamos los bytes nativos de vuelta a caracteres Latinos
     const utf8Decoded = forge.util.decodeUtf8(decipher.output.getBytes());
     
     return JSON.parse(utf8Decoded);
@@ -104,7 +112,6 @@ export const criptografiaMovil = {
 
   limpiarClaves: () => {
     _claveAESSesion = null;
-    
     console.log("Seguridad: Clave AES eliminada de la memoria volátil.");
   }
 };

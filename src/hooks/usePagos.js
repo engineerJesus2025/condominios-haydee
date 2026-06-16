@@ -63,7 +63,13 @@ export const usePagos = () => {
         }
       }
     } catch (err) {
-      procesarErrorApi(err); 
+      const esErrorDeRed = 
+        err.message === 'Network Error' || 
+        err.code === 'ERR_NETWORK' ||
+        (!err.response && err.request);
+      if (!esErrorDeRed) {
+        procesarErrorApi(err); 
+      }
     }
     
     obtenerPagos();

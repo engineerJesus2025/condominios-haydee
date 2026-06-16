@@ -38,7 +38,16 @@ export const loginUsuario = createAsyncThunk(
       }
       return rejectWithValue({ tipo: 'LOGICA', mensaje: json.mensaje });
     } catch (error) {
-      return rejectWithValue(error);
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      
+      return rejectWithValue(errorPlano);
     }
   }
 );
@@ -49,7 +58,15 @@ export const cerrarSesionSegura = createAsyncThunk(
     try {
       await clienteApi.post('', {}, { params: { endpoint: 'logout' } });
     } catch (error) {
-      console.log("El servidor ya no reconoce la sesión o no hay red, cerrando sesion");
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
     } finally {
       if (typeof criptografiaMovil.limpiarClaves === 'function') {
         criptografiaMovil.limpiarClaves();
@@ -93,7 +110,15 @@ export const bootSilencioso = createAsyncThunk(
       throw new Error("Token revocado o inválido");
     } catch (error) {
       dispatch(logout()); // Limpiamos todo si algo falla
-      return rejectWithValue(error.message);
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR', 
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
     }
   }
 );
@@ -153,7 +178,23 @@ const usuarioSlice = createSlice({
         isRejected(loginUsuario),
         (state, action) => {
           state.loading = false;
-          state.error = action.payload || 'Ocurrió un error inesperado.';
+          
+          if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {
+            
+            if (action.payload.tipo === 'RED' || action.payload.mensaje === 'Network Error') {
+              state.error = 'No hay conexión a internet o el servidor no responde. Verifica tu señal.';
+            } else {
+              state.error = action.payload.mensaje;
+            }
+            
+          } else if (typeof action.payload === 'string') {
+            // Por si acaso llega como texto plano (en english por el axios)
+            state.error = action.payload === 'Network Error' 
+              ? 'No hay conexión a internet o el servidor no responde. Verifica tu señal.' 
+              : action.payload;
+          } else {
+            state.error = 'Ocurrió un error de conexión o validación.';
+          }
         }
       );
   }

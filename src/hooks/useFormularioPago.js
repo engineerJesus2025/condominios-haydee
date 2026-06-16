@@ -9,13 +9,10 @@ import { usePermisos } from './usePermisos';
 import { procesarErrorApi } from '../utils/gestorErroresUI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 export const useFormularioPago = (onClose) => {
   const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const [tasaDolar, setTasaDolar] = useState('1.00'); 
-  
   const [bancosDisponibles, setBancosDisponibles] = useState([]);
   const [apartamentosDisponibles, setApartamentosDisponibles] = useState([]);
   const [mesesPendientes, setMesesPendientes] = useState([]);
@@ -44,18 +41,13 @@ export const useFormularioPago = (onClose) => {
 
   const requiereBanco = ['TRANSFERENCIA', 'PAGO MOVIL'].includes(tipoPagoSeleccionado);
 
-  // CONVERSIÓN DE DIVISAS
   const equivalenteDolares = useMemo(() => {
     const montoBase = parseFloat(montoIngresado);
     const tasa = parseFloat(tasaDolar);
-    
-    if (!isNaN(montoBase) && !isNaN(tasa) && tasa > 0) {
-      return (montoBase / tasa).toFixed(2);
-    }
+    if (!isNaN(montoBase) && !isNaN(tasa) && tasa > 0) return (montoBase / tasa).toFixed(2);
     return '0.00';
   }, [montoIngresado, tasaDolar]);
 
-  // CARGA INICIAL
   useEffect(() => {
     const cargarCatalogosIniciales = async () => {
       try {
@@ -72,25 +64,27 @@ export const useFormularioPago = (onClose) => {
           const { bancos, apartamentos } = respuesta.data.datos;
           setBancosDisponibles(bancos);
           setApartamentosDisponibles(apartamentos);
-          
-          // Auto-seleccionar si el propietario solo tiene 1 apartamento
           if (apartamentos.length === 1) {
             setValue('apartamento_id', apartamentos[0].id_apartamento, { shouldValidate: true });
           }
         }
       } catch (error) {
-        procesarErrorApi(error);
+        const esErrorDeRed = 
+          error.message === 'Network Error' || 
+          error.code === 'ERR_NETWORK' ||
+          (!error.response && error.request);
+
+        if (!esErrorDeRed) {
+          procesarErrorApi(error);
+        }
       }
     };
 
     const leerTasaDeCacheLocal = async () => {
       try {
         const tasaGuardada = await AsyncStorage.getItem('tasa_dolar');
-        if (tasaGuardada) {
-          setTasaDolar(tasaGuardada);
-        } else {
-          setTasaDolar('1.00'); // en caso de error crítico de hardware
-        }
+        if (tasaGuardada) setTasaDolar(tasaGuardada);
+        else setTasaDolar('1.00');
       } catch (e) {
         setTasaDolar('1.00');
       }
@@ -100,7 +94,6 @@ export const useFormularioPago = (onClose) => {
     cargarCatalogosIniciales();
   }, []);
 
-  // Mensualidades (Se ejecuta al elegir apartamento)
   useEffect(() => {
     if (!apartamentoSeleccionado) {
       setMesesPendientes([]);
@@ -129,7 +122,14 @@ export const useFormularioPago = (onClose) => {
            setMesesPendientes([]);
         }
       } catch (error) {
-        procesarErrorApi(error);
+        const esErrorDeRed = 
+          error.message === 'Network Error' || 
+          error.code === 'ERR_NETWORK' ||
+          (!error.response && error.request);
+
+        if (!esErrorDeRed) {
+          procesarErrorApi(error);
+        }
         setMesesPendientes([]);
       } finally {
         setCargandoMensualidades(false);
@@ -141,18 +141,15 @@ export const useFormularioPago = (onClose) => {
   }, [apartamentoSeleccionado]);
 
   useEffect(() => {
-    if (!requiereBanco) {
-      clearErrors('imagen');
-    }
+    if (!requiereBanco) clearErrors('imagen');
   }, [requiereBanco, clearErrors]);
 
   const handleImagePick = async () => {
-    // Verificamos permisos si es necesario
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true, // Permite al usuario recortar los bordes negros del recibo
-      aspect: [4, 5],      // Proporción estándar para recibos
-      quality: 0.4, // Reduce la calidad al 40% (es un recibo, no hace falta el hd aqui -_-)
+      allowsEditing: true,
+      aspect: [4, 5],
+      quality: 0.4,
       base64: true
     });
 
@@ -163,14 +160,7 @@ export const useFormularioPago = (onClose) => {
   };
   
   const onSubmit = async (data) => {
-    // if (requiereBanco && !data.imagen) {
-    //   setError('imagen', { type: 'manual', message: 'Debes adjuntar la captura del recibo.' });
-      
-    //   onError({ imagen: { message: 'Debes adjuntar la captura del recibo.' } });
-    //   return; 
-    // }
     clearErrors(); 
-
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -180,7 +170,6 @@ export const useFormularioPago = (onClose) => {
       const formData = new FormData();
       formData.append('operacion', 'registrar_pago');
       formData.append('es_propietario', esAdmin ? '0' : '1');
-      
       formData.append('apartamento_id', data.apartamento_id);
       formData.append('mensualidad_id', data.mensualidad_id);
       formData.append('observacion', 'Pago registrado desde la App');
@@ -207,7 +196,6 @@ export const useFormularioPago = (onClose) => {
 
       const aptoObj = apartamentosDisponibles.find(a => String(a.id_apartamento) === String(data.apartamento_id));
       const mesObj = mesesPendientes.find(m => String(m.id) === String(data.mensualidad_id));
-      
       const nombreApartamento = aptoObj ? (aptoObj.nro_apartamento) : 'No asignado';
       const mesMensualidad = mesObj ? mesObj.mes.split(" ").join("/") : '';
 
@@ -225,32 +213,24 @@ export const useFormularioPago = (onClose) => {
       };
 
       await dispatch(registrarPagoServidor({ datosVisuales, formData })).unwrap();
-
       onClose();
       reset();
     } catch (error) {
-      console.log(errors)
       procesarErrorApi(error, (status, mensaje, erroresFormulario) => {
         if (status === 400 && erroresFormulario) {
-          
           Object.keys(erroresFormulario).forEach(campoServer => {
-            // INTERCEPTOR Y MAPEO DE NOMBRES
             let campoFrontend = campoServer;
             if (campoServer.startsWith('detalle_0_')) {
               campoFrontend = campoServer.replace('detalle_0_', ''); 
             }
-            
-            // Ahora React Hook Form pintará de rojo los inputs reales ('monto', 'referencia')
             setError(campoFrontend, {
               type: 'server',
               message: erroresFormulario[campoServer][0]
             });
           });
-          
           Alert.alert('Datos Inválidos', mensaje || 'Revise los campos marcados en rojo.');
           return true;
         }
-        
         return false; 
       });
     } finally {
@@ -261,10 +241,8 @@ export const useFormularioPago = (onClose) => {
   const canSubmit = isValid && !isSubmitting && (!requiereBanco || (watch('banco_id') && watch('referencia')));
 
   const onError = (errors) => {
-    // console.log(errors)
     const primerCampoConError = Object.keys(errors)[0];
     const mensajeError = errors[primerCampoConError]?.message || 'Por favor, completa este campo correctamente.';
-    
     const nombresCampos = {
       apartamento_id: 'Apartamento',
       monto: 'Monto',
@@ -275,35 +253,14 @@ export const useFormularioPago = (onClose) => {
       estado: 'Estado del pago',
       imagen: 'Comprobante'
     };
-    
     const nombreLegible = nombresCampos[primerCampoConError] || primerCampoConError;
-
-    Alert.alert(
-      "Información incompleta",
-      `Error en ${nombreLegible}: ${mensajeError}`
-    );
+    Alert.alert("Información incompleta", `Error en ${nombreLegible}: ${mensajeError}`);
   };
 
   return { 
-    control, 
-    errors,
-    comprobanteUri,
-    isSubmitting,
-    isValid: canSubmit,
-    handleSubmit,
-    handleImagePick,
-    onSubmit,
-    removeImage: () => setValue('imagen',
-    null),
-    bancosDisponibles,
-    apartamentosDisponibles,
-    mesesPendientes,
-    requiereBanco ,
-    esAdmin,
-    tasaDolar, 
-    equivalenteDolares,
-    apartamentoSeleccionado,
-    cargandoMensualidades,
-    onError
+    control, errors, comprobanteUri, isSubmitting, isValid: canSubmit,
+    handleSubmit, handleImagePick, onSubmit, removeImage: () => setValue('imagen', null),
+    bancosDisponibles, apartamentosDisponibles, mesesPendientes, requiereBanco,
+    esAdmin, tasaDolar, equivalenteDolares, apartamentoSeleccionado, cargandoMensualidades, onError
   };
 };

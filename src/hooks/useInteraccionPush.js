@@ -15,26 +15,40 @@ export const useInteraccionPush = () => {
 
       let rutaDestino = data.ruta;
 
-      // Si la ruta no está en el diccionario, se asume que es pública (ej. Inicio o Perfil).
+      // Diccionario de reglas
       const reglasAcceso = {
         'Mensualidad': permisos.puedeVerMensualidad,
         'Gastos': permisos.puedeVerGastos,
         'Cartelera': permisos.puedeVerCartelera,
         'DetalleCartelera': permisos.puedeVerCartelera,
-        'DetallePago': true, // todos pueden ver sus propios pagos
+        'DetallePago': true, 
       };
 
-      // Verificamos si la ruta tiene una regla definida y si el permiso es estrictamente falso
+      // Si no tiene permisos, lo mandamos a Inicio
       if (reglasAcceso[rutaDestino] === false) {
         console.warn(`Acceso denegado por Push a: ${rutaDestino}. Redirigiendo a Inicio.`);
-        rutaDestino = 'Inicio'; // Por defecto
+        rutaDestino = 'Inicio'; 
       }
 
-      // Al pasar los params, cualquier pantalla receptora podrá hacer fetch de su registro específico.
-      navigation.navigate(rutaDestino, {
-        id_registro: data.id_registro,
-        tabla_origen: data.tabla_origen
-      });
+      // Definimos qué rutas pertenecen al BottomTabNavigator
+      const rutasBottomTabs = ['Inicio', 'Pagos', 'Cartelera', 'Gastos', 'Mensualidad'];
+
+      if (rutasBottomTabs.includes(rutaDestino)) {
+        // Si va a una pestaña, navegamos primero al MainTabs y le decimos qué pantalla abrir adentro
+        navigation.navigate('MainTabs', {
+          screen: rutaDestino,
+          params: {
+            id_registro: data.id_registro,
+            tabla_origen: data.tabla_origen
+          }
+        });
+      } else {
+        // Si va a una vista de Detalle (que están en el AppStack general), navega directo
+        navigation.navigate(rutaDestino, {
+          id_registro: data.id_registro,
+          tabla_origen: data.tabla_origen
+        });
+      }
     });
 
     return () => subscription.remove();

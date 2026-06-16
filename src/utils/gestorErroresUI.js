@@ -2,13 +2,22 @@ import { Alert } from 'react-native';
 import { HTTP_CODIGO } from './HttpCodigos';
 
 export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null) => {
-  if (errorObj.tipo === 'SERVIDOR') {
-    // El formulario quiere manejar este error de validación por su cuenta
+  // Si llega vacío ignora en silencio
+  if (!errorObj) return; 
+
+  // errores de red crudos de Axios 
+  const esErrorDeRedCrudo = 
+    errorObj.message === 'Network Error' || 
+    errorObj.code === 'ERR_NETWORK' ||
+    (!errorObj.response && errorObj.request);
+
+  if (errorObj.tipo === 'API_ERROR' || errorObj.tipo === 'SERVIDOR') {
+    
     if (manejadorEspecificoFormulario) {
       const errorManejado = manejadorEspecificoFormulario(
         errorObj.status, 
         errorObj.mensaje, 
-        errorObj.erroresFormulario 
+        errorObj.errores
       );
       if (errorManejado) return; 
     }
@@ -19,13 +28,13 @@ export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null)
         break;
 
       case HTTP_CODIGO.NO_AUTORIZADO: // 401
-        Alert.alert('Sesión expirada', 'Por favor, inicie sesión nuevamente.');
+        Alert.alert('Acceso Denegado', errorObj.mensaje || 'Por favor, inicie sesión nuevamente.');
         break;
 
       case HTTP_CODIGO.PROHIBIDO: // 403
         Alert.alert(
-          'Fallo de Integridad', 
-          'No tiene los permisos requeridos para realizar esta acción'
+          'Acceso Restringido', 
+          errorObj.mensaje || 'No tiene los permisos requeridos (Rol) para realizar esta acción.'
         );
         break;
 
@@ -36,7 +45,7 @@ export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null)
       case HTTP_CODIGO.NO_ENCONTRADO: // 404
         Alert.alert(
           'Registro no encontrado', 
-          errorObj.mensaje || 'El elemento que intenta consultar o modificar ya no existe en el sistema.'
+          errorObj.mensaje || 'El elemento que intenta consultar o modificar ya no existe.'
         );
         break;
 
@@ -44,14 +53,13 @@ export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null)
         Alert.alert('Error del Servidor', errorObj.mensaje || 'Operación fallida.');
     }
     
-  } else if (errorObj.tipo === 'RED') {
-    Alert.alert('Problema de conexión', errorObj.mensaje);
-  } else {
-    console.log(errorObj)
-    // Captura errores de JavaScript puro o fallos de descifrado locales lanzados con throw
+  } else if (errorObj.tipo === 'RED' || esErrorDeRedCrudo) {
     Alert.alert(
-      'Fallo de Seguridad Local', 
-      errorObj.mensaje || 'No se pudo verificar la firma de autenticidad de la respuesta.'
+      'Problema de conexión', 
+      'No hay conexión a internet o el servidor no responde. Verifica tu señal.'
     );
+  } else {
+    const mensajeFinal = errorObj?.message || errorObj?.mensaje || 'Ocurrió un error desconocido.';
+    Alert.alert('Error inesperado', mensajeFinal);
   }
 };
